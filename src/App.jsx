@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Crown, Shield, Lock, Sparkles, Plus, Trash2, X, Check, Settings, Users, RefreshCw, LogOut, ScrollText } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Crown, Shield, Lock, Sparkles, Plus, Trash2, X, Check, Settings, Users, RefreshCw, LogOut, ScrollText, Copy } from 'lucide-react';
+import { supabase } from './supabaseClient';
 
-/* ---------- constants & storage helpers ---------- */
+/* ============================================================
+   CONSTANTS
+   ============================================================ */
 
 const TREE_COLORS = {
   gold:    { name: 'Gold',    hex: '#d4a843', rgb: '212,168,67' },
@@ -14,32 +17,26 @@ const TREE_COLORS = {
 
 const ICONS = ['⚔️','🔥','❄️','🌿','🛡️','✨','💀','🌙','☀️','🩸','🕸️','👁️','⚡','🌊','🪨','🦴'];
 
-const META_KEY = 'campaign-meta';
-const TREES_KEY = 'campaign-trees';
-const PLAYERS_KEY = 'campaign-players';
-
 function uid(prefix) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function getKey(key) {
-  try {
-    const res = await window.storage.get(key, true);
-    return res ? JSON.parse(res.value) : null;
-  } catch (e) {
-    return null;
-  }
-}
-async function setKey(key, value) {
-  try {
-    await window.storage.set(key, JSON.stringify(value), true);
-    return true;
-  } catch (e) {
-    return false;
-  }
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 32);
 }
 
-/* ---------- styles ---------- */
+function campaignSlug(name) {
+  const base = slugify(name) || 'campaign';
+  return `${base}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/* ============================================================
+   STYLES
+   ============================================================ */
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -51,7 +48,7 @@ const CSS = `
   --border: #383f52;
   --text: #e9e3d6;
   --text-muted: #8b8fa3;
-  --gold: #d4a843;
+  --gold: #4f9d6e;
   --danger: #c4453c;
   --radius: 14px;
   font-family: 'Inter', -apple-system, sans-serif;
@@ -65,7 +62,7 @@ const CSS = `
 }
 .rf-root * { box-sizing: border-box; }
 .rf-root button { font-family: inherit; cursor: pointer; }
-.rf-root input, .rf-root textarea { font-family: inherit; }
+.rf-root input, .rf-root textarea, .rf-root select { font-family: inherit; }
 
 .rf-center { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
 .rf-loading { font-family: 'Cinzel', serif; color: var(--text-muted); letter-spacing: .05em; }
@@ -79,7 +76,7 @@ const CSS = `
 .rf-choice-title { font-family: 'Cinzel', serif; font-size: 15px; font-weight: 600; }
 .rf-choice-sub { font-size: 12.5px; color: var(--text-muted); line-height: 1.45; }
 
-.rf-passcode-form, .rf-setup-form { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.rf-passcode-form, .rf-setup-form, .rf-join-form { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
 .rf-passcode-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
 
 .rf-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); margin: 14px 0 6px; font-weight: 600; }
@@ -117,10 +114,14 @@ const CSS = `
 .rf-icon-btn-danger--armed { color: var(--danger); border-color: var(--danger); background: rgba(196,69,60,0.12); }
 
 .rf-page { max-width: 920px; margin: 0 auto; padding: 22px 20px 60px; }
-.rf-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.rf-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
 .rf-header-title { font-family: 'Cinzel', serif; font-weight: 700; font-size: 21px; }
 .rf-header-sub { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); margin-top: 3px; text-transform: uppercase; letter-spacing: .06em; }
 .rf-header-actions { display: flex; align-items: center; gap: 8px; }
+
+.rf-live-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.rf-live-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #4f9d6e; box-shadow: 0 0 6px #4f9d6e; }
+.rf-live-dot--off::before { background: var(--text-muted); box-shadow: none; }
 
 .rf-tabs { display: flex; gap: 6px; margin-bottom: 22px; border-bottom: 1px solid var(--border); overflow-x: auto; }
 .rf-tab { display: flex; align-items: center; gap: 6px; background: transparent; border: none; color: var(--text-muted); padding: 10px 14px; font-size: 13.5px; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
@@ -224,6 +225,16 @@ const CSS = `
 .rf-settings-card { max-width: 480px; }
 .rf-settings-danger { border-color: rgba(196,69,60,0.4); }
 
+.rf-share-row { display: flex; gap: 8px; margin-top: 10px; }
+.rf-share-row .rf-input { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+
+.rf-lobby-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+.rf-lobby-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left; background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; padding: 12px 14px; color: var(--text); transition: all .15s; }
+.rf-lobby-row:hover { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+.rf-lobby-row-name { font-family: 'Cinzel', serif; font-weight: 600; font-size: 14px; }
+.rf-lobby-row-id { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.rf-lobby-row-count { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+
 .rf-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--surface-2); border: 1px solid var(--gold); color: var(--text); padding: 11px 18px; border-radius: 10px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); z-index: 100; max-width: 90vw; text-align: center; }
 
 @media (max-width: 600px) {
@@ -234,7 +245,35 @@ const CSS = `
 }
 `;
 
-/* ---------- small reusable pieces ---------- */
+/* ============================================================
+   SUPABASE DATA LAYER
+   All reads/writes for a campaign live here. Row shapes:
+     campaigns:  { id, campaign_name, dm_passcode, max_equip_slots }
+     rune_trees: { id, campaign_id, name, color, icon, description, tier_count, runes (jsonb[]) }
+     players:    { id, campaign_id, name, unlocked_runes (jsonb[] of ids), equipped_runes (jsonb[] of ids) }
+   ============================================================ */
+
+async function fetchCampaign(campaignId) {
+  const { data, error } = await supabase.from('campaigns').select('*').eq('id', campaignId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function fetchTrees(campaignId) {
+  const { data, error } = await supabase.from('rune_trees').select('*').eq('campaign_id', campaignId);
+  if (error) throw error;
+  return data || [];
+}
+
+async function fetchPlayers(campaignId) {
+  const { data, error } = await supabase.from('players').select('*').eq('campaign_id', campaignId);
+  if (error) throw error;
+  return data || [];
+}
+
+/* ============================================================
+   SMALL REUSABLE PIECES
+   ============================================================ */
 
 function DeleteConfirmButton({ onConfirm, label }) {
   const [armed, setArmed] = useState(false);
@@ -270,7 +309,8 @@ function RuneNode({ rune, icon, status, selected, onClick }) {
 
 function RuneTreeView({ tree, mode, unlockedIds, equippedIds, selectedRuneId, onRuneClick }) {
   const color = TREE_COLORS[tree.color] || TREE_COLORS.gold;
-  const tiers = Array.from({ length: tree.tierCount || 1 }, (_, i) => i + 1);
+  const tiers = Array.from({ length: tree.tier_count || 1 }, (_, i) => i + 1);
+  const runes = tree.runes || [];
   return (
     <div className="rf-tree" style={{ '--tc': color.hex, '--tc-rgb': color.rgb }}>
       <div className="rf-tree-header">
@@ -282,13 +322,13 @@ function RuneTreeView({ tree, mode, unlockedIds, equippedIds, selectedRuneId, on
       </div>
       <div className="rf-tree-tiers">
         {tiers.map((tierNum) => {
-          const runes = tree.runes.filter((r) => r.tier === tierNum);
-          if (runes.length === 0) return null;
+          const tierRunes = runes.filter((r) => r.tier === tierNum);
+          if (tierRunes.length === 0) return null;
           return (
             <div className="rf-tier-row" key={tierNum}>
               <div className="rf-tier-label">Tier {tierNum}</div>
               <div className="rf-tier-nodes">
-                {runes.map((rune) => {
+                {tierRunes.map((rune) => {
                   let status;
                   if (mode === 'grant') {
                     status = unlockedIds.includes(rune.id) ? 'granted' : 'ungranted';
@@ -331,16 +371,17 @@ function DetailPanel({ rune, tree }) {
   );
 }
 
-function TopHeader({ meta, role, playerName, onExit, onRefresh, onSwitchPlayer }) {
+function TopHeader({ meta, role, playerName, onExit, onRefresh, onSwitchPlayer, live }) {
   return (
     <div className="rf-header">
       <div>
-        <div className="rf-header-title">{meta.campaignName}</div>
+        <div className="rf-header-title">{meta.campaign_name}</div>
         <div className="rf-header-sub">
           {role === 'dm' ? <><Crown size={13} /> Dungeon Master</> : <><Shield size={13} /> {playerName}</>}
         </div>
       </div>
       <div className="rf-header-actions">
+        <span className={`rf-live-dot${live ? '' : ' rf-live-dot--off'}`}>{live ? 'Live' : 'Reconnecting…'}</span>
         <button className="rf-icon-btn" onClick={onRefresh} title="Refresh"><RefreshCw size={16} /></button>
         {role === 'player' && onSwitchPlayer && (
           <button className="rf-btn-ghost-sm" onClick={onSwitchPlayer}>Switch player</button>
@@ -351,7 +392,9 @@ function TopHeader({ meta, role, playerName, onExit, onRefresh, onSwitchPlayer }
   );
 }
 
-/* ---------- DM: tree editor ---------- */
+/* ============================================================
+   DM: TREE EDITOR
+   ============================================================ */
 
 function TreeEditorModal({ tree, onClose, onSave, onDelete }) {
   const isNew = !tree;
@@ -359,7 +402,7 @@ function TreeEditorModal({ tree, onClose, onSave, onDelete }) {
   const [color, setColor] = useState(tree ? tree.color : 'gold');
   const [icon, setIcon] = useState(tree ? tree.icon : ICONS[0]);
   const [description, setDescription] = useState(tree ? tree.description : '');
-  const [tierCount, setTierCount] = useState(tree ? tree.tierCount : 2);
+  const [tierCount, setTierCount] = useState(tree ? tree.tier_count : 2);
   const [runes, setRunes] = useState(tree ? [...tree.runes] : []);
 
   const addRune = (tierNum) => {
@@ -386,7 +429,7 @@ function TreeEditorModal({ tree, onClose, onSave, onDelete }) {
       color,
       icon,
       description: description.trim(),
-      tierCount,
+      tier_count: tierCount,
       runes,
     });
   };
@@ -483,11 +526,12 @@ function TreesTab({ trees, onOpenEditor }) {
         <div className="rf-grid">
           {trees.map((tree) => {
             const color = TREE_COLORS[tree.color] || TREE_COLORS.gold;
+            const runeCount = (tree.runes || []).length;
             return (
               <div key={tree.id} className="rf-tree-card" style={{ '--tc': color.hex }} onClick={() => onOpenEditor(tree)}>
                 <div className="rf-tree-card-icon">{tree.icon}</div>
                 <div className="rf-tree-card-name">{tree.name}</div>
-                <div className="rf-tree-card-meta">{tree.runes.length} rune{tree.runes.length !== 1 ? 's' : ''} · {tree.tierCount} tier{tree.tierCount !== 1 ? 's' : ''}</div>
+                <div className="rf-tree-card-meta">{runeCount} rune{runeCount !== 1 ? 's' : ''} · {tree.tier_count} tier{tree.tier_count !== 1 ? 's' : ''}</div>
               </div>
             );
           })}
@@ -497,7 +541,9 @@ function TreesTab({ trees, onOpenEditor }) {
   );
 }
 
-/* ---------- DM: players & rune granting ---------- */
+/* ============================================================
+   DM: PLAYERS & RUNE GRANTING
+   ============================================================ */
 
 function RuneGrantModal({ player, trees, onClose, onToggleUnlock }) {
   const [selected, setSelected] = useState(null);
@@ -513,14 +559,14 @@ function RuneGrantModal({ player, trees, onClose, onToggleUnlock }) {
           <button className="rf-icon-btn" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="rf-modal-body">
-          <p className="rf-modal-hint">Click a rune to grant or revoke it. Granted runes glow and become available for {player.name} to equip.</p>
+          <p className="rf-modal-hint">Click a rune to grant or revoke it. Granted runes glow and become available for {player.name} to equip, live, the moment you click.</p>
           {trees.length === 0 && <div className="rf-empty-state">Create a rune path first.</div>}
           {trees.map((tree) => (
             <RuneTreeView
               key={tree.id}
               tree={tree}
               mode="grant"
-              unlockedIds={player.unlocked}
+              unlockedIds={player.unlocked_runes || []}
               selectedRuneId={selected ? selected.rune.id : null}
               onRuneClick={handleClick}
             />
@@ -538,7 +584,7 @@ function RuneGrantModal({ player, trees, onClose, onToggleUnlock }) {
 
 function PlayersTab({ players, trees, onAddPlayer, onDeletePlayer, onOpenGrant }) {
   const [newName, setNewName] = useState('');
-  const totalRunes = trees.reduce((sum, t) => sum + t.runes.length, 0);
+  const totalRunes = trees.reduce((sum, t) => sum + (t.runes || []).length, 0);
   const submit = () => {
     if (!newName.trim()) return;
     onAddPlayer(newName.trim());
@@ -560,13 +606,13 @@ function PlayersTab({ players, trees, onAddPlayer, onDeletePlayer, onOpenGrant }
         <button className="rf-btn-primary" onClick={submit}><Plus size={15} /> Add Player</button>
       </div>
       {players.length === 0 ? (
-        <div className="rf-empty-state">No players added yet. Add your party members so you can start unlocking runes for them.</div>
+        <div className="rf-empty-state">No players added yet. Add your party members, or share the campaign link and let them join themselves from the player screen.</div>
       ) : (
         <div className="rf-player-list">
           {players.map((p) => (
             <div key={p.id} className="rf-player-row">
               <div className="rf-player-row-name">{p.name}</div>
-              <div className="rf-player-row-meta">{p.unlocked.length}/{totalRunes} unlocked · {p.equipped.length} equipped</div>
+              <div className="rf-player-row-meta">{(p.unlocked_runes || []).length}/{totalRunes} unlocked · {(p.equipped_runes || []).length} equipped</div>
               <div className="rf-player-row-actions">
                 <button className="rf-btn-ghost-sm" onClick={() => onOpenGrant(p)}><Sparkles size={13} /> Manage Runes</button>
                 <DeleteConfirmButton onConfirm={() => onDeletePlayer(p.id)} label="remove" />
@@ -579,22 +625,33 @@ function PlayersTab({ players, trees, onAddPlayer, onDeletePlayer, onOpenGrant }
   );
 }
 
-function SettingsTab({ meta, onSave, onExit, onReset }) {
-  const [campaignName, setCampaignName] = useState(meta.campaignName);
-  const [maxSlots, setMaxSlots] = useState(meta.maxEquipSlots ?? 5);
+function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
+  const [campaignName, setCampaignName] = useState(meta.campaign_name);
+  const [maxSlots, setMaxSlots] = useState(meta.max_equip_slots ?? 5);
   const [newPasscode, setNewPasscode] = useState('');
   const [savedFlash, setSavedFlash] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const save = () => {
     onSave({
       ...meta,
-      campaignName: campaignName.trim() || meta.campaignName,
-      maxEquipSlots: Math.max(0, Number(maxSlots) || 0),
-      dmPasscode: newPasscode.trim() ? newPasscode.trim() : meta.dmPasscode,
+      campaign_name: campaignName.trim() || meta.campaign_name,
+      max_equip_slots: Math.max(0, Number(maxSlots) || 0),
+      dm_passcode: newPasscode.trim() ? newPasscode.trim() : meta.dm_passcode,
     });
     setNewPasscode('');
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 2000);
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard may be unavailable, the input is still selectable */
+    }
   };
 
   return (
@@ -616,13 +673,17 @@ function SettingsTab({ meta, onSave, onExit, onReset }) {
 
       <div className="rf-card rf-settings-card" style={{ marginTop: 18 }}>
         <div className="rf-label" style={{ marginTop: 0 }}>Sharing this campaign</div>
-        <div className="rf-hint">Send this same artifact link to your players. They'll choose "I'm a Player" and pick their name from the list — no passcode needed.</div>
+        <div className="rf-hint">Send this link to your players. They'll choose "I'm a Player," pick or type their name, and everything updates live for everyone — no passcode needed.</div>
+        <div className="rf-share-row">
+          <input className="rf-input" readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
+          <button className="rf-btn-ghost-sm" onClick={copyLink}><Copy size={13} /> {copied ? 'Copied' : 'Copy'}</button>
+        </div>
       </div>
 
       <div className="rf-card rf-settings-card rf-settings-danger" style={{ marginTop: 18 }}>
         <div className="rf-label" style={{ marginTop: 0 }}>Danger zone</div>
-        <div className="rf-hint" style={{ marginBottom: 10 }}>This permanently deletes all rune paths, players, and progress.</div>
-        <DeleteConfirmButton onConfirm={onReset} label="reset entire campaign" />
+        <div className="rf-hint" style={{ marginBottom: 10 }}>This permanently deletes the campaign: all rune paths, players, and progress, for everyone.</div>
+        <DeleteConfirmButton onConfirm={onReset} label="delete entire campaign" />
       </div>
 
       <button className="rf-btn-ghost" style={{ marginTop: 18 }} onClick={onExit}><LogOut size={14} /> Exit DM mode</button>
@@ -630,20 +691,16 @@ function SettingsTab({ meta, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, trees, players, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveMeta, onExit, onReset, onRefresh, setModalOpen }) {
+function DMDashboard({ meta, shareUrl, trees, players, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
-
-  useEffect(() => {
-    setModalOpen(editingTree !== undefined || grantingPlayer !== null);
-  }, [editingTree, grantingPlayer]);
 
   const livePlayer = grantingPlayer ? (players.find((p) => p.id === grantingPlayer.id) || grantingPlayer) : null;
 
   return (
     <div className="rf-page">
-      <TopHeader meta={meta} role="dm" onExit={onExit} onRefresh={onRefresh} />
+      <TopHeader meta={meta} role="dm" onExit={onExit} onRefresh={onRefresh} live={live} />
       <div className="rf-tabs">
         <button className={`rf-tab${tab === 'trees' ? ' rf-tab--active' : ''}`} onClick={() => setTab('trees')}><ScrollText size={15} /> Rune Paths</button>
         <button className={`rf-tab${tab === 'players' ? ' rf-tab--active' : ''}`} onClick={() => setTab('players')}><Users size={15} /> Players</button>
@@ -652,7 +709,7 @@ function DMDashboard({ meta, trees, players, onSaveTree, onDeleteTree, onAddPlay
       <div>
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
         {tab === 'players' && <PlayersTab players={players} trees={trees} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} />}
-        {tab === 'settings' && <SettingsTab meta={meta} onSave={onSaveMeta} onExit={onExit} onReset={onReset} />}
+        {tab === 'settings' && <SettingsTab meta={meta} shareUrl={shareUrl} onSave={onSaveMeta} onExit={onExit} onReset={onReset} />}
       </div>
       {editingTree !== undefined && (
         <TreeEditorModal
@@ -674,16 +731,24 @@ function DMDashboard({ meta, trees, players, onSaveTree, onDeleteTree, onAddPlay
   );
 }
 
-/* ---------- Player side ---------- */
+/* ============================================================
+   PLAYER SIDE
+   ============================================================ */
 
-function PlayerPicker({ players, meta, onSelect, onExit }) {
+function PlayerPicker({ players, meta, onSelect, onJoinAsNew, live, onExit }) {
+  const [joinName, setJoinName] = useState('');
+  const submitJoin = () => {
+    if (!joinName.trim()) return;
+    onJoinAsNew(joinName.trim());
+    setJoinName('');
+  };
   return (
     <div className="rf-page">
-      <TopHeader meta={meta} role="player" playerName="Choose your character" onExit={onExit} onRefresh={() => {}} />
+      <TopHeader meta={meta} role="player" playerName="Choose your character" onExit={onExit} onRefresh={() => {}} live={live} />
       <div>
         <div className="rf-section-header"><h2 className="rf-section-title">Who are you?</h2></div>
         {players.length === 0 ? (
-          <div className="rf-empty-state">Your DM hasn't added any players yet. Ask them to add you from the Players tab.</div>
+          <div className="rf-empty-state">No players in this campaign yet. Type your name below to join.</div>
         ) : (
           <div className="rf-picker-grid">
             {players.map((p) => (
@@ -694,22 +759,37 @@ function PlayerPicker({ players, meta, onSelect, onExit }) {
             ))}
           </div>
         )}
+        <div className="rf-card" style={{ marginTop: 18, maxWidth: 420 }}>
+          <label className="rf-label" style={{ marginTop: 0 }}>Not on the list?</label>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <input
+              className="rf-input"
+              placeholder="Your character's name"
+              value={joinName}
+              onChange={(e) => setJoinName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitJoin(); }}
+            />
+            <button className="rf-btn-primary" onClick={submitJoin}>Join</button>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function PlayerDashboard({ meta, trees, players, currentPlayerId, onSelectPlayer, onToggleEquip, onExit, onRefresh }) {
+function PlayerDashboard({ meta, trees, players, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onExit, onRefresh }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
   if (!player) {
-    return <PlayerPicker players={players} meta={meta} onSelect={onSelectPlayer} onExit={onExit} />;
+    return <PlayerPicker players={players} meta={meta} onSelect={onSelectPlayer} onJoinAsNew={onJoinAsNew} live={live} onExit={onExit} />;
   }
 
-  const maxSlots = meta.maxEquipSlots ?? 5;
+  const maxSlots = meta.max_equip_slots ?? 5;
+  const unlocked = player.unlocked_runes || [];
+  const equipped = player.equipped_runes || [];
   const equippedRuneObjs = trees.flatMap((t) =>
-    t.runes.filter((r) => player.equipped.includes(r.id)).map((r) => ({ ...r, _tree: t }))
+    (t.runes || []).filter((r) => equipped.includes(r.id)).map((r) => ({ ...r, _tree: t }))
   );
 
   const handleRuneClick = (rune, tree, status) => {
@@ -720,12 +800,12 @@ function PlayerDashboard({ meta, trees, players, currentPlayerId, onSelectPlayer
 
   return (
     <div className="rf-page">
-      <TopHeader meta={meta} role="player" playerName={player.name} onExit={onExit} onRefresh={onRefresh} onSwitchPlayer={() => onSelectPlayer(null)} />
+      <TopHeader meta={meta} role="player" playerName={player.name} onExit={onExit} onRefresh={onRefresh} onSwitchPlayer={() => onSelectPlayer(null)} live={live} />
       <div>
         <div className="rf-loadout">
           <div className="rf-loadout-header">
             <div className="rf-loadout-title">Current Loadout</div>
-            <div className="rf-loadout-count">{player.equipped.length}{maxSlots > 0 ? `/${maxSlots}` : ''} equipped</div>
+            <div className="rf-loadout-count">{equipped.length}{maxSlots > 0 ? `/${maxSlots}` : ''} equipped</div>
           </div>
           {equippedRuneObjs.length === 0 ? (
             <div className="rf-empty-mini">No runes equipped yet. Click an unlocked rune below to equip it.</div>
@@ -755,8 +835,8 @@ function PlayerDashboard({ meta, trees, players, currentPlayerId, onSelectPlayer
               key={tree.id}
               tree={tree}
               mode="equip"
-              unlockedIds={player.unlocked}
-              equippedIds={player.equipped}
+              unlockedIds={unlocked}
+              equippedIds={equipped}
               selectedRuneId={selected ? selected.rune.id : null}
               onRuneClick={handleRuneClick}
             />
@@ -768,13 +848,15 @@ function PlayerDashboard({ meta, trees, players, currentPlayerId, onSelectPlayer
   );
 }
 
-/* ---------- login / setup ---------- */
+/* ============================================================
+   LOGIN / SETUP
+   ============================================================ */
 
 function DMPasscodeForm({ meta, onSuccess, onBack }) {
   const [val, setVal] = useState('');
   const [err, setErr] = useState(false);
   const submit = () => {
-    if (val === meta.dmPasscode) onSuccess();
+    if (val === meta.dm_passcode) onSuccess();
     else setErr(true);
   };
   return (
@@ -802,7 +884,7 @@ function LoginScreen({ meta, onChooseDM, onChoosePlayer }) {
   return (
     <div className="rf-center">
       <div className="rf-login-card">
-        <div className="rf-login-title">{meta.campaignName}</div>
+        <div className="rf-login-title">{meta.campaign_name}</div>
         <div className="rf-login-sub">A rune system for your table</div>
         {!showPasscode ? (
           <div className="rf-login-choices">
@@ -825,7 +907,7 @@ function LoginScreen({ meta, onChooseDM, onChoosePlayer }) {
   );
 }
 
-function SetupScreen({ onCreate }) {
+function SetupScreen({ onCreate, onShowJoin, onBack, creating, createErr }) {
   const [campaignName, setCampaignName] = useState('');
   const [passcode, setPasscode] = useState('');
   const [confirmPasscode, setConfirmPasscode] = useState('');
@@ -835,6 +917,7 @@ function SetupScreen({ onCreate }) {
     if (!campaignName.trim()) { setErr('Give your campaign a name.'); return; }
     if (!passcode.trim()) { setErr('Choose a DM passcode.'); return; }
     if (passcode !== confirmPasscode) { setErr('Passcodes do not match.'); return; }
+    setErr('');
     onCreate(campaignName.trim(), passcode.trim());
   };
 
@@ -842,7 +925,7 @@ function SetupScreen({ onCreate }) {
     <div className="rf-center">
       <div className="rf-login-card">
         <div className="rf-login-title">Forge a Rune System</div>
-        <div className="rf-login-sub">Set this up once. Share this same artifact link with your players afterward.</div>
+        <div className="rf-login-sub">Create your campaign once, then share the link with your players. Everything syncs live.</div>
         <div className="rf-setup-form">
           <label className="rf-label">Campaign name</label>
           <input className="rf-input" value={campaignName} onChange={(e) => setCampaignName(e.target.value)} placeholder="e.g. The Sundered Coast" />
@@ -856,184 +939,525 @@ function SetupScreen({ onCreate }) {
             onChange={(e) => setConfirmPasscode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
           />
-          {err && <div className="rf-error">{err}</div>}
-          <button className="rf-btn-primary" style={{ marginTop: 14, width: '100%' }} onClick={submit}>Create Campaign</button>
+          {(err || createErr) && <div className="rf-error">{err || createErr}</div>}
+          <button className="rf-btn-primary" style={{ marginTop: 14, width: '100%' }} onClick={submit} disabled={creating}>
+            {creating ? 'Forging…' : 'Create Campaign'}
+          </button>
+          <button className="rf-btn-ghost" style={{ marginTop: 10, width: '100%' }} onClick={onShowJoin}>
+            I already have a campaign link
+          </button>
+          {onBack && (
+            <button className="rf-btn-ghost" style={{ marginTop: 6, width: '100%' }} onClick={onBack}>
+              ← Back to campaign list
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-/* ---------- root ---------- */
+function LobbyBrowser({ onSelectCampaign, onCreate, onShowJoin }) {
+  const [campaigns, setCampaigns] = useState([]);
+  const [counts, setCounts] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      try {
+        const [{ data: campaignRows, error: campaignErr }, { data: playerRows, error: playerErr }] = await Promise.all([
+          supabase.from('campaigns').select('id, campaign_name').order('campaign_name', { ascending: true }),
+          supabase.from('players').select('campaign_id'),
+        ]);
+        if (campaignErr) throw campaignErr;
+        if (playerErr) throw playerErr;
+        if (!active) return;
+
+        setCampaigns(campaignRows || []);
+        const tally = {};
+        (playerRows || []).forEach((p) => { tally[p.campaign_id] = (tally[p.campaign_id] || 0) + 1; });
+        setCounts(tally);
+        setErr('');
+      } catch (e) {
+        console.error(e);
+        if (active) setErr('Could not load the campaign list. Check your connection and Supabase setup.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    load();
+
+    // Keep the lobby list live: new campaigns appear, deleted ones vanish, player counts update.
+    const channel = supabase
+      .channel('lobby-browser')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaigns' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, load)
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return (
+    <div className="rf-center">
+      <div className="rf-login-card" style={{ maxWidth: 520 }}>
+        <div className="rf-login-title">Rune Forge</div>
+        <div className="rf-login-sub">Browse open campaigns below, or start your own.</div>
+
+        <button className="rf-btn-primary" style={{ width: '100%', marginBottom: 18 }} onClick={onCreate}>
+          <Plus size={15} /> Create New Campaign
+        </button>
+
+        <div className="rf-label" style={{ marginTop: 0 }}>Open Campaigns</div>
+        {loading && <div className="rf-empty-mini">Loading campaigns…</div>}
+        {err && <div className="rf-error">{err}</div>}
+        {!loading && !err && campaigns.length === 0 && (
+          <div className="rf-empty-state">No campaigns yet. Be the first to create one.</div>
+        )}
+        {!loading && campaigns.length > 0 && (
+          <div className="rf-lobby-list">
+            {campaigns.map((c) => (
+              <button key={c.id} className="rf-lobby-row" onClick={() => onSelectCampaign(c.id)}>
+                <div>
+                  <div className="rf-lobby-row-name">{c.campaign_name}</div>
+                  <div className="rf-lobby-row-id">{c.id}</div>
+                </div>
+                <div className="rf-lobby-row-count"><Users size={13} /> {counts[c.id] || 0}</div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button className="rf-btn-ghost" style={{ marginTop: 16, width: '100%' }} onClick={onShowJoin}>
+          Have a direct campaign link instead?
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function JoinScreen({ onJoin, onBack, joinErr, joining }) {
+  const [campaignIdInput, setCampaignIdInput] = useState('');
+  const submit = () => {
+    if (!campaignIdInput.trim()) return;
+    onJoin(campaignIdInput.trim());
+  };
+  return (
+    <div className="rf-center">
+      <div className="rf-login-card">
+        <div className="rf-login-title">Join a Campaign</div>
+        <div className="rf-login-sub">Paste the campaign ID your DM shared with you.</div>
+        <div className="rf-join-form">
+          <label className="rf-label">Campaign ID</label>
+          <input
+            className="rf-input"
+            value={campaignIdInput}
+            onChange={(e) => setCampaignIdInput(e.target.value)}
+            placeholder="e.g. sundered-coast-x7k2"
+            onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+            autoFocus
+          />
+          {joinErr && <div className="rf-error">{joinErr}</div>}
+          <div className="rf-passcode-actions">
+            <button className="rf-btn-ghost" onClick={onBack}>Back</button>
+            <button className="rf-btn-primary" onClick={submit} disabled={joining}>{joining ? 'Looking…' : 'Continue'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   ROOT
+   ============================================================ */
+
+const STARTER_TREE = () => ({
+  id: uid('tree'),
+  name: 'Elemental Mastery',
+  color: 'crimson',
+  icon: '🔥',
+  description: 'An example path — edit or delete this to make it your own.',
+  tier_count: 2,
+  runes: [
+    { id: uid('rune'), name: 'Ember Touch', tier: 1, effect: '+1d4 fire damage on your next attack, once per short rest', description: 'A faint heat lingers in the fingertips of those who carry this rune.' },
+    { id: uid('rune'), name: 'Frostward', tier: 1, effect: 'Resistance to cold damage for 1 minute, once per long rest', description: 'Carved from a shard of glacier that never fully melts.' },
+    { id: uid('rune'), name: 'Wildfire Heart', tier: 2, effect: 'Once per long rest, add +2 to a damage roll', description: 'Said to beat in time with a forest fire.' },
+  ],
+});
+
+function getCampaignIdFromUrl() {
+  try {
+    return new URLSearchParams(window.location.search).get('c');
+  } catch {
+    return null;
+  }
+}
+
+function setCampaignIdInUrl(campaignId) {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('c', campaignId);
+    window.history.replaceState({}, '', url.toString());
+  } catch {
+    /* no-op in non-browser environments */
+  }
+}
+
+function buildShareUrl(campaignId) {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('c', campaignId);
+    return url.toString();
+  } catch {
+    return campaignId;
+  }
+}
 
 export default function App() {
-  const [phase, setPhase] = useState('loading');
+  const [campaignId, setCampaignId] = useState(null);
   const [meta, setMeta] = useState(null);
   const [trees, setTrees] = useState([]);
   const [players, setPlayers] = useState([]);
   const [currentPlayerId, setCurrentPlayerId] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [phase, setPhase] = useState('loading'); // loading | home | setup | join | login | dm | player
+  const [live, setLive] = useState(false);
   const [toast, setToast] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [createErr, setCreateErr] = useState('');
+  const [joining, setJoining] = useState(false);
+  const [joinErr, setJoinErr] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      const m = await getKey(META_KEY);
-      if (!m) { setPhase('setup'); return; }
-      setMeta(m);
-      const [t, p] = await Promise.all([getKey(TREES_KEY), getKey(PLAYERS_KEY)]);
-      setTrees(t || []);
-      setPlayers(p || []);
-      setPhase('login');
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (phase !== 'dm' && phase !== 'player') return;
-    const interval = setInterval(async () => {
-      if (modalOpen) return;
-      const [t, p] = await Promise.all([getKey(TREES_KEY), getKey(PLAYERS_KEY)]);
-      if (t) setTrees(t);
-      if (p) setPlayers(p);
-    }, 9000);
-    return () => clearInterval(interval);
-  }, [phase, modalOpen]);
-
+  const showToast = (msg) => setToast(msg);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3200);
     return () => clearTimeout(t);
   }, [toast]);
 
+  /* ---- bootstrap: read campaign id from URL on first load ---- */
+  useEffect(() => {
+    const idFromUrl = getCampaignIdFromUrl();
+    if (idFromUrl) {
+      openCampaign(idFromUrl);
+    } else {
+      setPhase('home');
+    }
+  }, []);
+
+  /* ---- load a campaign's data and switch into its login screen ---- */
+  const openCampaign = useCallback(async (id) => {
+    setPhase('loading');
+    try {
+      const campaign = await fetchCampaign(id);
+      if (!campaign) {
+        setJoinErr('No campaign found with that ID.');
+        setPhase('join');
+        return;
+      }
+      const [treeRows, playerRows] = await Promise.all([fetchTrees(id), fetchPlayers(id)]);
+      setCampaignId(id);
+      setMeta(campaign);
+      setTrees(treeRows);
+      setPlayers(playerRows);
+      setCampaignIdInUrl(id);
+      const savedPlayerId = window.localStorage ? window.localStorage.getItem(`rf-player-${id}`) : null;
+      if (savedPlayerId) setCurrentPlayerId(savedPlayerId);
+      setPhase('login');
+    } catch (e) {
+      console.error(e);
+      setJoinErr('Could not reach the campaign database. Check your connection and try again.');
+      setPhase('join');
+    }
+  }, []);
+
+  /* ---- realtime subscriptions, live for the duration of an open campaign ---- */
+  useEffect(() => {
+    if (!campaignId) return;
+
+    const treesChannel = supabase
+      .channel(`rune_trees-${campaignId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rune_trees', filter: `campaign_id=eq.${campaignId}` }, (payload) => {
+        setTrees((prev) => {
+          if (payload.eventType === 'DELETE') return prev.filter((t) => t.id !== payload.old.id);
+          const row = payload.new;
+          const exists = prev.some((t) => t.id === row.id);
+          return exists ? prev.map((t) => (t.id === row.id ? row : t)) : [...prev, row];
+        });
+      })
+      .subscribe((status) => setLive(status === 'SUBSCRIBED'));
+
+    const playersChannel = supabase
+      .channel(`players-${campaignId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `campaign_id=eq.${campaignId}` }, (payload) => {
+        setPlayers((prev) => {
+          if (payload.eventType === 'DELETE') return prev.filter((p) => p.id !== payload.old.id);
+          const row = payload.new;
+          const exists = prev.some((p) => p.id === row.id);
+          return exists ? prev.map((p) => (p.id === row.id ? row : p)) : [...prev, row];
+        });
+      })
+      .subscribe();
+
+    const campaignChannel = supabase
+      .channel(`campaigns-${campaignId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaigns', filter: `id=eq.${campaignId}` }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          showToast('This campaign was deleted.');
+          handleExit();
+          return;
+        }
+        setMeta(payload.new);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(treesChannel);
+      supabase.removeChannel(playersChannel);
+      supabase.removeChannel(campaignChannel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campaignId]);
+
   const refreshNow = async () => {
-    const [t, p] = await Promise.all([getKey(TREES_KEY), getKey(PLAYERS_KEY)]);
-    if (t) setTrees(t);
-    if (p) setPlayers(p);
+    if (!campaignId) return;
+    try {
+      const [t, p, c] = await Promise.all([fetchTrees(campaignId), fetchPlayers(campaignId), fetchCampaign(campaignId)]);
+      setTrees(t);
+      setPlayers(p);
+      if (c) setMeta(c);
+    } catch (e) {
+      console.error(e);
+      showToast('Could not refresh — check your connection.');
+    }
   };
+
+  /* ---- create / join ---- */
 
   const handleCreateCampaign = async (campaignName, passcode) => {
-    const newMeta = { campaignName, dmPasscode: passcode, maxEquipSlots: 5 };
-    const starterTree = {
-      id: uid('tree'),
-      name: 'Elemental Mastery',
-      color: 'crimson',
-      icon: '🔥',
-      description: 'An example path — edit or delete this to make it your own.',
-      tierCount: 2,
-      runes: [
-        { id: uid('rune'), name: 'Ember Touch', tier: 1, effect: '+1d4 fire damage on your next attack, once per short rest', description: 'A faint heat lingers in the fingertips of those who carry this rune.' },
-        { id: uid('rune'), name: 'Frostward', tier: 1, effect: 'Resistance to cold damage for 1 minute, once per long rest', description: 'Carved from a shard of glacier that never fully melts.' },
-        { id: uid('rune'), name: 'Wildfire Heart', tier: 2, effect: 'Once per long rest, add +2 to a damage roll', description: 'Said to beat in time with a forest fire.' },
-      ],
-    };
-    setMeta(newMeta);
-    setTrees([starterTree]);
-    setPlayers([]);
-    await setKey(META_KEY, newMeta);
-    await setKey(TREES_KEY, [starterTree]);
-    await setKey(PLAYERS_KEY, []);
-    setPhase('login');
+    setCreating(true);
+    setCreateErr('');
+    try {
+      const id = campaignSlug(campaignName);
+      const newMeta = { id, campaign_name: campaignName, dm_passcode: passcode, max_equip_slots: 5 };
+      const { error: campaignError } = await supabase.from('campaigns').insert([newMeta]);
+      if (campaignError) throw campaignError;
+
+      const starterTree = STARTER_TREE();
+      const { error: treeError } = await supabase.from('rune_trees').insert([{ ...starterTree, campaign_id: id }]);
+      if (treeError) throw treeError;
+
+      setCampaignId(id);
+      setMeta(newMeta);
+      setTrees([{ ...starterTree, campaign_id: id }]);
+      setPlayers([]);
+      setCampaignIdInUrl(id);
+      setPhase('login');
+    } catch (e) {
+      console.error(e);
+      setCreateErr('Could not create the campaign. Make sure your Supabase tables are set up, then try again.');
+    } finally {
+      setCreating(false);
+    }
   };
 
-  const handleSaveTree = (treeObj) => {
+  const handleJoinCampaign = async (id) => {
+    setJoining(true);
+    setJoinErr('');
+    await openCampaign(id);
+    setJoining(false);
+  };
+
+  /* ---- DM actions (writes go to Supabase; local state updates on the realtime echo,
+          but we also optimistically update so the DM's own screen feels instant) ---- */
+
+  const handleSaveTree = async (treeObj) => {
     const exists = trees.some((t) => t.id === treeObj.id);
-    const next = exists ? trees.map((t) => (t.id === treeObj.id ? treeObj : t)) : [...trees, treeObj];
-    setTrees(next);
-    setKey(TREES_KEY, next);
+    const row = { ...treeObj, campaign_id: campaignId };
+    setTrees((prev) => (exists ? prev.map((t) => (t.id === row.id ? row : t)) : [...prev, row]));
+    const { error } = await supabase.from('rune_trees').upsert([row], { onConflict: 'id' });
+    if (error) { console.error(error); showToast('Failed to save rune path.'); }
   };
 
-  const handleDeleteTree = (treeId) => {
+  const handleDeleteTree = async (treeId) => {
     const dead = trees.find((t) => t.id === treeId);
     const runeIds = new Set((dead ? dead.runes : []).map((r) => r.id));
-    const next = trees.filter((t) => t.id !== treeId);
-    setTrees(next);
-    setKey(TREES_KEY, next);
-    const nextPlayers = players.map((p) => ({
-      ...p,
-      unlocked: p.unlocked.filter((id) => !runeIds.has(id)),
-      equipped: p.equipped.filter((id) => !runeIds.has(id)),
+    setTrees((prev) => prev.filter((t) => t.id !== treeId));
+
+    const { error } = await supabase.from('rune_trees').delete().eq('id', treeId);
+    if (error) { console.error(error); showToast('Failed to delete rune path.'); return; }
+
+    // strip the deleted runes from every player who had them
+    const affected = players.filter((p) =>
+      (p.unlocked_runes || []).some((id) => runeIds.has(id)) || (p.equipped_runes || []).some((id) => runeIds.has(id))
+    );
+    await Promise.all(affected.map((p) => {
+      const unlocked_runes = (p.unlocked_runes || []).filter((id) => !runeIds.has(id));
+      const equipped_runes = (p.equipped_runes || []).filter((id) => !runeIds.has(id));
+      setPlayers((prev) => prev.map((x) => (x.id === p.id ? { ...x, unlocked_runes, equipped_runes } : x)));
+      return supabase.from('players').update({ unlocked_runes, equipped_runes }).eq('id', p.id);
     }));
-    setPlayers(nextPlayers);
-    setKey(PLAYERS_KEY, nextPlayers);
   };
 
-  const handleAddPlayer = (name) => {
-    const next = [...players, { id: uid('player'), name, unlocked: [], equipped: [] }];
-    setPlayers(next);
-    setKey(PLAYERS_KEY, next);
+  const handleAddPlayer = async (name) => {
+    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [] };
+    setPlayers((prev) => [...prev, newPlayer]);
+    const { error } = await supabase.from('players').insert([newPlayer]);
+    if (error) { console.error(error); showToast('Failed to add player.'); }
   };
 
-  const handleDeletePlayer = (id) => {
-    const next = players.filter((p) => p.id !== id);
-    setPlayers(next);
-    setKey(PLAYERS_KEY, next);
+  const handleDeletePlayer = async (id) => {
+    setPlayers((prev) => prev.filter((p) => p.id !== id));
     if (currentPlayerId === id) setCurrentPlayerId(null);
+    const { error } = await supabase.from('players').delete().eq('id', id);
+    if (error) { console.error(error); showToast('Failed to remove player.'); }
   };
 
-  const handleToggleUnlock = (playerId, runeId) => {
-    const next = players.map((p) => {
-      if (p.id !== playerId) return p;
-      const has = p.unlocked.includes(runeId);
-      return {
-        ...p,
-        unlocked: has ? p.unlocked.filter((id) => id !== runeId) : [...p.unlocked, runeId],
-        equipped: has ? p.equipped.filter((id) => id !== runeId) : p.equipped,
-      };
-    });
-    setPlayers(next);
-    setKey(PLAYERS_KEY, next);
-  };
-
-  const handleToggleEquip = (playerId, runeId) => {
+  const handleToggleUnlock = async (playerId, runeId) => {
     const player = players.find((p) => p.id === playerId);
-    if (!player || !player.unlocked.includes(runeId)) return;
-    const isEquipped = player.equipped.includes(runeId);
-    const maxSlots = meta ? (meta.maxEquipSlots ?? 5) : 5;
-    if (!isEquipped && maxSlots > 0 && player.equipped.length >= maxSlots) {
-      setToast(`Max ${maxSlots} runes equipped. Unequip one first.`);
+    if (!player) return;
+    const has = (player.unlocked_runes || []).includes(runeId);
+    const unlocked_runes = has
+      ? (player.unlocked_runes || []).filter((id) => id !== runeId)
+      : [...(player.unlocked_runes || []), runeId];
+    const equipped_runes = has
+      ? (player.equipped_runes || []).filter((id) => id !== runeId)
+      : (player.equipped_runes || []);
+    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, unlocked_runes, equipped_runes } : p)));
+    const { error } = await supabase.from('players').update({ unlocked_runes, equipped_runes }).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to update rune.'); }
+  };
+
+  const handleToggleEquip = async (playerId, runeId) => {
+    const player = players.find((p) => p.id === playerId);
+    if (!player || !(player.unlocked_runes || []).includes(runeId)) return;
+    const isEquipped = (player.equipped_runes || []).includes(runeId);
+    const maxSlots = meta ? (meta.max_equip_slots ?? 5) : 5;
+    if (!isEquipped && maxSlots > 0 && (player.equipped_runes || []).length >= maxSlots) {
+      showToast(`Max ${maxSlots} runes equipped. Unequip one first.`);
       return;
     }
-    const next = players.map((p) => (p.id === playerId
-      ? { ...p, equipped: isEquipped ? p.equipped.filter((id) => id !== runeId) : [...p.equipped, runeId] }
-      : p));
-    setPlayers(next);
-    setKey(PLAYERS_KEY, next);
+    const equipped_runes = isEquipped
+      ? (player.equipped_runes || []).filter((id) => id !== runeId)
+      : [...(player.equipped_runes || []), runeId];
+    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, equipped_runes } : p)));
+    const { error } = await supabase.from('players').update({ equipped_runes }).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to update loadout.'); }
   };
 
-  const handleSaveMeta = (newMeta) => {
+  const handleSaveMeta = async (newMeta) => {
     setMeta(newMeta);
-    setKey(META_KEY, newMeta);
+    const { error } = await supabase
+      .from('campaigns')
+      .update({ campaign_name: newMeta.campaign_name, max_equip_slots: newMeta.max_equip_slots, dm_passcode: newMeta.dm_passcode })
+      .eq('id', campaignId);
+    if (error) { console.error(error); showToast('Failed to save settings.'); }
   };
 
   const handleReset = async () => {
-    await window.storage.delete(META_KEY, true).catch(() => {});
-    await window.storage.delete(TREES_KEY, true).catch(() => {});
-    await window.storage.delete(PLAYERS_KEY, true).catch(() => {});
+    try {
+      await supabase.from('players').delete().eq('campaign_id', campaignId);
+      await supabase.from('rune_trees').delete().eq('campaign_id', campaignId);
+      await supabase.from('campaigns').delete().eq('id', campaignId);
+    } catch (e) {
+      console.error(e);
+    }
+    handleExit();
+  };
+
+  /* ---- player identity ---- */
+
+  const handleSelectPlayer = (id) => {
+    setCurrentPlayerId(id);
+    try {
+      if (id) window.localStorage.setItem(`rf-player-${campaignId}`, id);
+      else window.localStorage.removeItem(`rf-player-${campaignId}`);
+    } catch {
+      /* localStorage may be unavailable */
+    }
+  };
+
+  const handleJoinAsNew = async (name) => {
+    const existing = players.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      handleSelectPlayer(existing.id);
+      return;
+    }
+    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [] };
+    setPlayers((prev) => [...prev, newPlayer]);
+    const { error } = await supabase.from('players').insert([newPlayer]);
+    if (error) { console.error(error); showToast('Failed to join. Try again.'); return; }
+    handleSelectPlayer(newPlayer.id);
+  };
+
+  /* ---- navigation ---- */
+
+  const handleExit = () => {
+    setCampaignId(null);
     setMeta(null);
     setTrees([]);
     setPlayers([]);
     setCurrentPlayerId(null);
-    setPhase('setup');
+    setCreateErr('');
+    setJoinErr('');
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('c');
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      /* no-op */
+    }
+    setPhase('home');
   };
 
-  const handleExit = () => {
-    setCurrentPlayerId(null);
-    setPhase('login');
-  };
+  const shareUrl = campaignId ? buildShareUrl(campaignId) : '';
 
   return (
     <div className="rf-root">
       <style>{CSS}</style>
       {toast && <div className="rf-toast">{toast}</div>}
+
       {phase === 'loading' && <div className="rf-center"><div className="rf-loading">Unsealing the rune vault…</div></div>}
-      {phase === 'setup' && <SetupScreen onCreate={handleCreateCampaign} />}
+
+      {phase === 'home' && (
+        <LobbyBrowser
+          onSelectCampaign={openCampaign}
+          onCreate={() => { setCreateErr(''); setPhase('setup'); }}
+          onShowJoin={() => { setJoinErr(''); setPhase('join'); }}
+        />
+      )}
+
+      {phase === 'setup' && (
+        <SetupScreen
+          onCreate={handleCreateCampaign}
+          onShowJoin={() => { setJoinErr(''); setPhase('join'); }}
+          onBack={() => setPhase('home')}
+          creating={creating}
+          createErr={createErr}
+        />
+      )}
+
+      {phase === 'join' && (
+        <JoinScreen onJoin={handleJoinCampaign} onBack={() => setPhase('home')} joinErr={joinErr} joining={joining} />
+      )}
+
       {phase === 'login' && meta && (
         <LoginScreen meta={meta} onChooseDM={() => setPhase('dm')} onChoosePlayer={() => setPhase('player')} />
       )}
+
       {phase === 'dm' && meta && (
         <DMDashboard
           meta={meta}
+          shareUrl={shareUrl}
           trees={trees}
           players={players}
+          live={live}
           onSaveTree={handleSaveTree}
           onDeleteTree={handleDeleteTree}
           onAddPlayer={handleAddPlayer}
@@ -1043,16 +1467,18 @@ export default function App() {
           onExit={handleExit}
           onReset={handleReset}
           onRefresh={refreshNow}
-          setModalOpen={setModalOpen}
         />
       )}
+
       {phase === 'player' && meta && (
         <PlayerDashboard
           meta={meta}
           trees={trees}
           players={players}
           currentPlayerId={currentPlayerId}
-          onSelectPlayer={setCurrentPlayerId}
+          live={live}
+          onSelectPlayer={handleSelectPlayer}
+          onJoinAsNew={handleJoinAsNew}
           onToggleEquip={handleToggleEquip}
           onExit={handleExit}
           onRefresh={refreshNow}
