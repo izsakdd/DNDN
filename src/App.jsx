@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Crown, Shield, Lock, Sparkles, Plus, Trash2, X, Check, Settings, Users, RefreshCw, LogOut, ScrollText, Copy } from 'lucide-react';
+import { Crown, Shield, Lock, Sparkles, Plus, Trash2, X, Check, Settings, Users, RefreshCw, LogOut, ScrollText, Copy, Zap, Droplet } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
 /* ============================================================
@@ -237,6 +237,76 @@ const CSS = `
 
 .rf-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--surface-2); border: 1px solid var(--gold); color: var(--text); padding: 11px 18px; border-radius: 10px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); z-index: 100; max-width: 90vw; text-align: center; }
 
+
+/* ===== MANA SYSTEM ===== */
+.rf-mana-section {
+  background: linear-gradient(135deg, rgba(139,127,245,0.07), rgba(139,95,191,0.05));
+  border: 1px solid rgba(139,127,245,0.28);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 18px;
+}
+.rf-mana-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.rf-mana-title { display: flex; align-items: center; gap: 7px; font-family: 'Cinzel', serif; font-size: 13.5px; font-weight: 600; color: #8b7ff5; }
+.rf-mana-count { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: #8b7ff5; }
+.rf-mana-track { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; margin-bottom: 12px; }
+.rf-mana-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #8b7ff5, #a594f9); transition: width .4s ease; }
+.rf-mana-actions { display: flex; align-items: center; gap: 8px; }
+.rf-mana-adj { width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(139,127,245,0.35); background: transparent; color: #8b7ff5; font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.rf-mana-adj:hover:not(:disabled) { background: rgba(139,127,245,0.12); border-color: #8b7ff5; }
+.rf-mana-adj:disabled { opacity: .3; cursor: not-allowed; }
+.rf-mana-restore { display: flex; align-items: center; gap: 5px; border: 1px solid rgba(139,127,245,0.35); color: #8b7ff5; background: transparent; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; margin-left: auto; }
+.rf-mana-restore:hover:not(:disabled) { background: rgba(139,127,245,0.12); border-color: #8b7ff5; }
+.rf-mana-restore:disabled { opacity: .3; cursor: not-allowed; }
+.rf-mana-pill { display: inline-flex; align-items: center; gap: 4px; color: #8b7ff5; background: rgba(139,127,245,0.12); border: 1px solid rgba(139,127,245,0.25); border-radius: 6px; padding: 2px 7px; font-size: 11px; }
+
+/* ===== ABILITIES (player view) ===== */
+.rf-abilities-wrap { margin-bottom: 22px; }
+.rf-ability-set-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; }
+.rf-ability-set-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.rf-ability-set-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.rf-ability-set-label { font-family: 'Cinzel', serif; font-size: 15px; font-weight: 600; }
+.rf-ability-set-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.rf-ability-items { display: flex; flex-direction: column; gap: 10px; }
+.rf-ability-item { display: flex; align-items: flex-start; gap: 14px; padding: 13px 15px; border-radius: 11px; border: 1px solid rgba(139,127,245,0.22); background: rgba(139,127,245,0.05); border-left: 3px solid #8b7ff5; }
+.rf-ability-item-body { flex: 1; min-width: 0; }
+.rf-ability-item-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.rf-ability-item-effect { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8b7ff5; margin-bottom: 5px; }
+.rf-ability-item-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.45; }
+.rf-ability-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.rf-ability-cost { display: flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: #8b7ff5; }
+.rf-ability-use { display: flex; align-items: center; gap: 5px; border: 1px solid rgba(139,127,245,0.4); color: #8b7ff5; background: transparent; border-radius: 7px; padding: 7px 11px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.rf-ability-use:hover:not(:disabled) { background: rgba(139,127,245,0.12); border-color: #8b7ff5; }
+.rf-ability-use:disabled { opacity: .3; cursor: not-allowed; }
+
+/* ===== ABILITY SETS (DM view) ===== */
+.rf-abset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px,1fr)); gap: 14px; }
+.rf-abset-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 14px; text-align: center; transition: all .15s; cursor: pointer; }
+.rf-abset-card:hover { border-color: #8b7ff5; box-shadow: 0 0 0 1px #8b7ff5, 0 10px 24px rgba(139,127,245,0.15); transform: translateY(-2px); }
+.rf-abset-card-icon { font-size: 30px; margin-bottom: 8px; }
+.rf-abset-card-name { font-family: 'Cinzel', serif; font-weight: 600; font-size: 14.5px; margin-bottom: 4px; }
+.rf-abset-card-meta { font-size: 11.5px; color: #8b7ff5; font-family: 'JetBrains Mono', monospace; }
+
+/* Ability editor */
+.rf-ab-block { background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; padding: 12px 14px; margin-bottom: 10px; }
+.rf-ab-row1 { display: grid; grid-template-columns: 1fr 80px auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+.rf-ab-row2 { margin-bottom: 6px; }
+.rf-mana-input { text-align: center; }
+
+/* Grant ability modal */
+.rf-grant-ab-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border); margin-bottom: 7px; cursor: pointer; transition: all .15s; }
+.rf-grant-ab-row:hover { border-color: rgba(139,127,245,0.5); background: rgba(139,127,245,0.08); }
+.rf-grant-ab-row--granted { border-color: #8b7ff5; background: rgba(139,127,245,0.1); }
+.rf-grant-ab-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; transition: all .15s; }
+.rf-grant-ab-check--on { background: #8b7ff5; border-color: #8b7ff5; color: #fff; }
+.rf-grant-ab-name { font-size: 13.5px; font-weight: 600; margin-bottom: 2px; }
+.rf-grant-ab-sub { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8b7ff5; }
+.rf-mana-setter { display: flex; align-items: center; gap: 12px; background: rgba(139,127,245,0.08); border: 1px solid rgba(139,127,245,0.25); border-radius: 11px; padding: 12px 16px; margin-bottom: 18px; flex-wrap: wrap; }
+.rf-mana-setter-label { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #8b7ff5; flex: 1; }
+
+.rf-btn-mana { display: inline-flex; align-items: center; gap: 5px; background: transparent; border: 1px solid rgba(139,127,245,0.4); color: #8b7ff5; border-radius: 7px; padding: 6px 10px; font-size: 12px; font-weight: 600; }
+.rf-btn-mana:hover { background: rgba(139,127,245,0.12); border-color: #8b7ff5; }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -267,6 +337,13 @@ async function fetchTrees(campaignId) {
 
 async function fetchPlayers(campaignId) {
   const { data, error } = await supabase.from('players').select('*').eq('campaign_id', campaignId);
+  if (error) throw error;
+  return data || [];
+}
+
+
+async function fetchAbilitySets(campaignId) {
+  const { data, error } = await supabase.from('ability_sets').select('*').eq('campaign_id', campaignId);
   if (error) throw error;
   return data || [];
 }
@@ -387,6 +464,52 @@ function TopHeader({ meta, role, playerName, onExit, onRefresh, onSwitchPlayer, 
           <button className="rf-btn-ghost-sm" onClick={onSwitchPlayer}>Switch player</button>
         )}
         <button className="rf-icon-btn" onClick={onExit} title="Log out"><LogOut size={16} /></button>
+      </div>
+    </div>
+  );
+}
+
+
+/* ============================================================
+   MANA BAR
+   ============================================================ */
+
+function ManaBar({ currentMana, maxMana, onAdjust, onRestore }) {
+  const pct = maxMana > 0 ? Math.max(0, Math.min(100, (currentMana / maxMana) * 100)) : 0;
+  return (
+    <div className="rf-mana-section">
+      <div className="rf-mana-header">
+        <div className="rf-mana-title"><Droplet size={14} /> Mana</div>
+        <div className="rf-mana-count">{currentMana} / {maxMana}</div>
+      </div>
+      <div className="rf-mana-track">
+        <div className="rf-mana-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="rf-mana-actions">
+        <button className="rf-mana-adj" onClick={() => onAdjust(-1)} disabled={currentMana <= 0}>−</button>
+        <button className="rf-mana-adj" onClick={() => onAdjust(+1)} disabled={currentMana >= maxMana}>+</button>
+        <button className="rf-mana-restore" onClick={onRestore} disabled={currentMana >= maxMana}>
+          <RefreshCw size={12} /> Restore All
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AbilityItem({ ability, currentMana, onUse }) {
+  const canAfford = currentMana >= ability.mana_cost;
+  return (
+    <div className="rf-ability-item">
+      <div className="rf-ability-item-body">
+        <div className="rf-ability-item-name">{ability.name}</div>
+        {ability.effect && <div className="rf-ability-item-effect">{ability.effect}</div>}
+        {ability.description && <div className="rf-ability-item-desc">{ability.description}</div>}
+      </div>
+      <div className="rf-ability-side">
+        <div className="rf-ability-cost"><Droplet size={12} /> {ability.mana_cost}</div>
+        <button className="rf-ability-use" disabled={!canAfford} onClick={() => onUse(ability)}>
+          <Zap size={12} /> Use
+        </button>
       </div>
     </div>
   );
@@ -582,9 +705,170 @@ function RuneGrantModal({ player, trees, onClose, onToggleUnlock }) {
   );
 }
 
-function PlayersTab({ players, trees, onAddPlayer, onDeletePlayer, onOpenGrant }) {
+
+/* ============================================================
+   DM: ABILITY SET EDITOR
+   ============================================================ */
+
+function AbilitySetEditorModal({ set, onClose, onSave, onDelete }) {
+  const isNew = !set;
+  const [name, setName] = useState(set ? set.name : '');
+  const [color, setColor] = useState(set ? set.color : 'violet');
+  const [icon, setIcon] = useState(set ? set.icon : '\u26a1');
+  const [description, setDescription] = useState(set ? set.description : '');
+  const [abilities, setAbilities] = useState(set ? [...set.abilities] : []);
+
+  const addAbility = () => setAbilities(a => [...a, { id: uid('ab'), name: 'New Ability', mana_cost: 2, effect: '', description: '' }]);
+  const updateAbility = (id, patch) => setAbilities(a => a.map(x => x.id === id ? { ...x, ...patch } : x));
+  const removeAbility = (id) => setAbilities(a => a.filter(x => x.id !== id));
+
+  const handleSave = () => {
+    if (!name.trim()) return;
+    onSave({ id: set ? set.id : uid('abset'), name: name.trim(), color, icon, description: description.trim(), abilities });
+  };
+
+  return (
+    <div className="rf-modal-overlay" onClick={onClose}>
+      <div className="rf-modal" onClick={e => e.stopPropagation()}>
+        <div className="rf-modal-header">
+          <h3>{isNew ? 'New Ability Set' : 'Edit Ability Set'}</h3>
+          <button className="rf-icon-btn" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="rf-modal-body">
+          <label className="rf-label">Set name</label>
+          <input className="rf-input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Arcane Arts" />
+          <label className="rf-label">Icon</label>
+          <div className="rf-icon-pick-row">
+            {ICONS.map(ic => <button key={ic} type="button" className={`rf-icon-pick${icon === ic ? ' rf-icon-pick--active' : ''}`} onClick={() => setIcon(ic)}>{ic}</button>)}
+          </div>
+          <label className="rf-label">Color</label>
+          <div className="rf-color-row">
+            {Object.entries(TREE_COLORS).map(([key, val]) => (
+              <button key={key} type="button" className={`rf-color-swatch${color === key ? ' rf-color-swatch--active' : ''}`} style={{ '--sw': val.hex }} onClick={() => setColor(key)} title={val.name} />
+            ))}
+          </div>
+          <label className="rf-label">Description (optional)</label>
+          <textarea className="rf-textarea" rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="What theme do these abilities share?" />
+          <div className="rf-tier-editor-header">
+            <label className="rf-label" style={{ margin: 0 }}>Abilities</label>
+            <button type="button" className="rf-btn-mana" onClick={addAbility}><Plus size={12} /> Add ability</button>
+          </div>
+          {abilities.length === 0 && <div className="rf-empty-mini">No abilities yet.</div>}
+          {abilities.map(ab => (
+            <div className="rf-ab-block" key={ab.id}>
+              <div className="rf-ab-row1">
+                <input className="rf-input rf-input-sm" value={ab.name} onChange={e => updateAbility(ab.id, { name: e.target.value })} placeholder="Ability name" />
+                <input className="rf-input rf-input-sm rf-mana-input" type="number" min="0" value={ab.mana_cost}
+                  onChange={e => updateAbility(ab.id, { mana_cost: Math.max(0, Number(e.target.value) || 0) })} placeholder="Mana" />
+                <button type="button" className="rf-icon-btn-danger" onClick={() => removeAbility(ab.id)}><Trash2 size={14} /></button>
+              </div>
+              <div className="rf-ab-row2">
+                <input className="rf-input rf-input-sm" value={ab.effect} onChange={e => updateAbility(ab.id, { effect: e.target.value })} placeholder="Mechanical effect" />
+              </div>
+              <div>
+                <textarea className="rf-textarea rf-textarea-sm" rows={2} value={ab.description} onChange={e => updateAbility(ab.id, { description: e.target.value })} placeholder="Flavor / lore (optional)" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="rf-modal-footer">
+          {!isNew && <DeleteConfirmButton onConfirm={() => onDelete(set.id)} label="delete set" />}
+          <div style={{ flex: 1 }} />
+          <button className="rf-btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="rf-btn-primary" onClick={handleSave} disabled={!name.trim()}>Save Set</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AbilityGrantModal({ player, abilitySets, onClose, onToggleGrant, onSetMaxMana }) {
+  const [localMax, setLocalMax] = useState(player.max_mana ?? 10);
+  const handleMaxBlur = () => onSetMaxMana(player.id, Math.max(0, Number(localMax) || 0));
+
+  return (
+    <div className="rf-modal-overlay" onClick={onClose}>
+      <div className="rf-modal rf-modal-wide" onClick={e => e.stopPropagation()}>
+        <div className="rf-modal-header">
+          <h3>Abilities for {player.name}</h3>
+          <button className="rf-icon-btn" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="rf-modal-body">
+          <div className="rf-mana-setter">
+            <div className="rf-mana-setter-label"><Droplet size={15} /> Max Mana for {player.name}</div>
+            <input className="rf-input" type="number" min="0" value={localMax}
+              onChange={e => setLocalMax(e.target.value)} onBlur={handleMaxBlur}
+              style={{ width: 90, textAlign: 'center' }} />
+          </div>
+          <p className="rf-modal-hint">Click an ability to grant or revoke it. Changes are live.</p>
+          {abilitySets.length === 0 && <div className="rf-empty-state">Create an ability set first from the Abilities tab.</div>}
+          {abilitySets.map(abSet => {
+            const color = TREE_COLORS[abSet.color] || TREE_COLORS.violet;
+            return (
+              <div key={abSet.id} style={{ marginBottom: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}>
+                  <div style={{ width: 9, height: 9, borderRadius: '50%', background: color.hex, flexShrink: 0 }} />
+                  <span style={{ fontFamily: "'Cinzel',serif", fontWeight: 600, fontSize: 14 }}>{abSet.icon} {abSet.name}</span>
+                </div>
+                {(abSet.abilities || []).length === 0 && <div className="rf-empty-mini">No abilities in this set.</div>}
+                {(abSet.abilities || []).map(ab => {
+                  const granted = (player.granted_abilities || []).includes(ab.id);
+                  return (
+                    <div key={ab.id} className={`rf-grant-ab-row${granted ? ' rf-grant-ab-row--granted' : ''}`}
+                      onClick={() => onToggleGrant(player.id, ab.id)}>
+                      <div className={`rf-grant-ab-check${granted ? ' rf-grant-ab-check--on' : ''}`}>
+                        {granted && <Check size={13} />}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div className="rf-grant-ab-name">{ab.name}</div>
+                        <div className="rf-grant-ab-sub">
+                          {ab.mana_cost} mana{ab.effect ? ` · ${ab.effect}` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+        <div className="rf-modal-footer">
+          <div style={{ flex: 1 }} />
+          <button className="rf-btn-primary" onClick={onClose}>Done</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AbilitiesTab({ abilitySets, onOpenEditor }) {
+  return (
+    <div>
+      <div className="rf-section-header">
+        <h2 className="rf-section-title">Ability Sets</h2>
+        <button className="rf-btn-primary" onClick={() => onOpenEditor(null)}><Plus size={15} /> New Set</button>
+      </div>
+      {abilitySets.length === 0 ? (
+        <div className="rf-empty-state">No ability sets yet. Create one to define mana-costed abilities you can unlock for players.</div>
+      ) : (
+        <div className="rf-abset-grid">
+          {abilitySets.map(s => (
+            <div key={s.id} className="rf-abset-card" onClick={() => onOpenEditor(s)}>
+              <div className="rf-abset-card-icon">{s.icon}</div>
+              <div className="rf-abset-card-name">{s.name}</div>
+              <div className="rf-abset-card-meta">{(s.abilities || []).length} abilit{(s.abilities || []).length === 1 ? 'y' : 'ies'}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlayersTab({ players, trees, abilitySets, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant }) {
   const [newName, setNewName] = useState('');
   const totalRunes = trees.reduce((sum, t) => sum + (t.runes || []).length, 0);
+  const totalAbilities = abilitySets.reduce((sum, s) => sum + (s.abilities || []).length, 0);
   const submit = () => {
     if (!newName.trim()) return;
     onAddPlayer(newName.trim());
@@ -612,9 +896,10 @@ function PlayersTab({ players, trees, onAddPlayer, onDeletePlayer, onOpenGrant }
           {players.map((p) => (
             <div key={p.id} className="rf-player-row">
               <div className="rf-player-row-name">{p.name}</div>
-              <div className="rf-player-row-meta">{(p.unlocked_runes || []).length}/{totalRunes} unlocked · {(p.equipped_runes || []).length} equipped</div>
+              <div className="rf-player-row-meta" style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>{(p.unlocked_runes || []).length}/{totalRunes} runes · {(p.granted_abilities || []).length}/{totalAbilities} abilities <span className="rf-mana-pill"><Droplet size={10}/> {p.current_mana ?? p.max_mana ?? 10}/{p.max_mana ?? 10}</span></div>
               <div className="rf-player-row-actions">
-                <button className="rf-btn-ghost-sm" onClick={() => onOpenGrant(p)}><Sparkles size={13} /> Manage Runes</button>
+                <button className="rf-btn-ghost-sm" onClick={() => onOpenGrant(p)}><Sparkles size={13} /> Runes</button>
+                <button className="rf-btn-mana" onClick={() => onOpenAbilityGrant(p)}><Zap size={13} /> Abilities</button>
                 <DeleteConfirmButton onConfirm={() => onDeletePlayer(p.id)} label="remove" />
               </div>
             </div>
@@ -691,24 +976,29 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, shareUrl, trees, players, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveMeta, onExit, onReset, onRefresh }) {
+function DMDashboard({ meta, shareUrl, trees, players, abilitySets, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
+  const [editingAbilitySet, setEditingAbilitySet] = useState(undefined);
+  const [grantingAbilitiesFor, setGrantingAbilitiesFor] = useState(null);
 
   const livePlayer = grantingPlayer ? (players.find((p) => p.id === grantingPlayer.id) || grantingPlayer) : null;
+  const liveAbilityPlayer = grantingAbilitiesFor ? (players.find((p) => p.id === grantingAbilitiesFor.id) || grantingAbilitiesFor) : null;
 
   return (
     <div className="rf-page">
       <TopHeader meta={meta} role="dm" onExit={onExit} onRefresh={onRefresh} live={live} />
       <div className="rf-tabs">
         <button className={`rf-tab${tab === 'trees' ? ' rf-tab--active' : ''}`} onClick={() => setTab('trees')}><ScrollText size={15} /> Rune Paths</button>
+        <button className={`rf-tab${tab === 'abilities' ? ' rf-tab--active' : ''}`} onClick={() => setTab('abilities')}><Zap size={15} /> Abilities</button>
         <button className={`rf-tab${tab === 'players' ? ' rf-tab--active' : ''}`} onClick={() => setTab('players')}><Users size={15} /> Players</button>
         <button className={`rf-tab${tab === 'settings' ? ' rf-tab--active' : ''}`} onClick={() => setTab('settings')}><Settings size={15} /> Settings</button>
       </div>
       <div>
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
-        {tab === 'players' && <PlayersTab players={players} trees={trees} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} />}
+        {tab === 'abilities' && <AbilitiesTab abilitySets={abilitySets} onOpenEditor={setEditingAbilitySet} />}
+        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} />}
         {tab === 'settings' && <SettingsTab meta={meta} shareUrl={shareUrl} onSave={onSaveMeta} onExit={onExit} onReset={onReset} />}
       </div>
       {editingTree !== undefined && (
@@ -725,6 +1015,23 @@ function DMDashboard({ meta, shareUrl, trees, players, live, onSaveTree, onDelet
           trees={trees}
           onClose={() => setGrantingPlayer(null)}
           onToggleUnlock={onToggleUnlock}
+        />
+      )}
+      {editingAbilitySet !== undefined && (
+        <AbilitySetEditorModal
+          set={editingAbilitySet}
+          onClose={() => setEditingAbilitySet(undefined)}
+          onSave={s => { onSaveAbilitySet(s); setEditingAbilitySet(undefined); }}
+          onDelete={id => { onDeleteAbilitySet(id); setEditingAbilitySet(undefined); }}
+        />
+      )}
+      {liveAbilityPlayer && (
+        <AbilityGrantModal
+          player={liveAbilityPlayer}
+          abilitySets={abilitySets}
+          onClose={() => setGrantingAbilitiesFor(null)}
+          onToggleGrant={onToggleGrantAbility}
+          onSetMaxMana={onSetPlayerMaxMana}
         />
       )}
     </div>
@@ -777,7 +1084,7 @@ function PlayerPicker({ players, meta, onSelect, onJoinAsNew, live, onExit }) {
   );
 }
 
-function PlayerDashboard({ meta, trees, players, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onExit, onRefresh }) {
+function PlayerDashboard({ meta, trees, players, abilitySets, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onExit, onRefresh }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
@@ -788,6 +1095,11 @@ function PlayerDashboard({ meta, trees, players, currentPlayerId, live, onSelect
   const maxSlots = meta.max_equip_slots ?? 5;
   const unlocked = player.unlocked_runes || [];
   const equipped = player.equipped_runes || [];
+  const maxMana = player.max_mana ?? 10;
+  const currentMana = Math.min(player.current_mana ?? maxMana, maxMana);
+  const grantedAbilitySets = abilitySets
+    .map(s => ({ ...s, abilities: (s.abilities || []).filter(ab => (player.granted_abilities || []).includes(ab.id)) }))
+    .filter(s => s.abilities.length > 0);
   const equippedRuneObjs = trees.flatMap((t) =>
     (t.runes || []).filter((r) => equipped.includes(r.id)).map((r) => ({ ...r, _tree: t }))
   );
@@ -826,6 +1138,43 @@ function PlayerDashboard({ meta, trees, players, currentPlayerId, live, onSelect
             </div>
           )}
         </div>
+
+        {maxMana > 0 && (
+          <ManaBar
+            currentMana={currentMana}
+            maxMana={maxMana}
+            onAdjust={delta => onAdjustMana(player.id, delta)}
+            onRestore={() => onAdjustMana(player.id, maxMana - currentMana)}
+          />
+        )}
+
+        {grantedAbilitySets.length > 0 && (
+          <div className="rf-abilities-wrap">
+            <div className="rf-section-header" style={{ marginBottom: 14 }}>
+              <h2 className="rf-section-title" style={{ fontSize: 16 }}><Zap size={16} style={{ display:'inline', verticalAlign:'middle', marginRight:6 }} />Abilities</h2>
+            </div>
+            {grantedAbilitySets.map(s => {
+              const color = TREE_COLORS[s.color] || TREE_COLORS.violet;
+              return (
+                <div key={s.id} className="rf-ability-set-block">
+                  <div className="rf-ability-set-head">
+                    <div className="rf-ability-set-dot" style={{ background: color.hex }} />
+                    <div>
+                      <div className="rf-ability-set-label">{s.icon} {s.name}</div>
+                      {s.description && <div className="rf-ability-set-desc">{s.description}</div>}
+                    </div>
+                  </div>
+                  <div className="rf-ability-items">
+                    {s.abilities.map(ab => (
+                      <AbilityItem key={ab.id} ability={ab} currentMana={currentMana}
+                        onUse={() => onUseAbility(player.id, ab)} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {trees.length === 0 ? (
           <div className="rf-empty-state">Your DM hasn't created any rune paths yet. Check back later.</div>
@@ -1125,6 +1474,7 @@ export default function App() {
   const [meta, setMeta] = useState(null);
   const [trees, setTrees] = useState([]);
   const [players, setPlayers] = useState([]);
+  const [abilitySets, setAbilitySets] = useState([]);
   const [currentPlayerId, setCurrentPlayerId] = useState(null);
   const [phase, setPhase] = useState('loading'); // loading | home | setup | join | login | dm | player
   const [live, setLive] = useState(false);
@@ -1161,11 +1511,12 @@ export default function App() {
         setPhase('join');
         return;
       }
-      const [treeRows, playerRows] = await Promise.all([fetchTrees(id), fetchPlayers(id)]);
+      const [treeRows, playerRows, abilitySetRows] = await Promise.all([fetchTrees(id), fetchPlayers(id), fetchAbilitySets(id)]);
       setCampaignId(id);
       setMeta(campaign);
       setTrees(treeRows);
       setPlayers(playerRows);
+      setAbilitySets(abilitySetRows);
       setCampaignIdInUrl(id);
       const savedPlayerId = window.localStorage ? window.localStorage.getItem(`rf-player-${id}`) : null;
       if (savedPlayerId) setCurrentPlayerId(savedPlayerId);
@@ -1217,10 +1568,23 @@ export default function App() {
       })
       .subscribe();
 
+    const abilitySetsChannel = supabase
+      .channel(`ability_sets-${campaignId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ability_sets', filter: `campaign_id=eq.${campaignId}` }, (payload) => {
+        setAbilitySets((prev) => {
+          if (payload.eventType === 'DELETE') return prev.filter((s) => s.id !== payload.old.id);
+          const row = payload.new;
+          const exists = prev.some((s) => s.id === row.id);
+          return exists ? prev.map((s) => (s.id === row.id ? row : s)) : [...prev, row];
+        });
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(treesChannel);
       supabase.removeChannel(playersChannel);
       supabase.removeChannel(campaignChannel);
+      supabase.removeChannel(abilitySetsChannel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignId]);
@@ -1228,9 +1592,10 @@ export default function App() {
   const refreshNow = async () => {
     if (!campaignId) return;
     try {
-      const [t, p, c] = await Promise.all([fetchTrees(campaignId), fetchPlayers(campaignId), fetchCampaign(campaignId)]);
+      const [t, p, c, ab] = await Promise.all([fetchTrees(campaignId), fetchPlayers(campaignId), fetchCampaign(campaignId), fetchAbilitySets(campaignId)]);
       setTrees(t);
       setPlayers(p);
+      setAbilitySets(ab);
       if (c) setMeta(c);
     } catch (e) {
       console.error(e);
@@ -1306,7 +1671,7 @@ export default function App() {
   };
 
   const handleAddPlayer = async (name) => {
-    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [] };
+    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [], granted_abilities: [], max_mana: 10, current_mana: 10 };
     setPlayers((prev) => [...prev, newPlayer]);
     const { error } = await supabase.from('players').insert([newPlayer]);
     if (error) { console.error(error); showToast('Failed to add player.'); }
@@ -1351,6 +1716,73 @@ export default function App() {
     if (error) { console.error(error); showToast('Failed to update loadout.'); }
   };
 
+
+  const handleSaveAbilitySet = async (setObj) => {
+    const exists = abilitySets.some((s) => s.id === setObj.id);
+    const row = { ...setObj, campaign_id: campaignId };
+    setAbilitySets((prev) => exists ? prev.map((s) => (s.id === row.id ? row : s)) : [...prev, row]);
+    const { error } = await supabase.from('ability_sets').upsert([row], { onConflict: 'id' });
+    if (error) { console.error(error); showToast('Failed to save ability set.'); }
+  };
+
+  const handleDeleteAbilitySet = async (setId) => {
+    const dead = abilitySets.find((s) => s.id === setId);
+    const abilityIds = new Set((dead ? dead.abilities : []).map((a) => a.id));
+    setAbilitySets((prev) => prev.filter((s) => s.id !== setId));
+    const { error } = await supabase.from('ability_sets').delete().eq('id', setId);
+    if (error) { console.error(error); showToast('Failed to delete ability set.'); return; }
+    const affected = players.filter((p) => (p.granted_abilities || []).some((id) => abilityIds.has(id)));
+    await Promise.all(affected.map((p) => {
+      const granted_abilities = (p.granted_abilities || []).filter((id) => !abilityIds.has(id));
+      setPlayers((prev) => prev.map((x) => (x.id === p.id ? { ...x, granted_abilities } : x)));
+      return supabase.from('players').update({ granted_abilities }).eq('id', p.id);
+    }));
+  };
+
+  const handleToggleGrantAbility = async (playerId, abilityId) => {
+    const player = players.find((p) => p.id === playerId);
+    if (!player) return;
+    const has = (player.granted_abilities || []).includes(abilityId);
+    const granted_abilities = has
+      ? (player.granted_abilities || []).filter((id) => id !== abilityId)
+      : [...(player.granted_abilities || []), abilityId];
+    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, granted_abilities } : p)));
+    const { error } = await supabase.from('players').update({ granted_abilities }).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to update ability.'); }
+  };
+
+  const handleSetPlayerMaxMana = async (playerId, max_mana) => {
+    const player = players.find((p) => p.id === playerId);
+    if (!player) return;
+    const current_mana = Math.min(player.current_mana ?? max_mana, max_mana);
+    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, max_mana, current_mana } : p)));
+    const { error } = await supabase.from('players').update({ max_mana, current_mana }).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to update mana.'); }
+  };
+
+  const handleAdjustMana = async (playerId, delta) => {
+    const player = players.find((p) => p.id === playerId);
+    if (!player) return;
+    const max_mana = player.max_mana ?? 10;
+    const current_mana = Math.max(0, Math.min(max_mana, (player.current_mana ?? max_mana) + delta));
+    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, current_mana } : p)));
+    const { error } = await supabase.from('players').update({ current_mana }).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to update mana.'); }
+  };
+
+  const handleUseAbility = async (playerId, ability) => {
+    const player = players.find((p) => p.id === playerId);
+    if (!player) return;
+    const max_mana = player.max_mana ?? 10;
+    const cur = player.current_mana ?? max_mana;
+    if (cur < ability.mana_cost) return;
+    const current_mana = cur - ability.mana_cost;
+    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, current_mana } : p)));
+    const { error } = await supabase.from('players').update({ current_mana }).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to use ability.'); return; }
+    showToast(`\u{1F52E} Used ${ability.name} \u00B7 \u2212${ability.mana_cost} mana`);
+  };
+
   const handleSaveMeta = async (newMeta) => {
     setMeta(newMeta);
     const { error } = await supabase
@@ -1364,6 +1796,7 @@ export default function App() {
     try {
       await supabase.from('players').delete().eq('campaign_id', campaignId);
       await supabase.from('rune_trees').delete().eq('campaign_id', campaignId);
+      await supabase.from('ability_sets').delete().eq('campaign_id', campaignId);
       await supabase.from('campaigns').delete().eq('id', campaignId);
     } catch (e) {
       console.error(e);
@@ -1389,7 +1822,7 @@ export default function App() {
       handleSelectPlayer(existing.id);
       return;
     }
-    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [] };
+    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [], granted_abilities: [], max_mana: 10, current_mana: 10 };
     setPlayers((prev) => [...prev, newPlayer]);
     const { error } = await supabase.from('players').insert([newPlayer]);
     if (error) { console.error(error); showToast('Failed to join. Try again.'); return; }
@@ -1457,12 +1890,17 @@ export default function App() {
           shareUrl={shareUrl}
           trees={trees}
           players={players}
+          abilitySets={abilitySets}
           live={live}
           onSaveTree={handleSaveTree}
           onDeleteTree={handleDeleteTree}
           onAddPlayer={handleAddPlayer}
           onDeletePlayer={handleDeletePlayer}
           onToggleUnlock={handleToggleUnlock}
+          onSaveAbilitySet={handleSaveAbilitySet}
+          onDeleteAbilitySet={handleDeleteAbilitySet}
+          onToggleGrantAbility={handleToggleGrantAbility}
+          onSetPlayerMaxMana={handleSetPlayerMaxMana}
           onSaveMeta={handleSaveMeta}
           onExit={handleExit}
           onReset={handleReset}
@@ -1475,11 +1913,14 @@ export default function App() {
           meta={meta}
           trees={trees}
           players={players}
+          abilitySets={abilitySets}
           currentPlayerId={currentPlayerId}
           live={live}
           onSelectPlayer={handleSelectPlayer}
           onJoinAsNew={handleJoinAsNew}
           onToggleEquip={handleToggleEquip}
+          onAdjustMana={handleAdjustMana}
+          onUseAbility={handleUseAbility}
           onExit={handleExit}
           onRefresh={refreshNow}
         />
