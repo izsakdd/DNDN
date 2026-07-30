@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Crown, Shield, Lock, Sparkles, Plus, Trash2, X, Check, Settings, Users, RefreshCw, LogOut, ScrollText, Copy, Zap, Droplet } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Crown, Shield, Lock, Sparkles, Plus, Trash2, X, Check, Settings, Users, RefreshCw, LogOut, ScrollText, Copy, Zap, Droplet, Map, Package } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
 /* ============================================================
@@ -307,6 +307,48 @@ const CSS = `
 .rf-btn-mana { display: inline-flex; align-items: center; gap: 5px; background: transparent; border: 1px solid rgba(139,127,245,0.4); color: #8b7ff5; border-radius: 7px; padding: 6px 10px; font-size: 12px; font-weight: 600; }
 .rf-btn-mana:hover { background: rgba(139,127,245,0.12); border-color: #8b7ff5; }
 
+
+/* ===== VTT ===== */
+.rf-vtt-empty { border: 2px dashed var(--border); border-radius: 12px; padding: 60px 20px; text-align: center; color: var(--text-muted); }
+.rf-vtt-map-wrap { position: relative; width: 100%; user-select: none; border-radius: 12px; overflow: hidden; background: #0a0c12; }
+.rf-vtt-map-img { width: 100%; height: auto; display: block; pointer-events: none; }
+.rf-vtt-token { position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid rgba(255,255,255,0.85); box-shadow: 0 2px 12px rgba(0,0,0,0.65); transform: translate(-50%,-50%); z-index: 5; transition: box-shadow .15s; }
+.rf-vtt-token-label { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.82); color:#fff; font-size:10px; font-weight:600; white-space:nowrap; padding:2px 5px; border-radius:4px; pointer-events:none; z-index:6; }
+.rf-token-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.rf-token-row { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 9px 12px; }
+.rf-token-swatch { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+/* ===== INVENTORY ===== */
+.rf-item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr)); gap: 12px; }
+.rf-item-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; transition: all .15s; }
+.rf-item-card:hover { border-color: var(--gold); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.3); }
+.rf-item-cat { font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 3px; }
+.rf-item-name { font-weight: 600; font-size: 14px; margin-bottom: 5px; }
+.rf-item-desc-sm { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; line-height: 1.4; }
+.rf-item-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.rf-item-stat { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-muted); }
+.rf-item-stat b { color: var(--gold); font-weight: 700; }
+.rf-inv-section { background: linear-gradient(135deg, var(--surface), var(--surface-2)); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 18px; }
+.rf-inv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.rf-inv-title { font-family: 'Cinzel', serif; font-size: 15.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.rf-inv-totals { display: flex; gap: 14px; }
+.rf-inv-total { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--gold); }
+.rf-inv-list { display: flex; flex-direction: column; gap: 8px; }
+.rf-inv-item { display: flex; align-items: center; gap: 12px; padding: 9px 12px; background: var(--bg); border-radius: 9px; border-left: 3px solid var(--gold); }
+.rf-inv-item-icon { font-size: 18px; flex-shrink: 0; }
+.rf-inv-item-body { flex: 1; min-width: 0; }
+.rf-inv-item-name { font-size: 13.5px; font-weight: 600; }
+.rf-inv-item-desc { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+.rf-inv-item-meta { display: flex; gap: 10px; margin-top: 2px; }
+.rf-inv-item-meta span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); }
+.rf-inv-item-qty { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--gold); white-space: nowrap; }
+.rf-inv-manage-list { display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto; }
+.rf-inv-manage-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; }
+.rf-qty-ctrl { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.rf-qty-btn { width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height:1; }
+.rf-qty-btn:hover { border-color: var(--gold); color: var(--gold); }
+.rf-qty-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--gold); min-width: 28px; text-align: center; }
+.rf-qty-val--zero { color: var(--text-muted); }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -347,6 +389,43 @@ async function fetchAbilitySets(campaignId) {
   if (error) throw error;
   return data || [];
 }
+
+
+async function fetchItems(campaignId) {
+  const { data, error } = await supabase.from('items').select('*').eq('campaign_id', campaignId);
+  if (error) throw error;
+  return data || [];
+}
+
+async function fetchVttState(campaignId) {
+  const { data, error } = await supabase.from('vtt_state').select('*').eq('campaign_id', campaignId);
+  if (error) throw error;
+  return (data && data[0]) || { campaign_id: campaignId, map_image: null, tokens: [] };
+}
+
+function compressImage(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 1600; let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.80));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+const CATEGORIES   = ['weapon','armor','consumable','tool','magic','currency','misc'];
+const CAT_ICONS    = { weapon:'\u2694\uFE0F', armor:'\uD83D\uDEE1\uFE0F', consumable:'\uD83E\uDDEA', tool:'\uD83D\uDD27', magic:'\u2728', currency:'\uD83E\uDE99', misc:'\uD83D\uDCE6' };
+const TOKEN_COLORS = ['#c4453c','#3d8fc4','#4f9d6e','#8b5fbf','#d4a843','#d47843','#3dabb8','#c8ccd8'];
+const TICONS       = ['\uD83D\uDC64','\uD83D\uDC79','\uD83D\uDC32','\uD83D\uDC3A','\uD83D\uDC80','\uD83E\uDDD9','\u2694\uFE0F','\uD83D\uDEE1\uFE0F','\uD83D\uDC3B','\uD83E\uDDA5','\uD83E\uDDDD','\uD83D\uDC17','\uD83D\uDC0D','\uD83E\uDD81','\uD83D\uDC51','\uD83D\uDC15'];
 
 /* ============================================================
    SMALL REUSABLE PIECES
@@ -865,7 +944,401 @@ function AbilitiesTab({ abilitySets, onOpenEditor }) {
   );
 }
 
-function PlayersTab({ players, trees, abilitySets, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant }) {
+
+/* ============================================================
+   VTT
+   ============================================================ */
+
+function VTTMapArea({ vttState, canDragAll, ownPlayerId, onMoveToken }) {
+  const mapRef = useRef(null);
+  const [dragging, setDragging] = useState(null);
+  const [localPos, setLocalPos] = useState({});
+
+  useEffect(() => {
+    const up = () => setDragging(null);
+    window.addEventListener('mouseup', up);
+    return () => window.removeEventListener('mouseup', up);
+  }, []);
+
+  const pct = useCallback((e) => {
+    if (!mapRef.current) return { x: 50, y: 50 };
+    const r = mapRef.current.getBoundingClientRect();
+    return {
+      x: Math.max(1, Math.min(99, ((e.clientX - r.left) / r.width)  * 100)),
+      y: Math.max(1, Math.min(99, ((e.clientY - r.top)  / r.height) * 100)),
+    };
+  }, []);
+
+  const onMouseDown = useCallback((e, token) => {
+    const mine = canDragAll || (ownPlayerId && token.player_id === ownPlayerId);
+    if (!mine) return;
+    e.preventDefault(); e.stopPropagation();
+    setDragging(token.id);
+    setLocalPos(prev => ({ ...prev, [token.id]: { x: token.x, y: token.y } }));
+  }, [canDragAll, ownPlayerId]);
+
+  const onMouseMove = useCallback((e) => {
+    if (!dragging) return;
+    const { x, y } = pct(e);
+    setLocalPos(prev => ({ ...prev, [dragging]: { x, y } }));
+  }, [dragging, pct]);
+
+  const onMouseUp = useCallback((e) => {
+    if (!dragging) return;
+    const { x, y } = pct(e);
+    onMoveToken(dragging, x, y);
+    setDragging(null);
+  }, [dragging, pct, onMoveToken]);
+
+  if (!vttState || !vttState.map_image) return null;
+  const sz = s => s === 'large' ? 58 : s === 'small' ? 30 : 44;
+
+  return (
+    <div ref={mapRef} className="rf-vtt-map-wrap"
+      style={{ cursor: dragging ? 'grabbing' : 'default' }}
+      onMouseMove={onMouseMove} onMouseUp={onMouseUp}
+      onMouseLeave={() => { if (dragging) setDragging(null); }}>
+      <img src={vttState.map_image} alt="Battle map" className="rf-vtt-map-img" draggable={false}/>
+      {(vttState.tokens || []).map(token => {
+        const pos = localPos[token.id] || { x: token.x, y: token.y };
+        const canDrag = canDragAll || (ownPlayerId && token.player_id === ownPlayerId);
+        const s = sz(token.size);
+        return (
+          <div key={token.id} className="rf-vtt-token"
+            style={{ left:`${pos.x}%`, top:`${pos.y}%`, width:s, height:s,
+              background:token.color, fontSize:Math.round(s*0.44),
+              cursor: canDrag ? (dragging===token.id ? 'grabbing' : 'grab') : 'default',
+              transition: dragging===token.id ? 'none' : 'left .12s,top .12s',
+              zIndex: dragging===token.id ? 20 : 5 }}
+            onMouseDown={e => onMouseDown(e, token)}>
+            {token.icon}
+            <div className="rf-vtt-token-label">{token.name}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function AddTokenModal({ players, onClose, onAdd }) {
+  const [name, setName]   = useState('');
+  const [type, setType]   = useState('monster');
+  const [color, setColor] = useState(TOKEN_COLORS[0]);
+  const [icon, setIcon]   = useState('\uD83D\uDC79');
+  const [size, setSize]   = useState('medium');
+  const [linked, setLinked] = useState('');
+
+  const handleAdd = () => {
+    if (!name.trim()) return;
+    onAdd({ id: uid('tok'), name: name.trim(), type, color, icon, size, x: 50, y: 50, player_id: linked || null });
+  };
+
+  return (
+    <div className="rf-modal-overlay" onClick={onClose}>
+      <div className="rf-modal" onClick={e => e.stopPropagation()}>
+        <div className="rf-modal-header">
+          <h3>Add Token</h3>
+          <button className="rf-icon-btn" onClick={onClose}><X size={18}/></button>
+        </div>
+        <div className="rf-modal-body">
+          <label className="rf-label">Name</label>
+          <input className="rf-input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Goblin, Thorin…"/>
+          <label className="rf-label">Type</label>
+          <div style={{ display:'flex', gap:8 }}>
+            {['player','monster','npc'].map(t => (
+              <button key={t} type="button" style={{ flex:1, fontSize:12, padding:'7px 8px', textTransform:'capitalize' }}
+                className={type===t ? 'rf-btn-primary' : 'rf-btn-ghost'}
+                onClick={() => { setType(t); setIcon(t==='player'?'\uD83D\uDC64':t==='monster'?'\uD83D\uDC79':'\uD83D\uDD35'); }}>
+                {t}
+              </button>
+            ))}
+          </div>
+          {type === 'player' && players.length > 0 && (
+            <>
+              <label className="rf-label">Link to player (lets them drag it)</label>
+              <select className="rf-input" value={linked}
+                onChange={e => { setLinked(e.target.value); if (e.target.value) setName(players.find(p=>p.id===e.target.value)?.name||name); }}>
+                <option value="">— unlinked —</option>
+                {players.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </>
+          )}
+          <label className="rf-label">Icon</label>
+          <div className="rf-icon-pick-row">
+            {TICONS.map(ic => <button key={ic} type="button" className={`rf-icon-pick${icon===ic?' rf-icon-pick--active':''}`} onClick={()=>setIcon(ic)}>{ic}</button>)}
+          </div>
+          <label className="rf-label">Color</label>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:4 }}>
+            {TOKEN_COLORS.map(c => (
+              <button key={c} type="button" onClick={()=>setColor(c)}
+                style={{ width:28, height:28, borderRadius:'50%', background:c,
+                  border:`3px solid ${color===c?'#fff':'transparent'}`,
+                  boxShadow: color===c ? `0 0 0 2px ${c}` : undefined }}/>
+            ))}
+          </div>
+          <label className="rf-label">Size</label>
+          <div style={{ display:'flex', gap:8 }}>
+            {['small','medium','large'].map(s => (
+              <button key={s} type="button" style={{ flex:1, fontSize:12, padding:'7px 8px', textTransform:'capitalize' }}
+                className={size===s ? 'rf-btn-primary' : 'rf-btn-ghost'}
+                onClick={()=>setSize(s)}>{s}</button>
+            ))}
+          </div>
+        </div>
+        <div className="rf-modal-footer">
+          <div style={{flex:1}}/>
+          <button className="rf-btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="rf-btn-primary" disabled={!name.trim()} onClick={handleAdd}>Place on Map</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VTTTab({ vttState, players, onUploadMap, onMoveToken, onAddToken, onRemoveToken }) {
+  const [addingToken, setAddingToken] = useState(false);
+  const fileRef = useRef(null);
+  return (
+    <div>
+      <div className="rf-section-header">
+        <h2 className="rf-section-title">Battle Map</h2>
+        <div style={{ display:'flex', gap:8 }}>
+          <button className="rf-btn-ghost-sm" onClick={() => fileRef.current?.click()}>
+            <Map size={13}/> {vttState.map_image ? 'Replace Map' : 'Upload Map'}
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={onUploadMap}/>
+          {vttState.map_image && (
+            <button className="rf-btn-primary" onClick={()=>setAddingToken(true)}><Plus size={14}/> Add Token</button>
+          )}
+        </div>
+      </div>
+      {!vttState.map_image ? (
+        <div className="rf-vtt-empty">
+          <Map size={40} style={{ margin:'0 auto 12px', display:'block', opacity:.25 }}/>
+          <div style={{ fontSize:14, marginBottom:6 }}>No map uploaded yet</div>
+          <div style={{ fontSize:12.5 }}>Upload a PNG or JPG — it will be compressed automatically</div>
+        </div>
+      ) : (
+        <>
+          <VTTMapArea vttState={vttState} canDragAll={true} ownPlayerId={null} onMoveToken={onMoveToken}/>
+          {(vttState.tokens||[]).length > 0 && (
+            <div className="rf-token-list">
+              {(vttState.tokens||[]).map(t => (
+                <div key={t.id} className="rf-token-row">
+                  <div className="rf-token-swatch" style={{ background:t.color }}>{t.icon}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:600, fontSize:13.5 }}>{t.name}</div>
+                    <div style={{ fontSize:11.5, color:'var(--text-muted)', textTransform:'capitalize' }}>{t.type} · {t.size}</div>
+                  </div>
+                  <DeleteConfirmButton onConfirm={()=>onRemoveToken(t.id)} label="remove"/>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+      {addingToken && (
+        <AddTokenModal players={players} onClose={()=>setAddingToken(false)}
+          onAdd={token => { onAddToken(token); setAddingToken(false); }}/>
+      )}
+    </div>
+  );
+}
+
+function PlayerVTTSection({ vttState, currentPlayerId, onMoveToken }) {
+  if (!vttState || !vttState.map_image) return null;
+  return (
+    <div style={{ marginBottom:22 }}>
+      <div className="rf-section-header" style={{ marginBottom:12 }}>
+        <h2 className="rf-section-title" style={{ fontSize:16, display:'flex', alignItems:'center', gap:8 }}>
+          <Map size={16}/>Battle Map
+        </h2>
+        <span style={{ fontSize:12, color:'var(--text-muted)' }}>Drag your token to move</span>
+      </div>
+      <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:14, overflow:'hidden' }}>
+        <VTTMapArea vttState={vttState} canDragAll={false} ownPlayerId={currentPlayerId} onMoveToken={onMoveToken}/>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   INVENTORY
+   ============================================================ */
+
+function ItemEditorModal({ item, onClose, onSave, onDelete }) {
+  const isNew = !item;
+  const [name,    setName]    = useState(item?.name || '');
+  const [desc,    setDesc]    = useState(item?.description || '');
+  const [cat,     setCat]     = useState(item?.category || 'misc');
+  const [weight,  setWeight]  = useState(item?.weight ?? 0);
+  const [goldVal, setGoldVal] = useState(item?.gold_value ?? 0);
+
+  const handleSave = () => {
+    if (!name.trim()) return;
+    onSave({ id: item ? item.id : uid('item'), name:name.trim(), description:desc.trim(), category:cat, weight:Number(weight)||0, gold_value:Number(goldVal)||0 });
+  };
+  return (
+    <div className="rf-modal-overlay" onClick={onClose}>
+      <div className="rf-modal" onClick={e => e.stopPropagation()}>
+        <div className="rf-modal-header">
+          <h3>{isNew ? 'New Item' : 'Edit Item'}</h3>
+          <button className="rf-icon-btn" onClick={onClose}><X size={18}/></button>
+        </div>
+        <div className="rf-modal-body">
+          <label className="rf-label">Name</label>
+          <input className="rf-input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Longsword +1"/>
+          <label className="rf-label">Category</label>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
+            {CATEGORIES.map(c => (
+              <button key={c} type="button" style={{ fontSize:12, padding:'5px 10px', textTransform:'capitalize' }}
+                className={cat===c ? 'rf-btn-primary' : 'rf-btn-ghost'} onClick={()=>setCat(c)}>
+                {CAT_ICONS[c]} {c}
+              </button>
+            ))}
+          </div>
+          <label className="rf-label">Description</label>
+          <textarea className="rf-textarea" rows={2} value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Magical properties or lore"/>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:14 }}>
+            <div>
+              <label className="rf-label" style={{ marginTop:0 }}>Weight (lb)</label>
+              <input className="rf-input" type="number" min="0" step="0.1" value={weight} onChange={e=>setWeight(e.target.value)}/>
+            </div>
+            <div>
+              <label className="rf-label" style={{ marginTop:0 }}>Gold value (gp)</label>
+              <input className="rf-input" type="number" min="0" step="0.5" value={goldVal} onChange={e=>setGoldVal(e.target.value)}/>
+            </div>
+          </div>
+        </div>
+        <div className="rf-modal-footer">
+          {!isNew && <DeleteConfirmButton onConfirm={()=>onDelete(item.id)} label="delete item"/>}
+          <div style={{flex:1}}/>
+          <button className="rf-btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="rf-btn-primary" disabled={!name.trim()} onClick={handleSave}>Save Item</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlayerInventoryModal({ player, items, onClose, onSetItemQty }) {
+  const getQty = id => (player.inventory||[]).find(e=>e.item_id===id)?.quantity || 0;
+  const [qtys, setQtys] = useState(() => {
+    const m = {};
+    items.forEach(i => { m[i.id] = getQty(i.id); });
+    return m;
+  });
+  const adj = (id, delta) => setQtys(prev => ({ ...prev, [id]: Math.max(0, (prev[id]||0)+delta) }));
+  const handleSave = () => {
+    items.forEach(item => { if ((qtys[item.id]||0) !== getQty(item.id)) onSetItemQty(player.id, item.id, qtys[item.id]||0); });
+    onClose();
+  };
+  return (
+    <div className="rf-modal-overlay" onClick={onClose}>
+      <div className="rf-modal rf-modal-wide" onClick={e=>e.stopPropagation()}>
+        <div className="rf-modal-header">
+          <h3>Inventory — {player.name}</h3>
+          <button className="rf-icon-btn" onClick={onClose}><X size={18}/></button>
+        </div>
+        <div className="rf-modal-body">
+          <p className="rf-modal-hint">Adjust quantities. Setting to 0 removes the item from the player.</p>
+          {items.length === 0 && <div className="rf-empty-state">No items in catalog yet. Create some in the Items tab first.</div>}
+          <div className="rf-inv-manage-list">
+            {items.map(item => (
+              <div key={item.id} className="rf-inv-manage-row">
+                <span style={{ fontSize:18, flexShrink:0 }}>{CAT_ICONS[item.category]||'\uD83D\uDCE6'}</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontWeight:600, fontSize:13.5 }}>{item.name}</div>
+                  <div style={{ fontSize:11.5, color:'var(--text-muted)', fontFamily:"'JetBrains Mono',monospace" }}>
+                    {[item.weight>0&&`${item.weight}lb`, item.gold_value>0&&`${item.gold_value}gp`].filter(Boolean).join(' · ')}
+                  </div>
+                </div>
+                <div className="rf-qty-ctrl">
+                  <button className="rf-qty-btn" onClick={()=>adj(item.id,-1)}>-</button>
+                  <div className={`rf-qty-val${(qtys[item.id]||0)===0?' rf-qty-val--zero':''}`}>{qtys[item.id]||0}</div>
+                  <button className="rf-qty-btn" onClick={()=>adj(item.id,+1)}>+</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rf-modal-footer">
+          <div style={{flex:1}}/>
+          <button className="rf-btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="rf-btn-primary" onClick={handleSave}>Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ItemsTab({ items, onOpenEditor }) {
+  return (
+    <div>
+      <div className="rf-section-header">
+        <h2 className="rf-section-title">Item Catalog</h2>
+        <button className="rf-btn-primary" onClick={()=>onOpenEditor(null)}><Plus size={15}/> New Item</button>
+      </div>
+      {items.length === 0 ? (
+        <div className="rf-empty-state">No items yet. Create items here, then give them to players from the Players tab.</div>
+      ) : (
+        <div className="rf-item-grid">
+          {items.map(item => (
+            <div key={item.id} className="rf-item-card" onClick={()=>onOpenEditor(item)}>
+              <div className="rf-item-cat">{CAT_ICONS[item.category]||'\uD83D\uDCE6'} {item.category}</div>
+              <div className="rf-item-name">{item.name}</div>
+              {item.description && <div className="rf-item-desc-sm">{item.description}</div>}
+              <div className="rf-item-stats">
+                {item.weight>0 && <div className="rf-item-stat">{item.weight}<b>lb</b></div>}
+                {item.gold_value>0 && <div className="rf-item-stat">{item.gold_value}<b>gp</b></div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlayerInventorySection({ player, items }) {
+  const inv = (player.inventory||[])
+    .map(e => ({ ...e, item: items.find(i=>i.id===e.item_id) }))
+    .filter(e => e.item && e.quantity>0);
+  if (inv.length === 0) return null;
+  const totalW = inv.reduce((s,e)=>s+e.item.weight*e.quantity,0);
+  const totalG = inv.reduce((s,e)=>s+e.item.gold_value*e.quantity,0);
+  return (
+    <div className="rf-inv-section">
+      <div className="rf-inv-header">
+        <div className="rf-inv-title"><Package size={16}/>Inventory</div>
+        <div className="rf-inv-totals">
+          {totalW>0 && <span className="rf-inv-total">\u2696\uFE0F {totalW%1===0?totalW:totalW.toFixed(1)} lb</span>}
+          {totalG>0 && <span className="rf-inv-total">\uD83E\uDE99 {totalG%1===0?totalG:totalG.toFixed(1)} gp</span>}
+        </div>
+      </div>
+      <div className="rf-inv-list">
+        {inv.map(e => (
+          <div key={e.item_id} className="rf-inv-item">
+            <div className="rf-inv-item-icon">{CAT_ICONS[e.item.category]||'\uD83D\uDCE6'}</div>
+            <div className="rf-inv-item-body">
+              <div className="rf-inv-item-name">{e.item.name}</div>
+              {e.item.description && <div className="rf-inv-item-desc">{e.item.description}</div>}
+              {(e.item.weight>0||e.item.gold_value>0) && (
+                <div className="rf-inv-item-meta">
+                  {e.item.weight>0 && <span>{e.item.weight}lb ea</span>}
+                  {e.item.gold_value>0 && <span>{e.item.gold_value}gp ea</span>}
+                </div>
+              )}
+            </div>
+            <div className="rf-inv-item-qty">\xD7{e.quantity}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PlayersTab({ players, trees, abilitySets, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory }) {
   const [newName, setNewName] = useState('');
   const totalRunes = trees.reduce((sum, t) => sum + (t.runes || []).length, 0);
   const totalAbilities = abilitySets.reduce((sum, s) => sum + (s.abilities || []).length, 0);
@@ -900,6 +1373,7 @@ function PlayersTab({ players, trees, abilitySets, onAddPlayer, onDeletePlayer, 
               <div className="rf-player-row-actions">
                 <button className="rf-btn-ghost-sm" onClick={() => onOpenGrant(p)}><Sparkles size={13} /> Runes</button>
                 <button className="rf-btn-mana" onClick={() => onOpenAbilityGrant(p)}><Zap size={13} /> Abilities</button>
+                <button className="rf-btn-ghost-sm" onClick={() => onOpenInventory(p)}><Package size={13}/> Items</button>
                 <DeleteConfirmButton onConfirm={() => onDeletePlayer(p.id)} label="remove" />
               </div>
             </div>
@@ -976,12 +1450,14 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, shareUrl, trees, players, abilitySets, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSaveMeta, onExit, onReset, onRefresh }) {
+function DMDashboard({ meta, shareUrl, trees, players, abilitySets, items, vttState, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSaveItem, onDeleteItem, onSetItemQty, onUploadMap, onMoveToken, onAddToken, onRemoveToken, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
   const [editingAbilitySet, setEditingAbilitySet] = useState(undefined);
   const [grantingAbilitiesFor, setGrantingAbilitiesFor] = useState(null);
+  const [editingItem, setEditingItem] = useState(undefined);
+  const [inventoryFor, setInventoryFor] = useState(null);
 
   const livePlayer = grantingPlayer ? (players.find((p) => p.id === grantingPlayer.id) || grantingPlayer) : null;
   const liveAbilityPlayer = grantingAbilitiesFor ? (players.find((p) => p.id === grantingAbilitiesFor.id) || grantingAbilitiesFor) : null;
@@ -993,12 +1469,16 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, live, onSave
         <button className={`rf-tab${tab === 'trees' ? ' rf-tab--active' : ''}`} onClick={() => setTab('trees')}><ScrollText size={15} /> Rune Paths</button>
         <button className={`rf-tab${tab === 'abilities' ? ' rf-tab--active' : ''}`} onClick={() => setTab('abilities')}><Zap size={15} /> Abilities</button>
         <button className={`rf-tab${tab === 'players' ? ' rf-tab--active' : ''}`} onClick={() => setTab('players')}><Users size={15} /> Players</button>
+        <button className={`rf-tab${tab === 'items' ? ' rf-tab--active' : ''}`} onClick={() => setTab('items')}><Package size={15}/> Items</button>
+        <button className={`rf-tab${tab === 'vtt' ? ' rf-tab--active' : ''}`} onClick={() => setTab('vtt')}><Map size={15}/> VTT</button>
         <button className={`rf-tab${tab === 'settings' ? ' rf-tab--active' : ''}`} onClick={() => setTab('settings')}><Settings size={15} /> Settings</button>
       </div>
       <div>
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
         {tab === 'abilities' && <AbilitiesTab abilitySets={abilitySets} onOpenEditor={setEditingAbilitySet} />}
-        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} />}
+        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor}/>}
+        {tab === 'items' && <ItemsTab items={items} onOpenEditor={setEditingItem}/>}
+        {tab === 'vtt' && <VTTTab vttState={vttState} players={players} onUploadMap={onUploadMap} onMoveToken={onMoveToken} onAddToken={onAddToken} onRemoveToken={onRemoveToken}/>}
         {tab === 'settings' && <SettingsTab meta={meta} shareUrl={shareUrl} onSave={onSaveMeta} onExit={onExit} onReset={onReset} />}
       </div>
       {editingTree !== undefined && (
@@ -1024,6 +1504,17 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, live, onSave
           onSave={s => { onSaveAbilitySet(s); setEditingAbilitySet(undefined); }}
           onDelete={id => { onDeleteAbilitySet(id); setEditingAbilitySet(undefined); }}
         />
+      )}
+      {editingItem !== undefined && (
+        <ItemEditorModal item={editingItem} onClose={()=>setEditingItem(undefined)}
+          onSave={i=>{onSaveItem(i);setEditingItem(undefined);}}
+          onDelete={id=>{onDeleteItem(id);setEditingItem(undefined);}}/>
+      )}
+      {inventoryFor && (
+        <PlayerInventoryModal
+          player={players.find(p=>p.id===inventoryFor.id)||inventoryFor}
+          items={items} onClose={()=>setInventoryFor(null)}
+          onSetItemQty={onSetItemQty}/>
       )}
       {liveAbilityPlayer && (
         <AbilityGrantModal
@@ -1084,7 +1575,7 @@ function PlayerPicker({ players, meta, onSelect, onJoinAsNew, live, onExit }) {
   );
 }
 
-function PlayerDashboard({ meta, trees, players, abilitySets, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onExit, onRefresh }) {
+function PlayerDashboard({ meta, trees, players, abilitySets, items, vttState, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onMoveToken, onExit, onRefresh }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
@@ -1148,6 +1639,8 @@ function PlayerDashboard({ meta, trees, players, abilitySets, currentPlayerId, l
           />
         )}
 
+        <PlayerInventorySection player={player} items={items}/>
+        <PlayerVTTSection vttState={vttState} currentPlayerId={currentPlayerId} onMoveToken={onMoveToken}/>
         {grantedAbilitySets.length > 0 && (
           <div className="rf-abilities-wrap">
             <div className="rf-section-header" style={{ marginBottom: 14 }}>
@@ -1475,6 +1968,8 @@ export default function App() {
   const [trees, setTrees] = useState([]);
   const [players, setPlayers] = useState([]);
   const [abilitySets, setAbilitySets] = useState([]);
+  const [items, setItems] = useState([]);
+  const [vttState, setVttState] = useState({ map_image: null, tokens: [] });
   const [currentPlayerId, setCurrentPlayerId] = useState(null);
   const [phase, setPhase] = useState('loading'); // loading | home | setup | join | login | dm | player
   const [live, setLive] = useState(false);
@@ -1511,12 +2006,14 @@ export default function App() {
         setPhase('join');
         return;
       }
-      const [treeRows, playerRows, abilitySetRows] = await Promise.all([fetchTrees(id), fetchPlayers(id), fetchAbilitySets(id)]);
+      const [treeRows, playerRows, abilitySetRows, itemRows, vttRow] = await Promise.all([fetchTrees(id), fetchPlayers(id), fetchAbilitySets(id), fetchItems(id), fetchVttState(id)]);
       setCampaignId(id);
       setMeta(campaign);
       setTrees(treeRows);
       setPlayers(playerRows);
       setAbilitySets(abilitySetRows);
+      setItems(itemRows);
+      setVttState(vttRow || { map_image: null, tokens: [] });
       setCampaignIdInUrl(id);
       const savedPlayerId = window.localStorage ? window.localStorage.getItem(`rf-player-${id}`) : null;
       if (savedPlayerId) setCurrentPlayerId(savedPlayerId);
@@ -1580,11 +2077,25 @@ export default function App() {
       })
       .subscribe();
 
+    const itemsChannel = supabase.channel(`items-${campaignId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'items', filter: `campaign_id=eq.${campaignId}` }, payload => {
+        setItems(prev => {
+          if (payload.eventType === 'DELETE') return prev.filter(i => i.id !== payload.old.id);
+          const row = payload.new;
+          return prev.some(i => i.id === row.id) ? prev.map(i => i.id===row.id ? row : i) : [...prev, row];
+        });
+      }).subscribe();
+    const vttChannel = supabase.channel(`vtt-${campaignId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vtt_state', filter: `campaign_id=eq.${campaignId}` }, payload => {
+        if (payload.new) setVttState(payload.new);
+      }).subscribe();
     return () => {
       supabase.removeChannel(treesChannel);
       supabase.removeChannel(playersChannel);
       supabase.removeChannel(campaignChannel);
       supabase.removeChannel(abilitySetsChannel);
+      supabase.removeChannel(itemsChannel);
+      supabase.removeChannel(vttChannel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignId]);
@@ -1592,7 +2103,7 @@ export default function App() {
   const refreshNow = async () => {
     if (!campaignId) return;
     try {
-      const [t, p, c, ab] = await Promise.all([fetchTrees(campaignId), fetchPlayers(campaignId), fetchCampaign(campaignId), fetchAbilitySets(campaignId)]);
+      const [t, p, c, ab, it, vtt] = await Promise.all([fetchTrees(campaignId), fetchPlayers(campaignId), fetchCampaign(campaignId), fetchAbilitySets(campaignId), fetchItems(campaignId), fetchVttState(campaignId)]);
       setTrees(t);
       setPlayers(p);
       setAbilitySets(ab);
@@ -1671,7 +2182,7 @@ export default function App() {
   };
 
   const handleAddPlayer = async (name) => {
-    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [], granted_abilities: [], max_mana: 10, current_mana: 10 };
+    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [], granted_abilities: [], max_mana: 10, current_mana: 10, inventory: [] };
     setPlayers((prev) => [...prev, newPlayer]);
     const { error } = await supabase.from('players').insert([newPlayer]);
     if (error) { console.error(error); showToast('Failed to add player.'); }
@@ -1783,6 +2294,69 @@ export default function App() {
     showToast(`\u{1F52E} Used ${ability.name} \u00B7 \u2212${ability.mana_cost} mana`);
   };
 
+
+  /* ── ITEM HANDLERS ── */
+  const handleSaveItem = async (itemObj) => {
+    const row = { ...itemObj, campaign_id: campaignId };
+    setItems(prev => prev.some(i=>i.id===row.id) ? prev.map(i=>i.id===row.id?row:i) : [...prev, row]);
+    const { error } = await supabase.from('items').upsert([row], { onConflict: 'id' });
+    if (error) { console.error(error); showToast('Failed to save item.'); }
+  };
+  const handleDeleteItem = async (itemId) => {
+    setItems(prev => prev.filter(i=>i.id!==itemId));
+    await supabase.from('items').delete().eq('id', itemId);
+    const affected = players.filter(p=>(p.inventory||[]).some(e=>e.item_id===itemId));
+    await Promise.all(affected.map(p => {
+      const inventory = (p.inventory||[]).filter(e=>e.item_id!==itemId);
+      setPlayers(prev => prev.map(x=>x.id===p.id?{...x,inventory}:x));
+      return supabase.from('players').update({ inventory }).eq('id', p.id);
+    }));
+  };
+  const handleSetItemQty = async (playerId, itemId, quantity) => {
+    const player = players.find(p=>p.id===playerId);
+    if (!player) return;
+    const inventory = [...(player.inventory||[])];
+    const idx = inventory.findIndex(e=>e.item_id===itemId);
+    if (quantity <= 0) { if (idx>=0) inventory.splice(idx,1); }
+    else if (idx>=0) { inventory[idx] = {...inventory[idx], quantity}; }
+    else { inventory.push({ item_id:itemId, quantity }); }
+    setPlayers(prev => prev.map(p=>p.id===playerId?{...p,inventory}:p));
+    const { error } = await supabase.from('players').update({ inventory }).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to update inventory.'); }
+  };
+
+  /* ── VTT HANDLERS ── */
+  const handleUploadMap = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    showToast('Compressing image…');
+    try {
+      const base64 = await compressImage(file);
+      const newState = { campaign_id: campaignId, map_image: base64, tokens: vttState.tokens||[] };
+      setVttState(newState);
+      const { error } = await supabase.from('vtt_state').upsert([newState], { onConflict: 'campaign_id' });
+      if (error) throw error;
+      showToast('Map uploaded!');
+    } catch (err) { console.error(err); showToast('Failed to upload map.'); }
+    e.target.value = '';
+  };
+  const handleMoveToken = async (tokenId, x, y) => {
+    const tokens = (vttState.tokens||[]).map(t=>t.id===tokenId?{...t,x,y}:t);
+    setVttState(prev => ({ ...prev, tokens }));
+    await supabase.from('vtt_state').update({ tokens }).eq('campaign_id', campaignId);
+  };
+  const handleAddToken = async (token) => {
+    const tokens = [...(vttState.tokens||[]), token];
+    const newState = { campaign_id: campaignId, map_image: vttState.map_image||null, tokens };
+    setVttState(newState);
+    const { error } = await supabase.from('vtt_state').upsert([newState], { onConflict: 'campaign_id' });
+    if (error) { console.error(error); showToast('Failed to add token.'); }
+  };
+  const handleRemoveToken = async (tokenId) => {
+    const tokens = (vttState.tokens||[]).filter(t=>t.id!==tokenId);
+    setVttState(prev => ({ ...prev, tokens }));
+    await supabase.from('vtt_state').update({ tokens }).eq('campaign_id', campaignId);
+  };
+
   const handleSaveMeta = async (newMeta) => {
     setMeta(newMeta);
     const { error } = await supabase
@@ -1797,6 +2371,8 @@ export default function App() {
       await supabase.from('players').delete().eq('campaign_id', campaignId);
       await supabase.from('rune_trees').delete().eq('campaign_id', campaignId);
       await supabase.from('ability_sets').delete().eq('campaign_id', campaignId);
+      await supabase.from('items').delete().eq('campaign_id', campaignId);
+      await supabase.from('vtt_state').delete().eq('campaign_id', campaignId);
       await supabase.from('campaigns').delete().eq('id', campaignId);
     } catch (e) {
       console.error(e);
@@ -1822,7 +2398,7 @@ export default function App() {
       handleSelectPlayer(existing.id);
       return;
     }
-    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [], granted_abilities: [], max_mana: 10, current_mana: 10 };
+    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [], granted_abilities: [], max_mana: 10, current_mana: 10, inventory: [] };
     setPlayers((prev) => [...prev, newPlayer]);
     const { error } = await supabase.from('players').insert([newPlayer]);
     if (error) { console.error(error); showToast('Failed to join. Try again.'); return; }
@@ -1891,6 +2467,8 @@ export default function App() {
           trees={trees}
           players={players}
           abilitySets={abilitySets}
+          items={items}
+          vttState={vttState}
           live={live}
           onSaveTree={handleSaveTree}
           onDeleteTree={handleDeleteTree}
@@ -1901,6 +2479,13 @@ export default function App() {
           onDeleteAbilitySet={handleDeleteAbilitySet}
           onToggleGrantAbility={handleToggleGrantAbility}
           onSetPlayerMaxMana={handleSetPlayerMaxMana}
+          onSaveItem={handleSaveItem}
+          onDeleteItem={handleDeleteItem}
+          onSetItemQty={handleSetItemQty}
+          onUploadMap={handleUploadMap}
+          onMoveToken={handleMoveToken}
+          onAddToken={handleAddToken}
+          onRemoveToken={handleRemoveToken}
           onSaveMeta={handleSaveMeta}
           onExit={handleExit}
           onReset={handleReset}
@@ -1914,6 +2499,8 @@ export default function App() {
           trees={trees}
           players={players}
           abilitySets={abilitySets}
+          items={items}
+          vttState={vttState}
           currentPlayerId={currentPlayerId}
           live={live}
           onSelectPlayer={handleSelectPlayer}
@@ -1921,6 +2508,7 @@ export default function App() {
           onToggleEquip={handleToggleEquip}
           onAdjustMana={handleAdjustMana}
           onUseAbility={handleUseAbility}
+          onMoveToken={handleMoveToken}
           onExit={handleExit}
           onRefresh={refreshNow}
         />
