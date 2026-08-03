@@ -349,6 +349,16 @@ const CSS = `
 .rf-qty-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--gold); min-width: 28px; text-align: center; }
 .rf-qty-val--zero { color: var(--text-muted); }
 
+
+/* ===== NOTEPAD ===== */
+.rf-notepad { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 18px; }
+.rf-notepad-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.rf-notepad-title { font-family: 'Cinzel', serif; font-size: 15.5px; font-weight: 600; }
+.rf-notepad-saved { font-size: 11.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; transition: opacity .3s; }
+.rf-notepad-area { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 12px 14px; color: var(--text); font-size: 13.5px; font-family: 'Inter', sans-serif; outline: none; resize: vertical; min-height: 160px; line-height: 1.65; }
+.rf-notepad-area:focus { border-color: var(--gold); }
+.rf-notepad-area::placeholder { color: var(--text-muted); font-style: italic; }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -1575,7 +1585,51 @@ function PlayerPicker({ players, meta, onSelect, onJoinAsNew, live, onExit }) {
   );
 }
 
-function PlayerDashboard({ meta, trees, players, abilitySets, items, vttState, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onMoveToken, onExit, onRefresh }) {
+
+/* ============================================================
+   PLAYER NOTEPAD
+   ============================================================ */
+
+function PlayerNotepad({ player, onSave }) {
+  const [text, setText] = useState(player.notes || '');
+  const [status, setStatus] = useState('saved');
+  const timer = useRef(null);
+
+  useEffect(() => {
+    setText(player.notes || '');
+    setStatus('saved');
+  }, [player.id]);
+
+  const handleChange = (e) => {
+    const val = e.target.value;
+    setText(val);
+    setStatus('unsaved');
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      onSave(player.id, val);
+      setStatus('saved');
+    }, 700);
+  };
+
+  return (
+    <div className="rf-notepad">
+      <div className="rf-notepad-header">
+        <div className="rf-notepad-title">📝 My Notes</div>
+        <div className="rf-notepad-saved" style={{ opacity: status === 'saved' ? 1 : 0.4 }}>
+          {status === 'saved' ? '✓ Saved' : 'Saving…'}
+        </div>
+      </div>
+      <textarea
+        className="rf-notepad-area"
+        value={text}
+        onChange={handleChange}
+        placeholder="Jot anything down — quest clues, NPC names, loot lists… only you can see this."
+      />
+    </div>
+  );
+}
+
+function PlayerDashboard({ meta, trees, players, abilitySets, items, vttState, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onMoveToken, onSaveNotes, onExit, onRefresh }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
@@ -1685,6 +1739,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, items, vttState, c
           ))
         )}
         {selected && <DetailPanel rune={selected.rune} tree={selected.tree} />}
+        <PlayerNotepad player={player} onSave={onSaveNotes}/>
       </div>
     </div>
   );
@@ -2357,6 +2412,12 @@ export default function App() {
     await supabase.from('vtt_state').update({ tokens }).eq('campaign_id', campaignId);
   };
 
+
+  const handleSaveNotes = async (playerId, notes) => {
+    setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, notes } : p));
+    await supabase.from('players').update({ notes }).eq('id', playerId);
+  };
+
   const handleSaveMeta = async (newMeta) => {
     setMeta(newMeta);
     const { error } = await supabase
@@ -2509,6 +2570,7 @@ export default function App() {
           onAdjustMana={handleAdjustMana}
           onUseAbility={handleUseAbility}
           onMoveToken={handleMoveToken}
+          onSaveNotes={handleSaveNotes}
           onExit={handleExit}
           onRefresh={refreshNow}
         />
