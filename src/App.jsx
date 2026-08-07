@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Crown, Shield, Lock, Sparkles, Plus, Trash2, X, Check, Settings, Users, RefreshCw, LogOut, ScrollText, Copy, Zap, Droplet, Map, Package } from 'lucide-react';
+import { Crown, Shield, Lock, Sparkles, Plus, Trash2, X, Check, Settings, Users, RefreshCw, LogOut, ScrollText, Copy, Zap, Droplet, Package } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
 /* ============================================================
@@ -42,20 +42,21 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 .rf-root {
-  --bg: #14171f;
-  --surface: #1c212d;
-  --surface-2: #262c3a;
-  --border: #383f52;
-  --text: #e9e3d6;
-  --text-muted: #8b8fa3;
+  --bg: #11100c;
+  --surface: #1c1912;
+  --surface-2: #241f14;
+  --border: #3a3124;
+  --text: #f0e6d3;
+  --text-muted: #8c7e68;
   --gold: #4f9d6e;
   --danger: #c4453c;
   --radius: 14px;
   font-family: 'Inter', -apple-system, sans-serif;
   color: var(--text);
   background:
-    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(212,168,67,0.07), transparent 60%),
-    radial-gradient(ellipse 700px 500px at 100% 10%, rgba(139,95,191,0.06), transparent 60%),
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(212,168,67,0.11), transparent 60%),
+    radial-gradient(ellipse 600px 400px at 85% 90%, rgba(139,95,191,0.07), transparent 55%),
+    radial-gradient(ellipse 500px 300px at 50% 50%, rgba(180,120,40,0.04), transparent 70%),
     var(--bg);
   min-height: 100vh;
   line-height: 1.4;
@@ -308,15 +309,6 @@ const CSS = `
 .rf-btn-mana:hover { background: rgba(139,127,245,0.12); border-color: #8b7ff5; }
 
 
-/* ===== VTT ===== */
-.rf-vtt-empty { border: 2px dashed var(--border); border-radius: 12px; padding: 60px 20px; text-align: center; color: var(--text-muted); }
-.rf-vtt-map-wrap { position: relative; width: 100%; user-select: none; border-radius: 12px; overflow: hidden; background: #0a0c12; }
-.rf-vtt-map-img { width: 100%; height: auto; display: block; pointer-events: none; }
-.rf-vtt-token { position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid rgba(255,255,255,0.85); box-shadow: 0 2px 12px rgba(0,0,0,0.65); transform: translate(-50%,-50%); z-index: 5; transition: box-shadow .15s; }
-.rf-vtt-token-label { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.82); color:#fff; font-size:10px; font-weight:600; white-space:nowrap; padding:2px 5px; border-radius:4px; pointer-events:none; z-index:6; }
-.rf-token-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-.rf-token-row { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 9px 12px; }
-.rf-token-swatch { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
 /* ===== INVENTORY ===== */
 .rf-item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr)); gap: 12px; }
 .rf-item-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; transition: all .15s; }
@@ -358,6 +350,60 @@ const CSS = `
 .rf-notepad-area { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 12px 14px; color: var(--text); font-size: 13.5px; font-family: 'Inter', sans-serif; outline: none; resize: vertical; min-height: 160px; line-height: 1.65; }
 .rf-notepad-area:focus { border-color: var(--gold); }
 .rf-notepad-area::placeholder { color: var(--text-muted); font-style: italic; }
+
+
+/* ===== D&D CHARACTER ===== */
+.rf-char-setup-wrap { min-height:100vh; background:var(--bg); display:flex; flex-direction:column; }
+.rf-char-setup-inner { max-width:680px; margin:0 auto; padding:28px 20px 60px; width:100%; }
+.rf-char-setup-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:32px 28px; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+.rf-char-setup-title { font-family:'Cinzel',serif; font-size:26px; font-weight:700; text-align:center; margin-bottom:4px; background:linear-gradient(135deg,#f5d78e,var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.rf-char-setup-sub { text-align:center; color:var(--text-muted); font-size:13px; margin-bottom:28px; }
+.rf-class-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:8px; margin-bottom:20px; }
+.rf-class-btn { display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 5px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; color:var(--text-muted); transition:all .15s; cursor:pointer; }
+.rf-class-btn:hover { border-color:var(--text-muted); color:var(--text); }
+.rf-class-btn--active { border-color:var(--gold); color:var(--text); background:rgba(212,168,67,0.10); box-shadow:0 0 0 1px var(--gold); }
+.rf-class-icon { font-size:20px; }
+.rf-class-name { font-size:10px; font-weight:600; font-family:'Cinzel',serif; text-align:center; line-height:1.25; }
+.rf-race-grid { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:22px; }
+.rf-race-btn { padding:6px 13px; background:var(--surface-2); border:1px solid var(--border); border-radius:20px; color:var(--text-muted); font-size:12.5px; transition:all .15s; cursor:pointer; }
+.rf-race-btn:hover { border-color:var(--text-muted); color:var(--text); }
+.rf-race-btn--active { border-color:var(--gold); color:var(--gold); background:rgba(212,168,67,0.08); }
+.rf-stat-setup-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:8px; }
+.rf-stat-setup-box { display:flex; flex-direction:column; align-items:center; gap:4px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:10px 4px; }
+.rf-stat-setup-label { font-family:'Cinzel',serif; font-size:9px; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); }
+.rf-stat-setup-mod { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:var(--gold); }
+.rf-stat-setup-ctrl { display:flex; align-items:center; gap:3px; }
+.rf-stat-setup-ctrl button { width:20px; height:20px; border-radius:4px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:14px; display:flex; align-items:center; justify-content:center; line-height:1; cursor:pointer; }
+.rf-stat-setup-ctrl button:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); }
+.rf-stat-setup-ctrl button:disabled { opacity:.3; cursor:not-allowed; }
+.rf-stat-setup-ctrl span { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; min-width:22px; text-align:center; }
+/* Character header in player view */
+.rf-char-header { background:linear-gradient(135deg,var(--surface),var(--surface-2)); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; margin-bottom:18px; }
+.rf-char-identity { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.rf-char-name-big { font-family:'Cinzel',serif; font-size:20px; font-weight:700; }
+.rf-char-sub { font-size:13px; color:var(--text-muted); margin-top:3px; font-style:italic; }
+.rf-char-right { display:flex; align-items:flex-start; gap:8px; }
+.rf-level-badge { display:flex; flex-direction:column; align-items:center; background:rgba(212,168,67,0.10); border:2px solid rgba(212,168,67,0.4); border-radius:10px; padding:8px 14px; }
+.rf-level-badge-label { font-size:9px; text-transform:uppercase; letter-spacing:.12em; color:var(--gold); font-family:'Cinzel',serif; }
+.rf-level-badge-val { font-family:'Cinzel',serif; font-size:24px; font-weight:700; color:var(--gold); line-height:1.1; }
+.rf-char-edit-btn { background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:7px; padding:5px 10px; font-size:11.5px; cursor:pointer; white-space:nowrap; margin-top:2px; }
+.rf-char-edit-btn:hover { border-color:var(--gold); color:var(--gold); }
+.rf-stat-block { display:grid; grid-template-columns:repeat(6,1fr); gap:7px; }
+.rf-stat-box { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:9px 4px; text-align:center; }
+.rf-stat-box-label { font-family:'Cinzel',serif; font-size:9px; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); margin-bottom:3px; }
+.rf-stat-box-mod { font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700; color:var(--gold); }
+.rf-stat-box-score { font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; margin-top:1px; }
+/* DM level ctrl */
+.rf-level-ctrl { display:flex; align-items:center; gap:5px; }
+.rf-level-ctrl-btn { width:22px; height:22px; border-radius:5px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:14px; display:flex; align-items:center; justify-content:center; line-height:1; cursor:pointer; }
+.rf-level-ctrl-btn:hover { border-color:var(--gold); color:var(--gold); }
+.rf-level-ctrl-val { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--gold); min-width:22px; text-align:center; }
+.rf-class-badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--text-muted); background:var(--surface-2); border:1px solid var(--border); border-radius:6px; padding:2px 7px; font-family:'JetBrains Mono',monospace; }
+/* Req badges */
+.rf-req-badges { display:flex; gap:6px; flex-wrap:wrap; margin-top:5px; }
+.rf-req-badge { font-size:10.5px; color:var(--gold); background:rgba(212,168,67,0.10); border:1px solid rgba(212,168,67,0.3); border-radius:5px; padding:1px 7px; font-family:'JetBrains Mono',monospace; }
+.rf-grant-ab-row--locked { opacity:.50; }
+.rf-lock-reason { font-size:10.5px; color:var(--danger); font-family:'JetBrains Mono',monospace; background:rgba(196,69,60,0.10); border-radius:5px; padding:2px 7px; white-space:nowrap; }
 
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
@@ -407,11 +453,6 @@ async function fetchItems(campaignId) {
   return data || [];
 }
 
-async function fetchVttState(campaignId) {
-  const { data, error } = await supabase.from('vtt_state').select('*').eq('campaign_id', campaignId);
-  if (error) throw error;
-  return (data && data[0]) || { campaign_id: campaignId, map_image: null, tokens: [] };
-}
 
 function compressImage(file) {
   return new Promise(resolve => {
@@ -434,8 +475,14 @@ function compressImage(file) {
 
 const CATEGORIES   = ['weapon','armor','consumable','tool','magic','currency','misc'];
 const CAT_ICONS    = { weapon:'\u2694\uFE0F', armor:'\uD83D\uDEE1\uFE0F', consumable:'\uD83E\uDDEA', tool:'\uD83D\uDD27', magic:'\u2728', currency:'\uD83E\uDE99', misc:'\uD83D\uDCE6' };
-const TOKEN_COLORS = ['#c4453c','#3d8fc4','#4f9d6e','#8b5fbf','#d4a843','#d47843','#3dabb8','#c8ccd8'];
-const TICONS       = ['\uD83D\uDC64','\uD83D\uDC79','\uD83D\uDC32','\uD83D\uDC3A','\uD83D\uDC80','\uD83E\uDDD9','\u2694\uFE0F','\uD83D\uDEE1\uFE0F','\uD83D\uDC3B','\uD83E\uDDA5','\uD83E\uDDDD','\uD83D\uDC17','\uD83D\uDC0D','\uD83E\uDD81','\uD83D\uDC51','\uD83D\uDC15'];
+
+
+const DND_CLASSES = ['Barbarian','Bard','Cleric','Druid','Fighter','Monk','Paladin','Ranger','Rogue','Sorcerer','Warlock','Wizard','Artificer'];
+const DND_RACES   = ['Human','Elf','High Elf','Wood Elf','Dark Elf','Dwarf','Halfling','Half-Orc','Half-Elf','Tiefling','Gnome','Dragonborn','Aasimar','Tabaxi','Goliath','Tortle'];
+const CLASS_ICONS = {Barbarian:'\u2694\uFE0F',Bard:'\uD83C\uDFB5',Cleric:'\u2695\uFE0F',Druid:'\uD83C\uDF3F',Fighter:'\uD83D\uDEE1\uFE0F',Monk:'\uD83D\uDC4A',Paladin:'\u2728',Ranger:'\uD83C\uDFF9',Rogue:'\uD83D\uDDE1\uFE0F',Sorcerer:'\uD83D\uDCAB',Warlock:'\uD83D\uDC80',Wizard:'\uD83D\uDD2E',Artificer:'\u2699\uFE0F'};
+const STATS=[{key:'str_score',label:'STR'},{key:'dex_score',label:'DEX'},{key:'con_score',label:'CON'},{key:'int_score',label:'INT'},{key:'wis_score',label:'WIS'},{key:'cha_score',label:'CHA'}];
+const statMod=v=>Math.floor(((v||10)-10)/2);
+const modStr=v=>{const m=statMod(v);return m>=0?'+'+m:''+m;};
 
 /* ============================================================
    SMALL REUSABLE PIECES
@@ -530,6 +577,12 @@ function DetailPanel({ rune, tree }) {
       <div className="rf-detail-title">{tree.icon} {rune.name}</div>
       <div className="rf-detail-tier">{tree.name} · Tier {rune.tier}</div>
       {rune.effect && <div className="rf-detail-effect">{rune.effect}</div>}
+      {(rune.req_level>0||rune.req_stat)&&(
+        <div className="rf-req-badges">
+          {rune.req_level>0&&<span className="rf-req-badge">Level {rune.req_level}+</span>}
+          {rune.req_stat&&<span className="rf-req-badge">{rune.req_stat} {rune.req_stat_val}+</span>}
+        </div>
+      )}
       {rune.description
         ? <div className="rf-detail-desc">{rune.description}</div>
         : <div className="rf-detail-desc rf-detail-desc--muted">No lore written for this rune yet.</div>}
@@ -558,6 +611,80 @@ function TopHeader({ meta, role, playerName, onExit, onRefresh, onSwitchPlayer, 
   );
 }
 
+
+
+/* ============================================================
+   CHARACTER CREATION & STAT BLOCK
+   ============================================================ */
+
+function StatBlock({ player }) {
+  return (
+    <div className="rf-stat-block">
+      {STATS.map(({key,label}) => {
+        const v = player[key]||10;
+        return (
+          <div key={key} className="rf-stat-box">
+            <div className="rf-stat-box-label">{label}</div>
+            <div className="rf-stat-box-mod">{modStr(v)}</div>
+            <div className="rf-stat-box-score">{v}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CharacterSetup({ player, onSave, onBack }) {
+  const [cls,setCls]   = useState(player.character_class||'');
+  const [race,setRace] = useState(player.race||'');
+  const [stats,setStats] = useState(STATS.reduce((m,{key})=>({...m,[key]:player[key]||10}),{}));
+  const adj = (key,d) => setStats(prev=>({...prev,[key]:Math.max(1,Math.min(30,(prev[key]||10)+d))}));
+  const handleSave = () => { if(!cls||!race) return; onSave({character_class:cls,race,...stats}); };
+  return (
+    <div className="rf-char-setup-wrap">
+      <div className="rf-char-setup-inner">
+        <div className="rf-char-setup-card">
+          <div className="rf-char-setup-title">Create Your Character</div>
+          <div className="rf-char-setup-sub">{player.name} — fill in your details to begin</div>
+          <label className="rf-label">Class</label>
+          <div className="rf-class-grid">
+            {DND_CLASSES.map(c=>(
+              <button key={c} type="button" className={`rf-class-btn${cls===c?' rf-class-btn--active':''}`} onClick={()=>setCls(c)}>
+                <span className="rf-class-icon">{CLASS_ICONS[c]||'\u2694\uFE0F'}</span>
+                <span className="rf-class-name">{c}</span>
+              </button>
+            ))}
+          </div>
+          <label className="rf-label">Race</label>
+          <div className="rf-race-grid">
+            {DND_RACES.map(r=>(
+              <button key={r} type="button" className={`rf-race-btn${race===r?' rf-race-btn--active':''}`} onClick={()=>setRace(r)}>{r}</button>
+            ))}
+          </div>
+          <label className="rf-label">Ability Scores</label>
+          <div className="rf-stat-setup-grid">
+            {STATS.map(({key,label})=>(
+              <div key={key} className="rf-stat-setup-box">
+                <div className="rf-stat-setup-label">{label}</div>
+                <div className="rf-stat-setup-mod">{modStr(stats[key])}</div>
+                <div className="rf-stat-setup-ctrl">
+                  <button onClick={()=>adj(key,-1)} disabled={(stats[key]||10)<=1}>-</button>
+                  <span>{stats[key]||10}</span>
+                  <button onClick={()=>adj(key,+1)} disabled={(stats[key]||10)>=30}>+</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:22}}>Suggested standard array: 15, 14, 13, 12, 10, 8</div>
+          <button className="rf-btn-primary" style={{width:'100%',marginBottom:8}} disabled={!cls||!race} onClick={handleSave}>
+            Begin Adventure
+          </button>
+          {onBack && <button className="rf-btn-ghost" style={{width:'100%'}} onClick={onBack}>Back</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ============================================================
    MANA BAR
@@ -706,6 +833,16 @@ function TreeEditorModal({ tree, onClose, onSave, onDelete }) {
                   <input className="rf-input rf-input-sm" value={rune.effect} onChange={(e) => updateRune(rune.id, { effect: e.target.value })} placeholder="Mechanical effect, e.g. +1 to saving throws" />
                   <textarea className="rf-textarea rf-textarea-sm" rows={1} value={rune.description} onChange={(e) => updateRune(rune.id, { description: e.target.value })} placeholder="Flavor / lore (optional)" />
                   <button type="button" className="rf-icon-btn-danger" onClick={() => removeRune(rune.id)}><Trash2 size={14} /></button>
+                  <div style={{gridColumn:'1/-1',display:'flex',gap:10,alignItems:'center',marginTop:4,flexWrap:'wrap'}}>
+                    <span style={{fontSize:11,color:'var(--text-muted)'}}>Min Level</span>
+                    <input className="rf-input rf-input-sm" type="number" min="0" max="20" value={rune.req_level||0} onChange={e=>updateRune(rune.id,{req_level:Number(e.target.value)||0})} style={{width:55,textAlign:'center'}}/>
+                    <span style={{fontSize:11,color:'var(--text-muted)',marginLeft:4}}>Req Stat</span>
+                    <select className="rf-input rf-input-sm" value={rune.req_stat||''} onChange={e=>updateRune(rune.id,{req_stat:e.target.value})} style={{width:75}}>
+                      <option value="">None</option>
+                      {STATS.map(s=><option key={s.key} value={s.label}>{s.label}</option>)}
+                    </select>
+                    {rune.req_stat&&<input className="rf-input rf-input-sm" type="number" min="1" max="30" value={rune.req_stat_val||1} onChange={e=>updateRune(rune.id,{req_stat_val:Number(e.target.value)||1})} style={{width:50,textAlign:'center'}}/>}
+                  </div>
                 </div>
               ))}
               {runes.filter((r) => r.tier === tierNum).length === 0 && (
@@ -855,7 +992,15 @@ function AbilitySetEditorModal({ set, onClose, onSave, onDelete }) {
                 <input className="rf-input rf-input-sm" value={ab.effect} onChange={e => updateAbility(ab.id, { effect: e.target.value })} placeholder="Mechanical effect" />
               </div>
               <div>
-                <textarea className="rf-textarea rf-textarea-sm" rows={2} value={ab.description} onChange={e => updateAbility(ab.id, { description: e.target.value })} placeholder="Flavor / lore (optional)" />
+                <textarea className="rf-textarea rf-textarea-sm" rows={2} value={ab.description} onChange={e=>updateAbility(ab.id,{description:e.target.value})} placeholder="Flavor / lore (optional)"/>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginTop:6,flexWrap:'wrap'}}>
+                <span style={{fontSize:11.5,color:'var(--text-muted)',fontFamily:"'Cinzel',serif"}}>Min Level</span>
+                <input className="rf-input rf-input-sm" type="number" min="0" max="20" value={ab.req_level||0} onChange={e=>updateAbility(ab.id,{req_level:Number(e.target.value)||0})} style={{width:60,textAlign:'center'}}/>
+                <span style={{fontSize:11.5,color:'var(--text-muted)',fontFamily:"'Cinzel',serif",marginLeft:6}}>Allowed Classes (empty = any)</span>
+              </div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:5,marginTop:5}}>
+                {DND_CLASSES.map(c=>{const on=(ab.allowed_classes||[]).includes(c);return(<button key={c} type="button" style={{fontSize:11,padding:'3px 7px'}} className={on?'rf-btn-primary':'rf-btn-ghost'} onClick={()=>updateAbility(ab.id,{allowed_classes:on?(ab.allowed_classes||[]).filter(x=>x!==c):[...(ab.allowed_classes||[]),c]})}>{CLASS_ICONS[c]} {c}</button>);})}
               </div>
             </div>
           ))}
@@ -901,10 +1046,14 @@ function AbilityGrantModal({ player, abilitySets, onClose, onToggleGrant, onSetM
                 </div>
                 {(abSet.abilities || []).length === 0 && <div className="rf-empty-mini">No abilities in this set.</div>}
                 {(abSet.abilities || []).map(ab => {
-                  const granted = (player.granted_abilities || []).includes(ab.id);
+                  const granted=(player.granted_abilities||[]).includes(ab.id);
+                  const lockLevel=ab.req_level&&(player.level||1)<ab.req_level;
+                  const lockClass=(ab.allowed_classes||[]).length>0&&player.character_class&&!ab.allowed_classes.includes(player.character_class);
+                  const lockReason=lockLevel?`Requires Level ${ab.req_level}`:lockClass?`${ab.allowed_classes.join('/')} only`:null;
                   return (
-                    <div key={ab.id} className={`rf-grant-ab-row${granted ? ' rf-grant-ab-row--granted' : ''}`}
-                      onClick={() => onToggleGrant(player.id, ab.id)}>
+                    <div key={ab.id} className={`rf-grant-ab-row${granted?' rf-grant-ab-row--granted':''}${lockReason?' rf-grant-ab-row--locked':''}`}
+                      style={{cursor:lockReason?'not-allowed':'pointer'}}
+                      onClick={()=>!lockReason&&onToggleGrant(player.id,ab.id)}>
                       <div className={`rf-grant-ab-check${granted ? ' rf-grant-ab-check--on' : ''}`}>
                         {granted && <Check size={13} />}
                       </div>
@@ -954,223 +1103,6 @@ function AbilitiesTab({ abilitySets, onOpenEditor }) {
   );
 }
 
-
-/* ============================================================
-   VTT
-   ============================================================ */
-
-function VTTMapArea({ vttState, canDragAll, ownPlayerId, onMoveToken }) {
-  const mapRef = useRef(null);
-  const [dragging, setDragging] = useState(null);
-  const [localPos, setLocalPos] = useState({});
-
-  useEffect(() => {
-    const up = () => setDragging(null);
-    window.addEventListener('mouseup', up);
-    return () => window.removeEventListener('mouseup', up);
-  }, []);
-
-  const pct = useCallback((e) => {
-    if (!mapRef.current) return { x: 50, y: 50 };
-    const r = mapRef.current.getBoundingClientRect();
-    return {
-      x: Math.max(1, Math.min(99, ((e.clientX - r.left) / r.width)  * 100)),
-      y: Math.max(1, Math.min(99, ((e.clientY - r.top)  / r.height) * 100)),
-    };
-  }, []);
-
-  const onMouseDown = useCallback((e, token) => {
-    const mine = canDragAll || (ownPlayerId && token.player_id === ownPlayerId);
-    if (!mine) return;
-    e.preventDefault(); e.stopPropagation();
-    setDragging(token.id);
-    setLocalPos(prev => ({ ...prev, [token.id]: { x: token.x, y: token.y } }));
-  }, [canDragAll, ownPlayerId]);
-
-  const onMouseMove = useCallback((e) => {
-    if (!dragging) return;
-    const { x, y } = pct(e);
-    setLocalPos(prev => ({ ...prev, [dragging]: { x, y } }));
-  }, [dragging, pct]);
-
-  const onMouseUp = useCallback((e) => {
-    if (!dragging) return;
-    const { x, y } = pct(e);
-    onMoveToken(dragging, x, y);
-    setDragging(null);
-  }, [dragging, pct, onMoveToken]);
-
-  if (!vttState || !vttState.map_image) return null;
-  const sz = s => s === 'large' ? 58 : s === 'small' ? 30 : 44;
-
-  return (
-    <div ref={mapRef} className="rf-vtt-map-wrap"
-      style={{ cursor: dragging ? 'grabbing' : 'default' }}
-      onMouseMove={onMouseMove} onMouseUp={onMouseUp}
-      onMouseLeave={() => { if (dragging) setDragging(null); }}>
-      <img src={vttState.map_image} alt="Battle map" className="rf-vtt-map-img" draggable={false}/>
-      {(vttState.tokens || []).map(token => {
-        const pos = localPos[token.id] || { x: token.x, y: token.y };
-        const canDrag = canDragAll || (ownPlayerId && token.player_id === ownPlayerId);
-        const s = sz(token.size);
-        return (
-          <div key={token.id} className="rf-vtt-token"
-            style={{ left:`${pos.x}%`, top:`${pos.y}%`, width:s, height:s,
-              background:token.color, fontSize:Math.round(s*0.44),
-              cursor: canDrag ? (dragging===token.id ? 'grabbing' : 'grab') : 'default',
-              transition: dragging===token.id ? 'none' : 'left .12s,top .12s',
-              zIndex: dragging===token.id ? 20 : 5 }}
-            onMouseDown={e => onMouseDown(e, token)}>
-            {token.icon}
-            <div className="rf-vtt-token-label">{token.name}</div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function AddTokenModal({ players, onClose, onAdd }) {
-  const [name, setName]   = useState('');
-  const [type, setType]   = useState('monster');
-  const [color, setColor] = useState(TOKEN_COLORS[0]);
-  const [icon, setIcon]   = useState('\uD83D\uDC79');
-  const [size, setSize]   = useState('medium');
-  const [linked, setLinked] = useState('');
-
-  const handleAdd = () => {
-    if (!name.trim()) return;
-    onAdd({ id: uid('tok'), name: name.trim(), type, color, icon, size, x: 50, y: 50, player_id: linked || null });
-  };
-
-  return (
-    <div className="rf-modal-overlay" onClick={onClose}>
-      <div className="rf-modal" onClick={e => e.stopPropagation()}>
-        <div className="rf-modal-header">
-          <h3>Add Token</h3>
-          <button className="rf-icon-btn" onClick={onClose}><X size={18}/></button>
-        </div>
-        <div className="rf-modal-body">
-          <label className="rf-label">Name</label>
-          <input className="rf-input" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Goblin, Thorin…"/>
-          <label className="rf-label">Type</label>
-          <div style={{ display:'flex', gap:8 }}>
-            {['player','monster','npc'].map(t => (
-              <button key={t} type="button" style={{ flex:1, fontSize:12, padding:'7px 8px', textTransform:'capitalize' }}
-                className={type===t ? 'rf-btn-primary' : 'rf-btn-ghost'}
-                onClick={() => { setType(t); setIcon(t==='player'?'\uD83D\uDC64':t==='monster'?'\uD83D\uDC79':'\uD83D\uDD35'); }}>
-                {t}
-              </button>
-            ))}
-          </div>
-          {type === 'player' && players.length > 0 && (
-            <>
-              <label className="rf-label">Link to player (lets them drag it)</label>
-              <select className="rf-input" value={linked}
-                onChange={e => { setLinked(e.target.value); if (e.target.value) setName(players.find(p=>p.id===e.target.value)?.name||name); }}>
-                <option value="">— unlinked —</option>
-                {players.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </>
-          )}
-          <label className="rf-label">Icon</label>
-          <div className="rf-icon-pick-row">
-            {TICONS.map(ic => <button key={ic} type="button" className={`rf-icon-pick${icon===ic?' rf-icon-pick--active':''}`} onClick={()=>setIcon(ic)}>{ic}</button>)}
-          </div>
-          <label className="rf-label">Color</label>
-          <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:4 }}>
-            {TOKEN_COLORS.map(c => (
-              <button key={c} type="button" onClick={()=>setColor(c)}
-                style={{ width:28, height:28, borderRadius:'50%', background:c,
-                  border:`3px solid ${color===c?'#fff':'transparent'}`,
-                  boxShadow: color===c ? `0 0 0 2px ${c}` : undefined }}/>
-            ))}
-          </div>
-          <label className="rf-label">Size</label>
-          <div style={{ display:'flex', gap:8 }}>
-            {['small','medium','large'].map(s => (
-              <button key={s} type="button" style={{ flex:1, fontSize:12, padding:'7px 8px', textTransform:'capitalize' }}
-                className={size===s ? 'rf-btn-primary' : 'rf-btn-ghost'}
-                onClick={()=>setSize(s)}>{s}</button>
-            ))}
-          </div>
-        </div>
-        <div className="rf-modal-footer">
-          <div style={{flex:1}}/>
-          <button className="rf-btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="rf-btn-primary" disabled={!name.trim()} onClick={handleAdd}>Place on Map</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function VTTTab({ vttState, players, onUploadMap, onMoveToken, onAddToken, onRemoveToken }) {
-  const [addingToken, setAddingToken] = useState(false);
-  const fileRef = useRef(null);
-  return (
-    <div>
-      <div className="rf-section-header">
-        <h2 className="rf-section-title">Battle Map</h2>
-        <div style={{ display:'flex', gap:8 }}>
-          <button className="rf-btn-ghost-sm" onClick={() => fileRef.current?.click()}>
-            <Map size={13}/> {vttState.map_image ? 'Replace Map' : 'Upload Map'}
-          </button>
-          <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={onUploadMap}/>
-          {vttState.map_image && (
-            <button className="rf-btn-primary" onClick={()=>setAddingToken(true)}><Plus size={14}/> Add Token</button>
-          )}
-        </div>
-      </div>
-      {!vttState.map_image ? (
-        <div className="rf-vtt-empty">
-          <Map size={40} style={{ margin:'0 auto 12px', display:'block', opacity:.25 }}/>
-          <div style={{ fontSize:14, marginBottom:6 }}>No map uploaded yet</div>
-          <div style={{ fontSize:12.5 }}>Upload a PNG or JPG — it will be compressed automatically</div>
-        </div>
-      ) : (
-        <>
-          <VTTMapArea vttState={vttState} canDragAll={true} ownPlayerId={null} onMoveToken={onMoveToken}/>
-          {(vttState.tokens||[]).length > 0 && (
-            <div className="rf-token-list">
-              {(vttState.tokens||[]).map(t => (
-                <div key={t.id} className="rf-token-row">
-                  <div className="rf-token-swatch" style={{ background:t.color }}>{t.icon}</div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:600, fontSize:13.5 }}>{t.name}</div>
-                    <div style={{ fontSize:11.5, color:'var(--text-muted)', textTransform:'capitalize' }}>{t.type} · {t.size}</div>
-                  </div>
-                  <DeleteConfirmButton onConfirm={()=>onRemoveToken(t.id)} label="remove"/>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-      {addingToken && (
-        <AddTokenModal players={players} onClose={()=>setAddingToken(false)}
-          onAdd={token => { onAddToken(token); setAddingToken(false); }}/>
-      )}
-    </div>
-  );
-}
-
-function PlayerVTTSection({ vttState, currentPlayerId, onMoveToken }) {
-  if (!vttState || !vttState.map_image) return null;
-  return (
-    <div style={{ marginBottom:22 }}>
-      <div className="rf-section-header" style={{ marginBottom:12 }}>
-        <h2 className="rf-section-title" style={{ fontSize:16, display:'flex', alignItems:'center', gap:8 }}>
-          <Map size={16}/>Battle Map
-        </h2>
-        <span style={{ fontSize:12, color:'var(--text-muted)' }}>Drag your token to move</span>
-      </div>
-      <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:14, overflow:'hidden' }}>
-        <VTTMapArea vttState={vttState} canDragAll={false} ownPlayerId={currentPlayerId} onMoveToken={onMoveToken}/>
-      </div>
-    </div>
-  );
-}
 
 /* ============================================================
    INVENTORY
@@ -1348,7 +1280,7 @@ function PlayerInventorySection({ player, items }) {
   );
 }
 
-function PlayersTab({ players, trees, abilitySets, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory }) {
+function PlayersTab({ players, trees, abilitySets, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel }) {
   const [newName, setNewName] = useState('');
   const totalRunes = trees.reduce((sum, t) => sum + (t.runes || []).length, 0);
   const totalAbilities = abilitySets.reduce((sum, s) => sum + (s.abilities || []).length, 0);
@@ -1378,7 +1310,16 @@ function PlayersTab({ players, trees, abilitySets, onAddPlayer, onDeletePlayer, 
         <div className="rf-player-list">
           {players.map((p) => (
             <div key={p.id} className="rf-player-row">
-              <div className="rf-player-row-name">{p.name}</div>
+              <div style={{display:"flex",alignItems:"center",gap:10,flex:"none"}}>
+                <div className="rf-player-row-name">{p.name}</div>
+                {p.character_class&&<div className="rf-class-badge">{CLASS_ICONS[p.character_class]} {p.character_class}</div>}
+              </div>
+              <div className="rf-level-ctrl">
+                <span style={{fontSize:11,color:"var(--text-muted)",fontFamily:"'Cinzel',serif",marginRight:2}}>Lv</span>
+                <button className="rf-level-ctrl-btn" onClick={()=>onSetPlayerLevel(p.id,Math.max(1,(p.level||1)-1))}>-</button>
+                <div className="rf-level-ctrl-val">{p.level||1}</div>
+                <button className="rf-level-ctrl-btn" onClick={()=>onSetPlayerLevel(p.id,Math.min(20,(p.level||1)+1))}>+</button>
+              </div>
               <div className="rf-player-row-meta" style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>{(p.unlocked_runes || []).length}/{totalRunes} runes · {(p.granted_abilities || []).length}/{totalAbilities} abilities <span className="rf-mana-pill"><Droplet size={10}/> {p.current_mana ?? p.max_mana ?? 10}/{p.max_mana ?? 10}</span></div>
               <div className="rf-player-row-actions">
                 <button className="rf-btn-ghost-sm" onClick={() => onOpenGrant(p)}><Sparkles size={13} /> Runes</button>
@@ -1460,7 +1401,7 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, shareUrl, trees, players, abilitySets, items, vttState, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSaveItem, onDeleteItem, onSetItemQty, onUploadMap, onMoveToken, onAddToken, onRemoveToken, onSaveMeta, onExit, onReset, onRefresh }) {
+function DMDashboard({ meta, shareUrl, trees, players, abilitySets, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onSaveItem, onDeleteItem, onSetItemQty, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
@@ -1480,15 +1421,13 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, items, vttSt
         <button className={`rf-tab${tab === 'abilities' ? ' rf-tab--active' : ''}`} onClick={() => setTab('abilities')}><Zap size={15} /> Abilities</button>
         <button className={`rf-tab${tab === 'players' ? ' rf-tab--active' : ''}`} onClick={() => setTab('players')}><Users size={15} /> Players</button>
         <button className={`rf-tab${tab === 'items' ? ' rf-tab--active' : ''}`} onClick={() => setTab('items')}><Package size={15}/> Items</button>
-        <button className={`rf-tab${tab === 'vtt' ? ' rf-tab--active' : ''}`} onClick={() => setTab('vtt')}><Map size={15}/> VTT</button>
         <button className={`rf-tab${tab === 'settings' ? ' rf-tab--active' : ''}`} onClick={() => setTab('settings')}><Settings size={15} /> Settings</button>
       </div>
       <div>
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
         {tab === 'abilities' && <AbilitiesTab abilitySets={abilitySets} onOpenEditor={setEditingAbilitySet} />}
-        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor}/>}
+        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel}/>}
         {tab === 'items' && <ItemsTab items={items} onOpenEditor={setEditingItem}/>}
-        {tab === 'vtt' && <VTTTab vttState={vttState} players={players} onUploadMap={onUploadMap} onMoveToken={onMoveToken} onAddToken={onAddToken} onRemoveToken={onRemoveToken}/>}
         {tab === 'settings' && <SettingsTab meta={meta} shareUrl={shareUrl} onSave={onSaveMeta} onExit={onExit} onReset={onReset} />}
       </div>
       {editingTree !== undefined && (
@@ -1629,7 +1568,7 @@ function PlayerNotepad({ player, onSave }) {
   );
 }
 
-function PlayerDashboard({ meta, trees, players, abilitySets, items, vttState, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onMoveToken, onSaveNotes, onExit, onRefresh }) {
+function PlayerDashboard({ meta, trees, players, abilitySets, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onSaveNotes, onSaveCharacter, onExit, onRefresh }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
@@ -1637,6 +1576,12 @@ function PlayerDashboard({ meta, trees, players, abilitySets, items, vttState, c
     return <PlayerPicker players={players} meta={meta} onSelect={onSelectPlayer} onJoinAsNew={onJoinAsNew} live={live} onExit={onExit} />;
   }
 
+  const [showSetup,setShowSetup]=useState(!player.character_class);
+  if(showSetup) return(
+    <CharacterSetup player={player}
+      onSave={async data=>{await onSaveCharacter(player.id,data);setShowSetup(false);}}
+      onBack={player.character_class?()=>setShowSetup(false):null}/>
+  );
   const maxSlots = meta.max_equip_slots ?? 5;
   const unlocked = player.unlocked_runes || [];
   const equipped = player.equipped_runes || [];
@@ -1694,7 +1639,6 @@ function PlayerDashboard({ meta, trees, players, abilitySets, items, vttState, c
         )}
 
         <PlayerInventorySection player={player} items={items}/>
-        <PlayerVTTSection vttState={vttState} currentPlayerId={currentPlayerId} onMoveToken={onMoveToken}/>
         {grantedAbilitySets.length > 0 && (
           <div className="rf-abilities-wrap">
             <div className="rf-section-header" style={{ marginBottom: 14 }}>
@@ -2024,7 +1968,6 @@ export default function App() {
   const [players, setPlayers] = useState([]);
   const [abilitySets, setAbilitySets] = useState([]);
   const [items, setItems] = useState([]);
-  const [vttState, setVttState] = useState({ map_image: null, tokens: [] });
   const [currentPlayerId, setCurrentPlayerId] = useState(null);
   const [phase, setPhase] = useState('loading'); // loading | home | setup | join | login | dm | player
   const [live, setLive] = useState(false);
@@ -2061,14 +2004,13 @@ export default function App() {
         setPhase('join');
         return;
       }
-      const [treeRows, playerRows, abilitySetRows, itemRows, vttRow] = await Promise.all([fetchTrees(id), fetchPlayers(id), fetchAbilitySets(id), fetchItems(id), fetchVttState(id)]);
+      const [treeRows, playerRows, abilitySetRows, itemRows] = await Promise.all([fetchTrees(id), fetchPlayers(id), fetchAbilitySets(id), fetchItems(id)]);
       setCampaignId(id);
       setMeta(campaign);
       setTrees(treeRows);
       setPlayers(playerRows);
       setAbilitySets(abilitySetRows);
       setItems(itemRows);
-      setVttState(vttRow || { map_image: null, tokens: [] });
       setCampaignIdInUrl(id);
       const savedPlayerId = window.localStorage ? window.localStorage.getItem(`rf-player-${id}`) : null;
       if (savedPlayerId) setCurrentPlayerId(savedPlayerId);
@@ -2140,17 +2082,12 @@ export default function App() {
           return prev.some(i => i.id === row.id) ? prev.map(i => i.id===row.id ? row : i) : [...prev, row];
         });
       }).subscribe();
-    const vttChannel = supabase.channel(`vtt-${campaignId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'vtt_state', filter: `campaign_id=eq.${campaignId}` }, payload => {
-        if (payload.new) setVttState(payload.new);
-      }).subscribe();
     return () => {
       supabase.removeChannel(treesChannel);
       supabase.removeChannel(playersChannel);
       supabase.removeChannel(campaignChannel);
       supabase.removeChannel(abilitySetsChannel);
       supabase.removeChannel(itemsChannel);
-      supabase.removeChannel(vttChannel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignId]);
@@ -2158,11 +2095,9 @@ export default function App() {
   const refreshNow = async () => {
     if (!campaignId) return;
     try {
-      const [t, p, c, ab, it, vtt] = await Promise.all([fetchTrees(campaignId), fetchPlayers(campaignId), fetchCampaign(campaignId), fetchAbilitySets(campaignId), fetchItems(campaignId), fetchVttState(campaignId)]);
-      setTrees(t);
-      setPlayers(p);
-      setAbilitySets(ab);
-      if (c) setMeta(c);
+      const [t,p,c,ab,it]=await Promise.all([fetchTrees(campaignId),fetchPlayers(campaignId),fetchCampaign(campaignId),fetchAbilitySets(campaignId),fetchItems(campaignId)]);
+      setTrees(t);setPlayers(p);setAbilitySets(ab);setItems(it);
+      if(c)setMeta(c);
     } catch (e) {
       console.error(e);
       showToast('Could not refresh — check your connection.');
@@ -2237,7 +2172,7 @@ export default function App() {
   };
 
   const handleAddPlayer = async (name) => {
-    const newPlayer = { id: uid('player'), campaign_id: campaignId, name, unlocked_runes: [], equipped_runes: [], granted_abilities: [], max_mana: 10, current_mana: 10, inventory: [] };
+    const newPlayer = { id:uid('player'),campaign_id:campaignId,name,unlocked_runes:[],equipped_runes:[],granted_abilities:[],max_mana:10,current_mana:10,inventory:[],notes:'',character_class:'',race:'',str_score:10,dex_score:10,con_score:10,int_score:10,wis_score:10,cha_score:10,level:1 };
     setPlayers((prev) => [...prev, newPlayer]);
     const { error } = await supabase.from('players').insert([newPlayer]);
     if (error) { console.error(error); showToast('Failed to add player.'); }
@@ -2380,39 +2315,16 @@ export default function App() {
     if (error) { console.error(error); showToast('Failed to update inventory.'); }
   };
 
-  /* ── VTT HANDLERS ── */
-  const handleUploadMap = async (e) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    showToast('Compressing image…');
-    try {
-      const base64 = await compressImage(file);
-      const newState = { campaign_id: campaignId, map_image: base64, tokens: vttState.tokens||[] };
-      setVttState(newState);
-      const { error } = await supabase.from('vtt_state').upsert([newState], { onConflict: 'campaign_id' });
-      if (error) throw error;
-      showToast('Map uploaded!');
-    } catch (err) { console.error(err); showToast('Failed to upload map.'); }
-    e.target.value = '';
-  };
-  const handleMoveToken = async (tokenId, x, y) => {
-    const tokens = (vttState.tokens||[]).map(t=>t.id===tokenId?{...t,x,y}:t);
-    setVttState(prev => ({ ...prev, tokens }));
-    await supabase.from('vtt_state').update({ tokens }).eq('campaign_id', campaignId);
-  };
-  const handleAddToken = async (token) => {
-    const tokens = [...(vttState.tokens||[]), token];
-    const newState = { campaign_id: campaignId, map_image: vttState.map_image||null, tokens };
-    setVttState(newState);
-    const { error } = await supabase.from('vtt_state').upsert([newState], { onConflict: 'campaign_id' });
-    if (error) { console.error(error); showToast('Failed to add token.'); }
-  };
-  const handleRemoveToken = async (tokenId) => {
-    const tokens = (vttState.tokens||[]).filter(t=>t.id!==tokenId);
-    setVttState(prev => ({ ...prev, tokens }));
-    await supabase.from('vtt_state').update({ tokens }).eq('campaign_id', campaignId);
-  };
 
-
+  const handleSetPlayerLevel = async (playerId, level) => {
+    setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,level}:p));
+    await supabase.from('players').update({level}).eq('id',playerId);
+  };
+  const handleSaveCharacter = async (playerId, data) => {
+    setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,...data}:p));
+    const {error}=await supabase.from('players').update(data).eq('id',playerId);
+    if(error){console.error(error);showToast('Failed to save character.');}
+  };
   const handleSaveNotes = async (playerId, notes) => {
     setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, notes } : p));
     await supabase.from('players').update({ notes }).eq('id', playerId);
@@ -2433,7 +2345,6 @@ export default function App() {
       await supabase.from('rune_trees').delete().eq('campaign_id', campaignId);
       await supabase.from('ability_sets').delete().eq('campaign_id', campaignId);
       await supabase.from('items').delete().eq('campaign_id', campaignId);
-      await supabase.from('vtt_state').delete().eq('campaign_id', campaignId);
       await supabase.from('campaigns').delete().eq('id', campaignId);
     } catch (e) {
       console.error(e);
@@ -2529,7 +2440,6 @@ export default function App() {
           players={players}
           abilitySets={abilitySets}
           items={items}
-          vttState={vttState}
           live={live}
           onSaveTree={handleSaveTree}
           onDeleteTree={handleDeleteTree}
@@ -2543,10 +2453,7 @@ export default function App() {
           onSaveItem={handleSaveItem}
           onDeleteItem={handleDeleteItem}
           onSetItemQty={handleSetItemQty}
-          onUploadMap={handleUploadMap}
-          onMoveToken={handleMoveToken}
-          onAddToken={handleAddToken}
-          onRemoveToken={handleRemoveToken}
+          onSetPlayerLevel={handleSetPlayerLevel}
           onSaveMeta={handleSaveMeta}
           onExit={handleExit}
           onReset={handleReset}
@@ -2561,7 +2468,6 @@ export default function App() {
           players={players}
           abilitySets={abilitySets}
           items={items}
-          vttState={vttState}
           currentPlayerId={currentPlayerId}
           live={live}
           onSelectPlayer={handleSelectPlayer}
@@ -2569,7 +2475,7 @@ export default function App() {
           onToggleEquip={handleToggleEquip}
           onAdjustMana={handleAdjustMana}
           onUseAbility={handleUseAbility}
-          onMoveToken={handleMoveToken}
+          onSaveCharacter={handleSaveCharacter}
           onSaveNotes={handleSaveNotes}
           onExit={handleExit}
           onRefresh={refreshNow}
