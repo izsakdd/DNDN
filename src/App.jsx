@@ -434,6 +434,30 @@ const CSS = `
 .rf-grant-comp-check { width:22px; height:22px; border-radius:6px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; }
 .rf-grant-comp-check--on { background:var(--gold); border-color:var(--gold); color:#1a1308; }
 
+
+/* ===== RUNE POPOVER ===== */
+.rf-rune-popover {
+  position: fixed;
+  width: 264px;
+  background: var(--surface);
+  border: 1px solid rgba(var(--tc-rgb),0.35);
+  border-left: 4px solid var(--tc);
+  border-radius: 13px;
+  padding: 15px 17px 14px;
+  box-shadow: 0 10px 36px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.12);
+  z-index: 60;
+  animation: rf-pop-in .13s cubic-bezier(.22,1,.36,1);
+}
+@keyframes rf-pop-in {
+  from { opacity:0; transform:scale(0.93) translateX(-6px); }
+  to   { opacity:1; transform:scale(1) translateX(0); }
+}
+.rf-popover-close {
+  position:absolute; top:8px; right:8px; background:transparent; border:none;
+  color:var(--text-muted); cursor:pointer; padding:3px; display:flex; align-items:center; border-radius:5px;
+}
+.rf-popover-close:hover { color:var(--text); background:var(--surface-2); }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -550,7 +574,7 @@ function RuneNode({ rune, icon, status, selected, onClick }) {
   const locked = status === 'locked' || status === 'ungranted';
   const equipped = status === 'equipped';
   return (
-    <div className="rf-node-wrap" onClick={onClick}>
+    <div className="rf-node-wrap" onClick={(e) => onClick(e)}>
       <div className={`rf-node rf-node--${status}${selected ? ' rf-node--selected' : ''}`}>
         <span>{icon}</span>
         {locked && <div className="rf-lock-badge"><Lock size={10} /></div>}
@@ -598,7 +622,7 @@ function RuneTreeView({ tree, mode, unlockedIds, equippedIds, selectedRuneId, on
                       icon={tree.icon}
                       status={status}
                       selected={selectedRuneId === rune.id}
-                      onClick={() => onRuneClick(rune, tree, status)}
+                      onClick={(e) => onRuneClick(rune, tree, status, e)}
                     />
                   );
                 })}
@@ -800,6 +824,52 @@ function AbilityItem({ ability, currentMana, onUse }) {
   );
 }
 
+
+/* ============================================================
+   RUNE POPOVER PANEL
+   ============================================================ */
+
+function FixedDetailPanel({ rune, tree, pos, onClose }) {
+  const ref = useRef(null);
+  const [fp, setFp] = useState(null);
+  const color = TREE_COLORS[tree.color] || TREE_COLORS.gold;
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let x = pos.x, y = pos.y;
+    if (x + 272 > vw - 12) x = Math.max(12, pos.x - 272 - 68);
+    if (y + r.height > vh - 12) y = Math.max(12, vh - r.height - 12);
+    setFp({ x, y });
+  }, [pos]);
+
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    const t = setTimeout(() => document.addEventListener('mousedown', h), 20);
+    return () => { clearTimeout(t); document.removeEventListener('mousedown', h); };
+  }, [onClose]);
+
+  return (
+    <div ref={ref} className="rf-rune-popover"
+      style={{ left: fp ? fp.x : pos.x, top: fp ? fp.y : pos.y, '--tc': color.hex, '--tc-rgb': color.rgb }}>
+      <button className="rf-popover-close" onClick={onClose}><X size={14}/></button>
+      <div className="rf-detail-title" style={{paddingRight:20}}>{tree.icon} {rune.name}</div>
+      <div className="rf-detail-tier">{tree.name} · Tier {rune.tier}</div>
+      {rune.effect && <div className="rf-detail-effect">{rune.effect}</div>}
+      {(rune.req_level > 0 || rune.req_stat) && (
+        <div className="rf-req-badges">
+          {rune.req_level > 0 && <span className="rf-req-badge">Level {rune.req_level}+</span>}
+          {rune.req_stat && <span className="rf-req-badge">{rune.req_stat} {rune.req_stat_val}+</span>}
+        </div>
+      )}
+      {rune.description
+        ? <div className="rf-detail-desc" style={{marginTop:8}}>{rune.description}</div>
+        : <div className="rf-detail-desc rf-detail-desc--muted" style={{marginTop:8}}>No lore written for this rune yet.</div>}
+    </div>
+  );
+}
+
 /* ============================================================
    DM: TREE EDITOR
    ============================================================ */
@@ -965,8 +1035,10 @@ function TreesTab({ trees, onOpenEditor }) {
 
 function RuneGrantModal({ player, trees, onClose, onToggleUnlock }) {
   const [selected, setSelected] = useState(null);
-  const handleClick = (rune, tree) => {
-    setSelected({ rune, tree });
+  const handleClick = (rune, tree, status, e) => {
+    if (selected?.rune?.id === rune.id) { setSelected(null); return; }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSelected({ rune, tree, pos: { x: rect.right + 14, y: rect.top - 20 } });
     onToggleUnlock(player.id, rune.id);
   };
   return (
@@ -986,10 +1058,10 @@ function RuneGrantModal({ player, trees, onClose, onToggleUnlock }) {
               mode="grant"
               unlockedIds={player.unlocked_runes || []}
               selectedRuneId={selected ? selected.rune.id : null}
-              onRuneClick={handleClick}
+              onRuneClick={(r,t,s,e) => handleClick(r,t,s,e)}
             />
           ))}
-          {selected && <DetailPanel rune={selected.rune} tree={selected.tree} />}
+          {selected && <FixedDetailPanel rune={selected.rune} tree={selected.tree} pos={selected.pos} onClose={() => setSelected(null)} />}
         </div>
         <div className="rf-modal-footer">
           <div style={{ flex: 1 }} />
@@ -1837,8 +1909,10 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, items,
     (t.runes || []).filter((r) => equipped.includes(r.id)).map((r) => ({ ...r, _tree: t }))
   );
 
-  const handleRuneClick = (rune, tree, status) => {
-    setSelected({ rune, tree });
+  const handleRuneClick = (rune, tree, status, e) => {
+    if (selected?.rune?.id === rune.id) { setSelected(null); return; }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSelected({ rune, tree, pos: { x: rect.right + 14, y: rect.top - 20 } });
     if (status === 'locked') return;
     onToggleEquip(player.id, rune.id);
   };
@@ -1926,7 +2000,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, items,
             />
           ))
         )}
-        {selected && <DetailPanel rune={selected.rune} tree={selected.tree} />}
+        {selected && <FixedDetailPanel rune={selected.rune} tree={selected.tree} pos={selected.pos} onClose={() => setSelected(null)} />}
         <PlayerNotepad player={player} onSave={onSaveNotes}/>
       </div>
     </div>
