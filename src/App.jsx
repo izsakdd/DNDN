@@ -394,6 +394,17 @@ const CSS = `
 .rf-stat-box-mod { font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700; color:var(--gold); }
 .rf-stat-box-score { font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; margin-top:1px; }
 /* DM level ctrl */
+
+/* ===== SKILL POINTS ===== */
+.rf-sp-badge { display:flex; flex-direction:column; align-items:center; background:rgba(61,143,196,0.12); border:2px solid rgba(61,143,196,0.4); border-radius:10px; padding:8px 14px; flex-shrink:0; }
+.rf-sp-badge-label { font-size:9px; text-transform:uppercase; letter-spacing:.12em; color:#3d8fc4; font-family:'Cinzel',serif; }
+.rf-sp-badge-val { font-family:'Cinzel',serif; font-size:24px; font-weight:700; color:#3d8fc4; line-height:1.1; }
+.rf-sp-notify { background:rgba(61,143,196,0.1); border:1px solid rgba(61,143,196,0.3); border-radius:9px; padding:9px 14px; display:flex; align-items:center; gap:8px; font-size:13px; color:#3d8fc4; font-weight:600; margin-top:12px; }
+.rf-stat-spend-btn { margin-top:5px; width:100%; background:rgba(61,143,196,0.15); border:1px solid rgba(61,143,196,0.4); color:#3d8fc4; border-radius:5px; font-size:11px; font-weight:700; padding:2px 0; cursor:pointer; transition:all .15s; }
+.rf-stat-spend-btn:hover { background:rgba(61,143,196,0.28); border-color:#3d8fc4; }
+.rf-sp-ctrl { display:flex; align-items:center; gap:5px; }
+.rf-sp-ctrl-label { font-size:10px; color:var(--text-muted); font-family:'Cinzel',serif; margin-right:2px; }
+.rf-sp-ctrl-val { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#3d8fc4; min-width:22px; text-align:center; }
 .rf-level-ctrl { display:flex; align-items:center; gap:5px; }
 .rf-level-ctrl-btn { width:22px; height:22px; border-radius:5px; border:1px solid var(--border); background:transparent; color:var(--text-muted); font-size:14px; display:flex; align-items:center; justify-content:center; line-height:1; cursor:pointer; }
 .rf-level-ctrl-btn:hover { border-color:var(--gold); color:var(--gold); }
@@ -682,16 +693,21 @@ function TopHeader({ meta, role, playerName, onExit, onRefresh, onSwitchPlayer, 
    CHARACTER CREATION & STAT BLOCK
    ============================================================ */
 
-function StatBlock({ player }) {
+function StatBlock({ player, onSpend }) {
+  const pts = player.skill_points || 0;
   return (
     <div className="rf-stat-block">
       {STATS.map(({key,label}) => {
         const v = player[key]||10;
+        const canSpend = pts > 0 && onSpend && v < 30;
         return (
           <div key={key} className="rf-stat-box">
             <div className="rf-stat-box-label">{label}</div>
             <div className="rf-stat-box-mod">{modStr(v)}</div>
             <div className="rf-stat-box-score">{v}</div>
+            {canSpend && (
+              <button className="rf-stat-spend-btn" onClick={() => onSpend(key)}>+1</button>
+            )}
           </div>
         );
       })}
@@ -1573,7 +1589,7 @@ function PlayerCompanionsSection({ player, companions }) {
   );
 }
 
-function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel, onOpenCompanions }) {
+function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel, onGiveSkillPoints, onOpenCompanions }) {
   const [newName, setNewName] = useState('');
   const totalRunes = trees.reduce((sum, t) => sum + (t.runes || []).length, 0);
   const totalAbilities = abilitySets.reduce((sum, s) => sum + (s.abilities || []).length, 0);
@@ -1612,6 +1628,12 @@ function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDe
                 <button className="rf-level-ctrl-btn" onClick={()=>onSetPlayerLevel(p.id,Math.max(1,(p.level||1)-1))}>-</button>
                 <div className="rf-level-ctrl-val">{p.level||1}</div>
                 <button className="rf-level-ctrl-btn" onClick={()=>onSetPlayerLevel(p.id,Math.min(20,(p.level||1)+1))}>+</button>
+              </div>
+              <div className="rf-sp-ctrl">
+                <span className="rf-sp-ctrl-label">SP</span>
+                <button className="rf-level-ctrl-btn" onClick={()=>onGiveSkillPoints(p.id,-1)} disabled={(p.skill_points||0)<=0}>-</button>
+                <div className="rf-sp-ctrl-val">{p.skill_points||0}</div>
+                <button className="rf-level-ctrl-btn" onClick={()=>onGiveSkillPoints(p.id,+1)}>+</button>
               </div>
               <div className="rf-player-row-meta" style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>{(p.unlocked_runes || []).length}/{totalRunes} runes · {(p.granted_abilities || []).length}/{totalAbilities} abilities <span className="rf-mana-pill"><Droplet size={10}/> {p.current_mana ?? p.max_mana ?? 10}/{p.max_mana ?? 10}</span></div>
               <div className="rf-player-row-actions">
@@ -1701,7 +1723,7 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSaveMeta, onExit, onReset, onRefresh }) {
+function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
@@ -1729,7 +1751,7 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
       <div>
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
         {tab === 'abilities' && <AbilitiesTab abilitySets={abilitySets} onOpenEditor={setEditingAbilitySet} />}
-        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} companions={companions} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel} onOpenCompanions={setCompanionFor}/>}
+        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} companions={companions} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel} onGiveSkillPoints={onGiveSkillPoints} onOpenCompanions={setCompanionFor}/>}
         {tab === 'companions' && <CompanionsTab companions={companions} onOpenEditor={setEditingCompanion}/>}
         {tab === 'items' && <ItemsTab items={items} onOpenEditor={setEditingItem}/>}
         {tab === 'settings' && <SettingsTab meta={meta} shareUrl={shareUrl} onSave={onSaveMeta} onExit={onExit} onReset={onReset} />}
@@ -1883,7 +1905,7 @@ function PlayerNotepad({ player, onSave }) {
   );
 }
 
-function PlayerDashboard({ meta, trees, players, abilitySets, companions, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onSaveNotes, onSaveCharacter, onExit, onRefresh }) {
+function PlayerDashboard({ meta, trees, players, abilitySets, companions, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
@@ -1921,6 +1943,33 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, items,
     <div className="rf-page">
       <TopHeader meta={meta} role="player" playerName={player.name} onExit={onExit} onRefresh={onRefresh} onSwitchPlayer={() => onSelectPlayer(null)} live={live} />
       <div>
+        {/* Character header */}
+        <div className="rf-char-header">
+          <div className="rf-char-identity">
+            <div>
+              <div className="rf-char-name-big">{player.name}</div>
+              <div className="rf-char-sub">{player.character_class||'Unknown Class'} · {player.race||'Unknown Race'}</div>
+            </div>
+            <div className="rf-char-right">
+              {(player.skill_points||0) > 0 && (
+                <div className="rf-sp-badge">
+                  <div className="rf-sp-badge-label">Skill Pts</div>
+                  <div className="rf-sp-badge-val">{player.skill_points}</div>
+                </div>
+              )}
+              <div className="rf-level-badge">
+                <div className="rf-level-badge-label">Level</div>
+                <div className="rf-level-badge-val">{player.level||1}</div>
+              </div>
+              <button className="rf-char-edit-btn" onClick={()=>setShowSetup(true)}>✏️ Edit</button>
+            </div>
+          </div>
+          <StatBlock player={player} onSpend={onSpendSkillPoint ? (key) => onSpendSkillPoint(player.id, key) : null}/>
+          {(player.skill_points||0) > 0 && (
+            <div className="rf-sp-notify">✨ You have {player.skill_points} skill point{player.skill_points!==1?'s':''} — tap +1 on any stat to spend them!</div>
+          )}
+        </div>
+
         <div className="rf-loadout">
           <div className="rf-loadout-header">
             <div className="rf-loadout-title">Current Loadout</div>
@@ -2674,6 +2723,27 @@ export default function App() {
   };
 
 
+
+  const handleGiveSkillPoints = async (playerId, delta) => {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+    const skill_points = Math.max(0, (player.skill_points || 0) + delta);
+    setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, skill_points } : p));
+    await supabase.from('players').update({ skill_points }).eq('id', playerId);
+  };
+
+  const handleSpendSkillPoint = async (playerId, statKey) => {
+    const player = players.find(p => p.id === playerId);
+    if (!player || (player.skill_points || 0) <= 0) return;
+    const curStat = player[statKey] || 10;
+    if (curStat >= 30) return;
+    const updates = { skill_points: (player.skill_points || 0) - 1, [statKey]: curStat + 1 };
+    setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, ...updates } : p));
+    const { error } = await supabase.from('players').update(updates).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to spend skill point.'); }
+    else showToast(`+1 ${statKey.replace('_score','').toUpperCase().replace('INT','INT').replace('_','')} — ${updates.skill_points} point${updates.skill_points !== 1 ? 's' : ''} remaining`);
+  };
+
   const handleSetPlayerLevel = async (playerId, level) => {
     setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,level}:p));
     await supabase.from('players').update({level}).eq('id',playerId);
@@ -2814,6 +2884,7 @@ export default function App() {
           onDeleteItem={handleDeleteItem}
           onSetItemQty={handleSetItemQty}
           onSetPlayerLevel={handleSetPlayerLevel}
+          onGiveSkillPoints={handleGiveSkillPoints}
           onSaveCompanion={handleSaveCompanion}
           onDeleteCompanion={handleDeleteCompanion}
           onToggleCompanion={handleToggleCompanion}
@@ -2839,6 +2910,7 @@ export default function App() {
           onToggleEquip={handleToggleEquip}
           onAdjustMana={handleAdjustMana}
           onUseAbility={handleUseAbility}
+          onSpendSkillPoint={handleSpendSkillPoint}
           onSaveCharacter={handleSaveCharacter}
           onSaveNotes={handleSaveNotes}
           onExit={handleExit}
