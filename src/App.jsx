@@ -469,6 +469,61 @@ const CSS = `
 }
 .rf-popover-close:hover { color:var(--text); background:var(--surface-2); }
 
+
+/* ===== WEIGHT / LOAD ===== */
+.rf-load-bar-wrap{margin-top:10px}
+.rf-load-bar-track{height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden;border:1px solid var(--border)}
+.rf-load-bar-fill{height:100%;border-radius:5px;transition:width .4s,background .3s}
+.rf-load-tier{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
+.rf-load-tier-name{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700}
+.rf-load-tier-weight{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-muted)}
+.rf-over-warning{display:flex;align-items:center;gap:8px;background:rgba(196,69,60,0.1);border:1px solid rgba(196,69,60,0.4);border-radius:9px;padding:9px 13px;margin-top:8px;font-size:13px;color:var(--danger);font-weight:600}
+.rf-carry-setter{display:flex;align-items:center;gap:12px;background:rgba(79,157,110,0.08);border:1px solid rgba(79,157,110,0.25);border-radius:11px;padding:12px 16px;margin-bottom:16px;flex-wrap:wrap}
+.rf-carry-setter-label{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:#4f9d6e;flex:1}
+/* ===== ENCOUNTERS ===== */
+.rf-enc-active-banner{display:flex;align-items:center;gap:10px;background:rgba(196,69,60,0.10);border:1px solid rgba(196,69,60,0.35);border-radius:11px;padding:12px 16px;margin-bottom:16px;font-family:'Cinzel',serif;font-weight:600;font-size:14px}
+.rf-enc-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;transition:all .15s}
+.rf-enc-card--active{border-color:var(--danger);background:rgba(196,69,60,0.06)}
+.rf-enc-card-name{font-family:'Cinzel',serif;font-weight:600;font-size:14.5px}
+.rf-enc-card-meta{font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.rf-enc-add-form{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:14px;margin-bottom:12px}
+.rf-enc-combatant-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.rf-enc-editor-row{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:9px 12px}
+.rf-enc-editor-row--player{border-color:rgba(61,143,196,0.4)}
+.rf-enc-init-badge{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);min-width:28px;text-align:center}
+.rf-enc-view{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:18px}
+.rf-enc-view-header{display:flex;align-items:center;gap:12px;padding:14px 18px;background:rgba(196,69,60,0.08);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.rf-enc-view-title{font-family:'Cinzel',serif;font-size:16px;font-weight:700}
+.rf-enc-round{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:3px 9px}
+.rf-enc-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border);transition:background .15s}
+.rf-enc-row:last-child{border-bottom:none}
+.rf-enc-row--current{background:rgba(212,168,67,0.08);border-left:3px solid var(--gold)}
+.rf-enc-row--dead{opacity:.45}
+.rf-enc-turn-arrow{font-size:12px;color:var(--gold);width:14px;flex-shrink:0}
+.rf-enc-init{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);min-width:26px;text-align:center}
+.rf-enc-icon{font-size:18px;flex-shrink:0}
+.rf-enc-name-block{flex:1;min-width:0}
+.rf-enc-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rf-enc-hp-bar-wrap{height:5px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-top:4px}
+.rf-enc-hp-bar{height:100%;border-radius:3px;transition:width .3s,background .3s}
+.rf-enc-ac{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);white-space:nowrap;flex-shrink:0}
+.rf-enc-hp-ctrl{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.rf-enc-hp-ctrl button{width:28px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;font-weight:700;cursor:pointer}
+.rf-enc-hp-ctrl button:hover{border-color:var(--gold);color:var(--gold)}
+.rf-enc-hp-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;min-width:56px;text-align:center}
+.rf-enc-hp-display{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-muted);min-width:56px;text-align:center}
+.rf-enc-atk{font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Arsenal */
+.rf-arsenal{background:linear-gradient(135deg,var(--surface),var(--surface-2));border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:18px}
+.rf-arsenal-title{font-family:'Cinzel',serif;font-size:15px;font-weight:700;margin-bottom:12px}
+.rf-arsenal-section{margin-bottom:12px}
+.rf-arsenal-sub{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:7px}
+.rf-arsenal-item{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg);border-radius:9px;border-left:3px solid var(--gold);margin-bottom:6px}
+.rf-arsenal-icon{font-size:18px;flex-shrink:0}
+.rf-arsenal-name{font-size:13.5px;font-weight:600}
+.rf-arsenal-desc{font-size:12px;color:var(--text-muted);margin-top:1px}
+.rf-arsenal-mana{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#8b7ff5;margin-top:2px}
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -511,6 +566,24 @@ async function fetchAbilitySets(campaignId) {
 }
 
 
+
+async function fetchEncounters(campaignId) {
+  const { data, error } = await supabase.from('encounters').select('*').eq('campaign_id', campaignId);
+  if (error) throw error;
+  return data || [];
+}
+const LOAD_TIERS = [
+  { name:'Light Load',   maxPct:33,       color:'#4caf50' },
+  { name:'Medium Load',  maxPct:66,       color:'#ffc107' },
+  { name:'Heavy Load',   maxPct:99.9,     color:'#ff9800' },
+  { name:'Fully Loaded', maxPct:Infinity, color:'#f44336', encumbered:true },
+];
+function getLoadTier(carried, max) {
+  if (!max) return null;
+  const pct = (carried / max) * 100;
+  const tier = LOAD_TIERS.find(t => pct <= t.maxPct) || LOAD_TIERS[3];
+  return { ...tier, pct: Math.min(pct, 100) };
+}
 async function fetchCompanions(campaignId) {
   const { data, error } = await supabase.from('companions').select('*').eq('campaign_id', campaignId);
   if (error) throw error;
@@ -1300,7 +1373,7 @@ function ItemEditorModal({ item, onClose, onSave, onDelete }) {
           <textarea className="rf-textarea" rows={2} value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Magical properties or lore"/>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:14 }}>
             <div>
-              <label className="rf-label" style={{ marginTop:0 }}>Weight (lb)</label>
+              <label className="rf-label" style={{ marginTop:0 }}>Weight (kg)</label>
               <input className="rf-input" type="number" min="0" step="0.1" value={weight} onChange={e=>setWeight(e.target.value)}/>
             </div>
             <div>
@@ -1320,7 +1393,9 @@ function ItemEditorModal({ item, onClose, onSave, onDelete }) {
   );
 }
 
-function PlayerInventoryModal({ player, items, onClose, onSetItemQty }) {
+function PlayerInventoryModal({ player, items, onClose, onSetItemQty, onSetMaxCarry }) {
+  const [localMax, setLocalMax] = React.useState(player.max_carry_weight ?? 75);
+  const handleMaxBlur = () => onSetMaxCarry && onSetMaxCarry(player.id, Math.max(0, Number(localMax)||0));
   const getQty = id => (player.inventory||[]).find(e=>e.item_id===id)?.quantity || 0;
   const [qtys, setQtys] = useState(() => {
     const m = {};
@@ -1340,6 +1415,13 @@ function PlayerInventoryModal({ player, items, onClose, onSetItemQty }) {
           <button className="rf-icon-btn" onClick={onClose}><X size={18}/></button>
         </div>
         <div className="rf-modal-body">
+          <div className="rf-carry-setter">
+            <div className="rf-carry-setter-label">&#9878; Max carry weight for {player.name}</div>
+            <input className="rf-input" type="number" min="0" value={localMax}
+              onChange={e=>setLocalMax(e.target.value)} onBlur={handleMaxBlur}
+              style={{width:80,textAlign:'center'}}/>
+            <span style={{fontSize:13,color:'var(--text-muted)',fontWeight:600}}>kg</span>
+          </div>
           <p className="rf-modal-hint">Adjust quantities. Setting to 0 removes the item from the player.</p>
           {items.length === 0 && <div className="rf-empty-state">No items in catalog yet. Create some in the Items tab first.</div>}
           <div className="rf-inv-manage-list">
@@ -1349,7 +1431,7 @@ function PlayerInventoryModal({ player, items, onClose, onSetItemQty }) {
                 <div style={{ flex:1 }}>
                   <div style={{ fontWeight:600, fontSize:13.5 }}>{item.name}</div>
                   <div style={{ fontSize:11.5, color:'var(--text-muted)', fontFamily:"'JetBrains Mono',monospace" }}>
-                    {[item.weight>0&&`${item.weight}lb`, item.gold_value>0&&`${item.gold_value}gp`].filter(Boolean).join(' · ')}
+                    {[item.weight>0&&`${item.weight}kg`, item.gold_value>0&&`${item.gold_value}gp`].filter(Boolean).join(' · ')}
                   </div>
                 </div>
                 <div className="rf-qty-ctrl">
@@ -1388,7 +1470,7 @@ function ItemsTab({ items, onOpenEditor }) {
               <div className="rf-item-name">{item.name}</div>
               {item.description && <div className="rf-item-desc-sm">{item.description}</div>}
               <div className="rf-item-stats">
-                {item.weight>0 && <div className="rf-item-stat">{item.weight}<b>lb</b></div>}
+                {item.weight>0 && <div className="rf-item-stat">{item.weight}<b>kg</b></div>}
                 {item.gold_value>0 && <div className="rf-item-stat">{item.gold_value}<b>gp</b></div>}
               </div>
             </div>
@@ -1406,6 +1488,8 @@ function PlayerInventorySection({ player, items }) {
   if (inv.length === 0) return null;
   const totalW = inv.reduce((s,e)=>s+e.item.weight*e.quantity,0);
   const totalG = inv.reduce((s,e)=>s+e.item.gold_value*e.quantity,0);
+  const maxCarry = player.max_carry_weight ?? 75;
+  const load = getLoadTier(totalW, maxCarry);
   return (
     <div className="rf-inv-section">
       <div className="rf-inv-header">
@@ -1415,6 +1499,23 @@ function PlayerInventorySection({ player, items }) {
           {totalG>0 && <span className="rf-inv-total">\uD83E\uDE99 {totalG%1===0?totalG:totalG.toFixed(1)} gp</span>}
         </div>
       </div>
+      {(player.max_carry_weight??75)>0 && (() => {
+        const mc=player.max_carry_weight??75;
+        const load=getLoadTier(totalW,mc);
+        if(!load) return null;
+        return(
+          <div className="rf-load-bar-wrap">
+            <div className="rf-load-bar-track">
+              <div className="rf-load-bar-fill" style={{width:`${load.pct}%`,background:load.color}}/>
+            </div>
+            <div className="rf-load-tier">
+              <span className="rf-load-tier-name" style={{color:load.color}}>{load.name}</span>
+              <span className="rf-load-tier-weight">{totalW%1===0?totalW:totalW.toFixed(1)} / {mc} kg</span>
+            </div>
+            {load.encumbered&&<div className="rf-over-warning">&#9888; Encumbered — carrying more than your limit!</div>}
+          </div>
+        );
+      })()}
       <div className="rf-inv-list">
         {inv.map(e => (
           <div key={e.item_id} className="rf-inv-item">
@@ -1424,7 +1525,7 @@ function PlayerInventorySection({ player, items }) {
               {e.item.description && <div className="rf-inv-item-desc">{e.item.description}</div>}
               {(e.item.weight>0||e.item.gold_value>0) && (
                 <div className="rf-inv-item-meta">
-                  {e.item.weight>0 && <span>{e.item.weight}lb ea</span>}
+                  {e.item.weight>0 && <span>{e.item.weight} kg ea</span>}
                   {e.item.gold_value>0 && <span>{e.item.gold_value}gp ea</span>}
                 </div>
               )}
@@ -1437,6 +1538,214 @@ function PlayerInventorySection({ player, items }) {
   );
 }
 
+
+
+/* ============================================================
+   ENCOUNTERS
+   ============================================================ */
+
+function EncounterEditorModal({ encounter, players, onClose, onSave, onDelete }) {
+  const isNew = !encounter;
+  const [name, setName] = React.useState(encounter?.name||'New Encounter');
+  const [combatants, setCombatants] = React.useState(encounter?.combatants||[]);
+  const [mode, setMode] = React.useState(null);
+  const [eName,setEName]=React.useState(''); const [eInit,setEInit]=React.useState('');
+  const [eHP,setEHP]=React.useState(''); const [eAC,setEAC]=React.useState(''); const [eAtk,setEAtk]=React.useState('');
+  const [pId,setPId]=React.useState(''); const [pInit,setPInit]=React.useState('');
+  const [pHP,setPHP]=React.useState(''); const [pAC,setPAC]=React.useState('');
+  const sorted = arr => [...arr].sort((a,b)=>b.initiative-a.initiative);
+  const addEnemy = () => {
+    if(!eName.trim()) return;
+    const hp=Number(eHP)||1;
+    setCombatants(prev=>sorted([...prev,{id:uid('c'),type:'enemy',name:eName.trim(),initiative:Number(eInit)||0,max_hp:hp,current_hp:hp,ac:Number(eAC)||10,attack:eAtk.trim(),is_defeated:false}]));
+    setEName('');setEInit('');setEHP('');setEAC('');setEAtk('');setMode(null);
+  };
+  const addPlayer = () => {
+    const pl=players.find(p=>p.id===pId); if(!pl) return;
+    const hp=Number(pHP)||20;
+    setCombatants(prev=>sorted([...prev,{id:uid('c'),type:'player',player_id:pId,name:pl.name,initiative:Number(pInit)||0,max_hp:hp,current_hp:hp,ac:Number(pAC)||(10+statMod(pl.dex_score||10)),is_defeated:false}]));
+    setPId('');setPInit('');setPHP('');setPAC('');setMode(null);
+  };
+  return(
+    <div className="rf-modal-overlay" onClick={onClose}>
+      <div className="rf-modal rf-modal-wide" onClick={e=>e.stopPropagation()}>
+        <div className="rf-modal-header"><h3>{isNew?'New Encounter':'Edit Encounter'}</h3><button className="rf-icon-btn" onClick={onClose}><X size={18}/></button></div>
+        <div className="rf-modal-body">
+          <label className="rf-label">Encounter Name</label>
+          <input className="rf-input" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Goblin Ambush"/>
+          <div className="rf-tier-editor-header">
+            <label className="rf-label" style={{margin:0}}>Combatants</label>
+            <div style={{display:'flex',gap:8}}>
+              <button type="button" className="rf-btn-ghost-sm" onClick={()=>setMode('player')}>+ Player</button>
+              <button type="button" className="rf-btn-primary" style={{fontSize:12,padding:'6px 10px'}} onClick={()=>setMode('enemy')}>+ Enemy</button>
+            </div>
+          </div>
+          {mode==='enemy'&&(
+            <div className="rf-enc-add-form">
+              <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:8,marginBottom:8}}>
+                <input className="rf-input rf-input-sm" value={eName} onChange={e=>setEName(e.target.value)} placeholder="Name"/>
+                <input className="rf-input rf-input-sm" type="number" value={eInit} onChange={e=>setEInit(e.target.value)} placeholder="Init"/>
+                <input className="rf-input rf-input-sm" type="number" value={eHP} onChange={e=>setEHP(e.target.value)} placeholder="HP"/>
+                <input className="rf-input rf-input-sm" type="number" value={eAC} onChange={e=>setEAC(e.target.value)} placeholder="AC"/>
+              </div>
+              <input className="rf-input rf-input-sm" value={eAtk} onChange={e=>setEAtk(e.target.value)} placeholder="Attack (e.g. +4 to hit, 1d6+2)" style={{display:'block',marginBottom:8}}/>
+              <div style={{display:'flex',gap:8}}>
+                <button className="rf-btn-ghost" onClick={()=>setMode(null)}>Cancel</button>
+                <button className="rf-btn-primary" disabled={!eName.trim()} onClick={addEnemy}>Add Enemy</button>
+              </div>
+            </div>
+          )}
+          {mode==='player'&&(
+            <div className="rf-enc-add-form">
+              <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:8,marginBottom:8}}>
+                <select className="rf-input rf-input-sm" value={pId} onChange={e=>{setPId(e.target.value);const pl=players.find(p=>p.id===e.target.value);if(pl)setPAC(String(10+statMod(pl.dex_score||10)));}} >
+                  <option value="">Select player...</option>
+                  {players.filter(p=>!combatants.some(c=>c.player_id===p.id)).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+                <input className="rf-input rf-input-sm" type="number" value={pInit} onChange={e=>setPInit(e.target.value)} placeholder="Init"/>
+                <input className="rf-input rf-input-sm" type="number" value={pHP} onChange={e=>setPHP(e.target.value)} placeholder="HP"/>
+                <input className="rf-input rf-input-sm" type="number" value={pAC} onChange={e=>setPAC(e.target.value)} placeholder="AC"/>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button className="rf-btn-ghost" onClick={()=>setMode(null)}>Cancel</button>
+                <button className="rf-btn-primary" disabled={!pId} onClick={addPlayer}>Add Player</button>
+              </div>
+            </div>
+          )}
+          {combatants.length===0
+            ?<div className="rf-empty-mini">No combatants yet. Add enemies and players above — they auto-sort by initiative.</div>
+            :<div className="rf-enc-combatant-list">
+              {combatants.map(c=>(
+                <div key={c.id} className={`rf-enc-editor-row${c.type==='player'?' rf-enc-editor-row--player':''}`}>
+                  <div className="rf-enc-init-badge">{c.initiative}</div>
+                  <div className="rf-enc-icon">{c.type==='player'?'👤':'👹'}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,fontSize:13.5}}>{c.name}</div>
+                    <div style={{fontSize:11.5,color:'var(--text-muted)'}}>HP {c.max_hp} · AC {c.ac}{c.attack?` · ${c.attack}`:''}</div>
+                  </div>
+                  <button className="rf-icon-btn-danger" onClick={()=>setCombatants(prev=>prev.filter(x=>x.id!==c.id))}><Trash2 size={14}/></button>
+                </div>
+              ))}
+            </div>
+          }
+        </div>
+        <div className="rf-modal-footer">
+          {!isNew&&<DeleteConfirmButton onConfirm={()=>onDelete(encounter.id)} label="delete encounter"/>}
+          <div style={{flex:1}}/>
+          <button className="rf-btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="rf-btn-primary" onClick={()=>onSave({id:encounter?.id||uid('enc'),name:name.trim()||'Encounter',active:encounter?.active||false,round:encounter?.round||1,turn_index:encounter?.turn_index||0,combatants})}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EncountersTab({ encounters, onOpenEditor, onActivate, onEnd }) {
+  const active = encounters.find(e=>e.active);
+  return(
+    <div>
+      <div className="rf-section-header">
+        <h2 className="rf-section-title">Encounters</h2>
+        <button className="rf-btn-primary" onClick={()=>onOpenEditor(null)}><Plus size={15}/> New</button>
+      </div>
+      {active&&<div className="rf-enc-active-banner">⚔️ Active: {active.name} — Round {active.round}<button style={{marginLeft:'auto',background:'transparent',border:'1px solid var(--danger)',color:'var(--danger)',borderRadius:7,padding:'5px 10px',fontSize:12,cursor:'pointer'}} onClick={onEnd}>End</button></div>}
+      {encounters.length===0
+        ?<div className="rf-empty-state">No encounters yet. Create one to run live combat with initiative and HP tracking.</div>
+        :<div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {encounters.map(enc=>(
+            <div key={enc.id} className={`rf-enc-card${enc.active?' rf-enc-card--active':''}`}>
+              <div style={{flex:1}}>
+                <div className="rf-enc-card-name">{enc.active?'⚔️ ':'📋 '}{enc.name}</div>
+                <div className="rf-enc-card-meta">{enc.combatants.length} combatants · Round {enc.round}{enc.active?` · Turn ${enc.turn_index+1}`:''}</div>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                {!enc.active&&<button className="rf-btn-ghost-sm" onClick={()=>onActivate(enc.id)}>⚔️ Activate</button>}
+                <button className="rf-btn-ghost-sm" onClick={()=>onOpenEditor(enc)}>Edit</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+function ActiveEncounterView({ encounter, isGM, onUpdateHP, onNextTurn, onEndEncounter }) {
+  if(!encounter) return null;
+  return(
+    <div className="rf-enc-view">
+      <div className="rf-enc-view-header">
+        <div className="rf-enc-view-title">⚔️ {encounter.name}</div>
+        <div className="rf-enc-round">Round {encounter.round}</div>
+        {isGM&&<div style={{display:'flex',gap:8,marginLeft:'auto'}}>
+          <button className="rf-btn-ghost-sm" onClick={onNextTurn}>Next Turn ►</button>
+          <button style={{background:'transparent',border:'1px solid var(--danger)',color:'var(--danger)',borderRadius:7,padding:'5px 10px',fontSize:12,cursor:'pointer'}} onClick={onEndEncounter}>End</button>
+        </div>}
+      </div>
+      <div>
+        {encounter.combatants.map((c,i)=>{
+          const cur=i===encounter.turn_index;
+          const dead=c.current_hp<=0;
+          const pct=Math.max(0,Math.min(100,(c.current_hp/c.max_hp)*100));
+          const col=pct>50?'#4caf50':pct>25?'#ffc107':'#f44336';
+          return(
+            <div key={c.id} className={`rf-enc-row${cur?' rf-enc-row--current':''}${dead?' rf-enc-row--dead':''}`}>
+              <div className="rf-enc-turn-arrow">{cur?'►':''}</div>
+              <div className="rf-enc-init">{c.initiative}</div>
+              <div className="rf-enc-icon">{c.type==='player'?'👤':'👹'}</div>
+              <div className="rf-enc-name-block">
+                <div className="rf-enc-name" style={{textDecoration:dead?'line-through':'none'}}>{c.name}</div>
+                <div className="rf-enc-hp-bar-wrap"><div className="rf-enc-hp-bar" style={{width:`${pct}%`,background:col}}/></div>
+              </div>
+              <div className="rf-enc-ac">🛡{c.ac}</div>
+              {isGM?(
+                <div className="rf-enc-hp-ctrl">
+                  <button onClick={()=>onUpdateHP(c.id,-5)}>-5</button>
+                  <button onClick={()=>onUpdateHP(c.id,-1)}>-1</button>
+                  <span className="rf-enc-hp-val">{c.current_hp}/{c.max_hp}</span>
+                  <button onClick={()=>onUpdateHP(c.id,+1)}>+1</button>
+                  <button onClick={()=>onUpdateHP(c.id,+5)}>+5</button>
+                </div>
+              ):(
+                <div className="rf-enc-hp-display">{c.current_hp}/{c.max_hp}</div>
+              )}
+              {isGM&&c.attack&&<div className="rf-enc-atk">{c.attack}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PlayerArsenal({ player, items, abilitySets }) {
+  const weapons=(player.inventory||[]).map(e=>({...e,item:items.find(i=>i.id===e.item_id)})).filter(e=>e.item&&e.item.category==='weapon'&&e.quantity>0);
+  const abilities=abilitySets.flatMap(s=>(s.abilities||[]).filter(ab=>(player.granted_abilities||[]).includes(ab.id)).map(ab=>({...ab,setIcon:s.icon})));
+  if(!weapons.length&&!abilities.length) return null;
+  return(
+    <div className="rf-arsenal">
+      <div className="rf-arsenal-title">⚔️ Your Arsenal</div>
+      {weapons.length>0&&<div className="rf-arsenal-section">
+        <div className="rf-arsenal-sub">Weapons</div>
+        {weapons.map(e=>(
+          <div key={e.item_id} className="rf-arsenal-item">
+            <span className="rf-arsenal-icon">⚔️</span>
+            <div><div className="rf-arsenal-name">{e.item.name}</div>{e.item.description&&<div className="rf-arsenal-desc">{e.item.description}</div>}</div>
+          </div>
+        ))}
+      </div>}
+      {abilities.length>0&&<div className="rf-arsenal-section">
+        <div className="rf-arsenal-sub">Abilities</div>
+        {abilities.map(ab=>(
+          <div key={ab.id} className="rf-arsenal-item">
+            <span className="rf-arsenal-icon">{ab.setIcon||'✨'}</span>
+            <div><div className="rf-arsenal-name">{ab.name}</div><div className="rf-arsenal-mana">💧 {ab.mana_cost} mana{ab.effect?` · ${ab.effect}`:''}</div></div>
+          </div>
+        ))}
+      </div>}
+    </div>
+  );
+}
 
 /* ============================================================
    COMPANIONS
@@ -1589,7 +1898,7 @@ function PlayerCompanionsSection({ player, companions }) {
   );
 }
 
-function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel, onGiveSkillPoints, onOpenCompanions }) {
+function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel, onGiveSkillPoints, onOpenCompanions, onOpenEncounterAssign }) {
   const [newName, setNewName] = useState('');
   const totalRunes = trees.reduce((sum, t) => sum + (t.runes || []).length, 0);
   const totalAbilities = abilitySets.reduce((sum, s) => sum + (s.abilities || []).length, 0);
@@ -1723,7 +2032,7 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSaveMeta, onExit, onReset, onRefresh }) {
+function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
@@ -1733,6 +2042,8 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
   const [inventoryFor, setInventoryFor] = useState(null);
   const [editingCompanion, setEditingCompanion] = useState(undefined);
   const [companionFor, setCompanionFor] = useState(null);
+  const [editingEncounter, setEditingEncounter] = useState(undefined);
+  const activeEncounter = encounters.find(e=>e.active)||null;
 
   const livePlayer = grantingPlayer ? (players.find((p) => p.id === grantingPlayer.id) || grantingPlayer) : null;
   const liveAbilityPlayer = grantingAbilitiesFor ? (players.find((p) => p.id === grantingAbilitiesFor.id) || grantingAbilitiesFor) : null;
@@ -1744,6 +2055,7 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
         <button className={`rf-tab${tab === 'trees' ? ' rf-tab--active' : ''}`} onClick={() => setTab('trees')}><ScrollText size={15} /> Rune Paths</button>
         <button className={`rf-tab${tab === 'abilities' ? ' rf-tab--active' : ''}`} onClick={() => setTab('abilities')}><Zap size={15} /> Abilities</button>
         <button className={`rf-tab${tab === 'players' ? ' rf-tab--active' : ''}`} onClick={() => setTab('players')}><Users size={15} /> Players</button>
+        <button className={`rf-tab${tab === 'encounters' ? ' rf-tab--active' : ''}`} onClick={() => setTab('encounters')}>⚔️ Encounters</button>
         <button className={`rf-tab${tab === 'companions' ? ' rf-tab--active' : ''}`} onClick={() => setTab('companions')}>\uD83D\uDC3E Companions</button>
         <button className={`rf-tab${tab === 'items' ? ' rf-tab--active' : ''}`} onClick={() => setTab('items')}><Package size={15}/> Items</button>
         <button className={`rf-tab${tab === 'settings' ? ' rf-tab--active' : ''}`} onClick={() => setTab('settings')}><Settings size={15} /> Settings</button>
@@ -1752,6 +2064,8 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
         {tab === 'abilities' && <AbilitiesTab abilitySets={abilitySets} onOpenEditor={setEditingAbilitySet} />}
         {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} companions={companions} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel} onGiveSkillPoints={onGiveSkillPoints} onOpenCompanions={setCompanionFor}/>}
+        {tab === 'encounters' && <><EncountersTab encounters={encounters} onOpenEditor={setEditingEncounter} onActivate={onActivateEncounter} onEnd={onEndEncounter}/>{activeEncounter&&<div style={{marginTop:18}}><ActiveEncounterView encounter={activeEncounter} isGM={true} onUpdateHP={(cId,d)=>onUpdateCombatantHP(activeEncounter.id,cId,d)} onNextTurn={()=>onNextTurn(activeEncounter.id)} onEndEncounter={onEndEncounter}/></div>}</>
+        }
         {tab === 'companions' && <CompanionsTab companions={companions} onOpenEditor={setEditingCompanion}/>}
         {tab === 'items' && <ItemsTab items={items} onOpenEditor={setEditingItem}/>}
         {tab === 'settings' && <SettingsTab meta={meta} shareUrl={shareUrl} onSave={onSaveMeta} onExit={onExit} onReset={onReset} />}
@@ -1796,11 +2110,16 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
           companions={companions} onClose={()=>setCompanionFor(null)}
           onToggle={onToggleCompanion}/>
       )}
+      {editingEncounter !== undefined && (
+        <EncounterEditorModal encounter={editingEncounter} players={players} onClose={()=>setEditingEncounter(undefined)}
+          onSave={enc=>{onSaveEncounter(enc);setEditingEncounter(undefined);}}
+          onDelete={id=>{onDeleteEncounter(id);setEditingEncounter(undefined);}}/>
+      )}
       {inventoryFor && (
         <PlayerInventoryModal
           player={players.find(p=>p.id===inventoryFor.id)||inventoryFor}
           items={items} onClose={()=>setInventoryFor(null)}
-          onSetItemQty={onSetItemQty}/>
+          onSetItemQty={onSetItemQty} onSetMaxCarry={onSetMaxCarry}/>
       )}
       {liveAbilityPlayer && (
         <AbilityGrantModal
@@ -1905,7 +2224,7 @@ function PlayerNotepad({ player, onSave }) {
   );
 }
 
-function PlayerDashboard({ meta, trees, players, abilitySets, companions, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh }) {
+function PlayerDashboard({ meta, trees, players, abilitySets, companions, encounters, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
@@ -1943,6 +2262,8 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, items,
     <div className="rf-page">
       <TopHeader meta={meta} role="player" playerName={player.name} onExit={onExit} onRefresh={onRefresh} onSwitchPlayer={() => onSelectPlayer(null)} live={live} />
       <div>
+        {/* Active encounter */}
+        {(()=>{const ae=encounters&&encounters.find(e=>e.active);return ae?(<><ActiveEncounterView encounter={ae} isGM={false} onUpdateHP={()=>{}} onNextTurn={()=>{}} onEndEncounter={()=>{}}/><PlayerArsenal player={player} items={items} abilitySets={abilitySets}/></>):null;})()}
         {/* Character header */}
         <div className="rf-char-header">
           <div className="rf-char-identity">
@@ -2334,6 +2655,7 @@ export default function App() {
   const [trees, setTrees] = useState([]);
   const [players, setPlayers] = useState([]);
   const [abilitySets, setAbilitySets] = useState([]);
+  const [encounters, setEncounters] = useState([]);
   const [companions, setCompanions] = useState([]);
   const [items, setItems] = useState([]);
   const [currentPlayerId, setCurrentPlayerId] = useState(null);
@@ -2372,12 +2694,13 @@ export default function App() {
         setPhase('join');
         return;
       }
-      const [treeRows, playerRows, abilitySetRows, compRows, itemRows] = await Promise.all([fetchTrees(id), fetchPlayers(id), fetchAbilitySets(id), fetchCompanions(id), fetchItems(id)]);
+      const [treeRows, playerRows, abilitySetRows, encRows, compRows, itemRows] = await Promise.all([fetchTrees(id), fetchPlayers(id), fetchAbilitySets(id), fetchEncounters(id), fetchCompanions(id), fetchItems(id)]);
       setCampaignId(id);
       setMeta(campaign);
       setTrees(treeRows);
       setPlayers(playerRows);
       setAbilitySets(abilitySetRows);
+      setEncounters(encRows);
       setCompanions(compRows);
       setItems(itemRows);
       setCampaignIdInUrl(id);
@@ -2443,6 +2766,14 @@ export default function App() {
       })
       .subscribe();
 
+    const encounterChannel = supabase.channel(`encounters-${campaignId}`)
+      .on('postgres_changes',{event:'*',schema:'public',table:'encounters',filter:`campaign_id=eq.${campaignId}`},payload=>{
+        setEncounters(prev=>{
+          if(payload.eventType==='DELETE') return prev.filter(e=>e.id!==payload.old.id);
+          const row=payload.new;
+          return prev.some(e=>e.id===row.id)?prev.map(e=>e.id===row.id?row:e):[...prev,row];
+        });
+      }).subscribe();
     const companionsChannel = supabase.channel(`companions-${campaignId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'companions', filter: `campaign_id=eq.${campaignId}` }, payload => {
         setCompanions(prev => {
@@ -2465,6 +2796,7 @@ export default function App() {
       supabase.removeChannel(playersChannel);
       supabase.removeChannel(campaignChannel);
       supabase.removeChannel(abilitySetsChannel);
+      supabase.removeChannel(encounterChannel);
       supabase.removeChannel(companionsChannel);
       supabase.removeChannel(itemsChannel);
     };
@@ -2474,8 +2806,8 @@ export default function App() {
   const refreshNow = async () => {
     if (!campaignId) return;
     try {
-      const [t,p,c,ab,comp,it]=await Promise.all([fetchTrees(campaignId),fetchPlayers(campaignId),fetchCampaign(campaignId),fetchAbilitySets(campaignId),fetchCompanions(campaignId),fetchItems(campaignId)]);
-      setTrees(t);setPlayers(p);setAbilitySets(ab);setCompanions(comp);setItems(it);
+      const [t,p,c,ab,enc,comp,it]=await Promise.all([fetchTrees(campaignId),fetchPlayers(campaignId),fetchCampaign(campaignId),fetchAbilitySets(campaignId),fetchEncounters(campaignId),fetchCompanions(campaignId),fetchItems(campaignId)]);
+      setTrees(t);setPlayers(p);setAbilitySets(ab);setEncounters(enc);setCompanions(comp);setItems(it);
       if(c)setMeta(c);
     } catch (e) {
       console.error(e);
@@ -2666,6 +2998,48 @@ export default function App() {
 
 
   /* ── COMPANION HANDLERS ── */
+
+  const handleSaveEncounter = async (enc) => {
+    const row={...enc,campaign_id:campaignId};
+    setEncounters(prev=>prev.some(e=>e.id===row.id)?prev.map(e=>e.id===row.id?row:e):[...prev,row]);
+    const {error}=await supabase.from('encounters').upsert([row],{onConflict:'id'});
+    if(error){console.error(error);showToast('Failed to save encounter.');}
+  };
+  const handleDeleteEncounter = async (id) => {
+    setEncounters(prev=>prev.filter(e=>e.id!==id));
+    await supabase.from('encounters').delete().eq('id',id);
+  };
+  const handleActivateEncounter = async (id) => {
+    const updated=encounters.map(e=>({...e,active:e.id===id}));
+    setEncounters(updated);
+    await Promise.all(updated.map(e=>supabase.from('encounters').update({active:e.active}).eq('id',e.id)));
+  };
+  const handleEndEncounter = async () => {
+    const active=encounters.find(e=>e.active); if(!active) return;
+    setEncounters(prev=>prev.map(e=>e.id===active.id?{...e,active:false}:e));
+    await supabase.from('encounters').update({active:false}).eq('id',active.id);
+  };
+  const handleUpdateCombatantHP = async (encId,combId,delta) => {
+    const enc=encounters.find(e=>e.id===encId); if(!enc) return;
+    const combatants=enc.combatants.map(c=>{
+      if(c.id!==combId) return c;
+      const hp=Math.max(0,Math.min(c.max_hp,c.current_hp+delta));
+      return {...c,current_hp:hp,is_defeated:hp<=0};
+    });
+    setEncounters(prev=>prev.map(e=>e.id===encId?{...e,combatants}:e));
+    await supabase.from('encounters').update({combatants}).eq('id',encId);
+  };
+  const handleNextTurn = async (encId) => {
+    const enc=encounters.find(e=>e.id===encId); if(!enc) return;
+    let next=enc.turn_index+1; let round=enc.round;
+    if(next>=enc.combatants.length){next=0;round++;}
+    setEncounters(prev=>prev.map(e=>e.id===encId?{...e,turn_index:next,round}:e));
+    await supabase.from('encounters').update({turn_index:next,round}).eq('id',encId);
+  };
+  const handleSetMaxCarry = async (playerId, max_carry_weight) => {
+    setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,max_carry_weight}:p));
+    await supabase.from('players').update({max_carry_weight}).eq('id',playerId);
+  };
   const handleSaveCompanion = async (compObj) => {
     const row = { ...compObj, campaign_id: campaignId };
     setCompanions(prev => prev.some(c=>c.id===row.id) ? prev.map(c=>c.id===row.id?row:c) : [...prev, row]);
@@ -2772,6 +3146,7 @@ export default function App() {
       await supabase.from('players').delete().eq('campaign_id', campaignId);
       await supabase.from('rune_trees').delete().eq('campaign_id', campaignId);
       await supabase.from('ability_sets').delete().eq('campaign_id', campaignId);
+      await supabase.from('encounters').delete().eq('campaign_id',campaignId);
       await supabase.from('companions').delete().eq('campaign_id', campaignId);
       await supabase.from('items').delete().eq('campaign_id', campaignId);
       await supabase.from('campaigns').delete().eq('id', campaignId);
@@ -2869,6 +3244,7 @@ export default function App() {
           players={players}
           abilitySets={abilitySets}
           companions={companions}
+          encounters={encounters}
           items={items}
           live={live}
           onSaveTree={handleSaveTree}
@@ -2888,6 +3264,13 @@ export default function App() {
           onSaveCompanion={handleSaveCompanion}
           onDeleteCompanion={handleDeleteCompanion}
           onToggleCompanion={handleToggleCompanion}
+          onSetMaxCarry={handleSetMaxCarry}
+          onSaveEncounter={handleSaveEncounter}
+          onDeleteEncounter={handleDeleteEncounter}
+          onActivateEncounter={handleActivateEncounter}
+          onEndEncounter={handleEndEncounter}
+          onUpdateCombatantHP={handleUpdateCombatantHP}
+          onNextTurn={handleNextTurn}
           onSaveMeta={handleSaveMeta}
           onExit={handleExit}
           onReset={handleReset}
@@ -2902,6 +3285,7 @@ export default function App() {
           players={players}
           abilitySets={abilitySets}
           companions={companions}
+          encounters={encounters}
           items={items}
           currentPlayerId={currentPlayerId}
           live={live}
