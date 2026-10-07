@@ -1898,7 +1898,50 @@ function PlayerCompanionsSection({ player, companions }) {
   );
 }
 
-function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel, onGiveSkillPoints, onOpenCompanions, onOpenEncounterAssign }) {
+
+function SetStatsModal({ player, onClose, onSave }) {
+  const [stats, setStats] = React.useState(
+    STATS.reduce((m,{key})=>({...m,[key]:player[key]??10}),{})
+  );
+  const set = (key,val) => setStats(prev=>({...prev,[key]:val===''?'':Number(val)}));
+  return(
+    <div className="rf-modal-overlay" onClick={onClose}>
+      <div className="rf-modal" onClick={e=>e.stopPropagation()}>
+        <div className="rf-modal-header">
+          <h3>Set Stats — {player.name}</h3>
+          <button className="rf-icon-btn" onClick={onClose}><X size={18}/></button>
+        </div>
+        <div className="rf-modal-body">
+          <p className="rf-modal-hint">Set any stat to any value, including negatives. No restrictions.</p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
+            {STATS.map(({key,label})=>(
+              <div key={key} style={{textAlign:'center'}}>
+                <label className="rf-label" style={{margin:'0 0 6px',display:'block'}}>{label}</label>
+                <div style={{fontSize:12,color:'var(--text-muted)',fontFamily:"'JetBrains Mono',monospace",marginBottom:4}}>
+                  {modStr(stats[key]===''?10:Number(stats[key])||0)}
+                </div>
+                <input className="rf-input" type="number" value={stats[key]}
+                  onChange={e=>set(key,e.target.value)}
+                  style={{textAlign:'center',fontSize:16,fontWeight:700,padding:'8px 4px'}}/>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rf-modal-footer">
+          <div style={{flex:1}}/>
+          <button className="rf-btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="rf-btn-primary" onClick={()=>{
+            const cleaned=STATS.reduce((m,{key})=>({...m,[key]:stats[key]===''?0:Number(stats[key])||0}),{});
+            onSave(player.id, cleaned);
+            onClose();
+          }}>Save Stats</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel, onGiveSkillPoints, onOpenCompanions, onOpenEncounterAssign, onOpenStats }) {
   const [newName, setNewName] = useState('');
   const totalRunes = trees.reduce((sum, t) => sum + (t.runes || []).length, 0);
   const totalAbilities = abilitySets.reduce((sum, s) => sum + (s.abilities || []).length, 0);
@@ -1949,6 +1992,7 @@ function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDe
                 <button className="rf-btn-ghost-sm" onClick={() => onOpenGrant(p)}><Sparkles size={13} /> Runes</button>
                 <button className="rf-btn-mana" onClick={() => onOpenAbilityGrant(p)}><Zap size={13} /> Abilities</button>
                 <button className="rf-btn-ghost-sm" onClick={() => onOpenInventory(p)}><Package size={13}/> Items</button>
+                <button className="rf-btn-ghost-sm" onClick={() => onOpenStats && onOpenStats(p)}>📊 Stats</button>
                 <button className="rf-btn-ghost-sm" onClick={() => onOpenCompanions(p)}>\uD83D\uDC3E Companions</button>
                 <DeleteConfirmButton onConfirm={() => onDeletePlayer(p.id)} label="remove" />
               </div>
@@ -2032,7 +2076,7 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onSaveMeta, onExit, onReset, onRefresh }) {
+function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onSetPlayerStats, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
@@ -2043,6 +2087,7 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
   const [editingCompanion, setEditingCompanion] = useState(undefined);
   const [companionFor, setCompanionFor] = useState(null);
   const [editingEncounter, setEditingEncounter] = useState(undefined);
+  const [statsFor, setStatsFor] = useState(null);
   const activeEncounter = encounters.find(e=>e.active)||null;
 
   const livePlayer = grantingPlayer ? (players.find((p) => p.id === grantingPlayer.id) || grantingPlayer) : null;
@@ -2063,7 +2108,7 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
       <div>
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
         {tab === 'abilities' && <AbilitiesTab abilitySets={abilitySets} onOpenEditor={setEditingAbilitySet} />}
-        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} companions={companions} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel} onGiveSkillPoints={onGiveSkillPoints} onOpenCompanions={setCompanionFor}/>}
+        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} companions={companions} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel} onGiveSkillPoints={onGiveSkillPoints} onOpenCompanions={setCompanionFor} onOpenStats={setStatsFor}/>}
         {tab === 'encounters' && <><EncountersTab encounters={encounters} onOpenEditor={setEditingEncounter} onActivate={onActivateEncounter} onEnd={onEndEncounter}/>{activeEncounter&&<div style={{marginTop:18}}><ActiveEncounterView encounter={activeEncounter} isGM={true} onUpdateHP={(cId,d)=>onUpdateCombatantHP(activeEncounter.id,cId,d)} onNextTurn={()=>onNextTurn(activeEncounter.id)} onEndEncounter={onEndEncounter}/></div>}</>
         }
         {tab === 'companions' && <CompanionsTab companions={companions} onOpenEditor={setEditingCompanion}/>}
@@ -2109,6 +2154,12 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
           player={players.find(p=>p.id===companionFor.id)||companionFor}
           companions={companions} onClose={()=>setCompanionFor(null)}
           onToggle={onToggleCompanion}/>
+      )}
+      {statsFor && (
+        <SetStatsModal
+          player={players.find(p=>p.id===statsFor.id)||statsFor}
+          onClose={()=>setStatsFor(null)}
+          onSave={onSetPlayerStats}/>
       )}
       {editingEncounter !== undefined && (
         <EncounterEditorModal encounter={editingEncounter} players={players} onClose={()=>setEditingEncounter(undefined)}
@@ -3118,6 +3169,13 @@ export default function App() {
     else showToast(`+1 ${statKey.replace('_score','').toUpperCase().replace('INT','INT').replace('_','')} — ${updates.skill_points} point${updates.skill_points !== 1 ? 's' : ''} remaining`);
   };
 
+  const handleSetPlayerStats = async (playerId, stats) => {
+    setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,...stats}:p));
+    const {error}=await supabase.from('players').update(stats).eq('id',playerId);
+    if(error){console.error(error);showToast('Failed to update stats.');}
+    else showToast('Stats updated!');
+  };
+
   const handleSetPlayerLevel = async (playerId, level) => {
     setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,level}:p));
     await supabase.from('players').update({level}).eq('id',playerId);
@@ -3271,6 +3329,7 @@ export default function App() {
           onEndEncounter={handleEndEncounter}
           onUpdateCombatantHP={handleUpdateCombatantHP}
           onNextTurn={handleNextTurn}
+          onSetPlayerStats={handleSetPlayerStats}
           onSaveMeta={handleSaveMeta}
           onExit={handleExit}
           onReset={handleReset}
