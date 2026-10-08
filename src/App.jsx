@@ -620,9 +620,9 @@ const CATEGORIES   = ['weapon','armor','consumable','tool','magic','currency','m
 const CAT_ICONS    = { weapon:'\u2694\uFE0F', armor:'\uD83D\uDEE1\uFE0F', consumable:'\uD83E\uDDEA', tool:'\uD83D\uDD27', magic:'\u2728', currency:'\uD83E\uDE99', misc:'\uD83D\uDCE6' };
 
 
-const DND_CLASSES = ['Barbarian','Bard','Cleric','Druid','Fighter','Monk','Paladin','Ranger','Rogue','Sorcerer','Warlock','Wizard','Artificer'];
+const DND_CLASSES = ['Barbarian','Bard','Cleric','Druid','Fighter','Monk','Paladin','Ranger','Rogue','Sorcerer','Warlock','Wizard','Artificer','Tactician','Kalas'];
 const DND_RACES   = ['Human','Elf','High Elf','Wood Elf','Dark Elf','Dwarf','Halfling','Half-Orc','Half-Elf','Tiefling','Gnome','Dragonborn','Aasimar','Tabaxi','Goliath','Tortle'];
-const CLASS_ICONS = {Barbarian:'\u2694\uFE0F',Bard:'\uD83C\uDFB5',Cleric:'\u2695\uFE0F',Druid:'\uD83C\uDF3F',Fighter:'\uD83D\uDEE1\uFE0F',Monk:'\uD83D\uDC4A',Paladin:'\u2728',Ranger:'\uD83C\uDFF9',Rogue:'\uD83D\uDDE1\uFE0F',Sorcerer:'\uD83D\uDCAB',Warlock:'\uD83D\uDC80',Wizard:'\uD83D\uDD2E',Artificer:'\u2699\uFE0F'};
+const CLASS_ICONS = {Tactician:'🎯',Kalas:'🌑',Barbarian:'\u2694\uFE0F',Bard:'\uD83C\uDFB5',Cleric:'\u2695\uFE0F',Druid:'\uD83C\uDF3F',Fighter:'\uD83D\uDEE1\uFE0F',Monk:'\uD83D\uDC4A',Paladin:'\u2728',Ranger:'\uD83C\uDFF9',Rogue:'\uD83D\uDDE1\uFE0F',Sorcerer:'\uD83D\uDCAB',Warlock:'\uD83D\uDC80',Wizard:'\uD83D\uDD2E',Artificer:'\u2699\uFE0F'};
 const STATS=[{key:'str_score',label:'STR'},{key:'dex_score',label:'DEX'},{key:'con_score',label:'CON'},{key:'int_score',label:'INT'},{key:'wis_score',label:'WIS'},{key:'cha_score',label:'CHA'}];
 const statMod=v=>Math.floor(((v||10)-10)/2);
 const modStr=v=>{const m=statMod(v);return m>=0?'+'+m:''+m;};
@@ -795,10 +795,11 @@ function CharacterSetup({ player, onSave, onBack, statBudget=27 }) {
     STATS.reduce((m,{key})=>({...m,[key]:Math.max(8,player[key]||8)}),{})
   );
 
-  const spent = pointsSpent(stats);
-  const remaining = statBudget - spent;
+  const spent = cls==='Kalas' ? 0 : pointsSpent(stats);
+  const remaining = cls==='Kalas' ? 0 : statBudget - spent;
 
   const adj = (key,d) => {
+    if (cls === 'Kalas') return;
     const cur=Math.max(8,Math.min(15,stats[key]||8));
     const nxt=cur+d;
     if(nxt<8||nxt>15) return;
@@ -817,12 +818,21 @@ function CharacterSetup({ player, onSave, onBack, statBudget=27 }) {
           <label className="rf-label">Class</label>
           <div className="rf-class-grid">
             {DND_CLASSES.map(c=>(
-              <button key={c} type="button" className={`rf-class-btn${cls===c?' rf-class-btn--active':''}`} onClick={()=>setCls(c)}>
+              <button key={c} type="button" className={`rf-class-btn${cls===c?' rf-class-btn--active':''}`} onClick={()=>{setCls(c);if(c==='Kalas')setStats(STATS.reduce((m,{key})=>({...m,[key]:8}),{}));}}>
                 <span className="rf-class-icon">{CLASS_ICONS[c]||'\u2694\uFE0F'}</span>
                 <span className="rf-class-name">{c}</span>
               </button>
             ))}
           </div>
+          {cls === 'Kalas' && (
+            <div style={{background:'rgba(196,69,60,0.12)',border:'1px solid rgba(196,69,60,0.45)',borderRadius:10,padding:'11px 16px',marginBottom:16,display:'flex',alignItems:'flex-start',gap:10,fontSize:13,color:'var(--danger)',lineHeight:1.5}}>
+              <span style={{fontSize:18,flexShrink:0}}>&#9888;</span>
+              <div>
+                <div style={{fontFamily:"'Cinzel',serif",fontWeight:700,marginBottom:3}}>Kalas starts with nothing</div>
+                <div>This class begins with no stat allocation. All ability scores are locked at 8. Stat points can only be earned and spent in-game through the DM.</div>
+              </div>
+            </div>
+          )}
           <label className="rf-label">Race</label>
           <div className="rf-race-grid">
             {DND_RACES.map(r=>(
@@ -832,15 +842,15 @@ function CharacterSetup({ player, onSave, onBack, statBudget=27 }) {
           <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',margin:'14px 0 8px'}}>
             <label className="rf-label" style={{margin:0}}>Ability Scores — Point Buy</label>
             <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700,
-              color:remaining<0?'var(--danger)':remaining===0?'var(--text-muted)':'var(--gold)'}}>
-              {spent} / {statBudget} pts
+              color:cls==='Kalas'?'var(--text-muted)':remaining<0?'var(--danger)':remaining===0?'var(--text-muted)':'var(--gold)'}}>
+              {cls==='Kalas'?'Locked':spent+' / '+statBudget+' pts'}
             </span>
           </div>
           <div className="rf-stat-setup-grid">
             {STATS.map(({key,label})=>{
               const val=stats[key]||8;
-              const canUp=val<15&&((POINT_COSTS[val+1]||0)-(POINT_COSTS[val]||0))<=remaining;
-              const canDn=val>8;
+              const canUp=cls!=='Kalas'&&val<15&&((POINT_COSTS[val+1]||0)-(POINT_COSTS[val]||0))<=remaining;
+              const canDn=cls!=='Kalas'&&val>8;
               return(
                 <div key={key} className="rf-stat-setup-box">
                   <div className="rf-stat-setup-label">{label}</div>
