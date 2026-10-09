@@ -42,10 +42,10 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 .rf-root {
-  --bg: #11100c;
-  --surface: #1c1912;
-  --surface-2: #241f14;
-  --border: #3a3124;
+  --bg: #0d0b08;
+  --surface: #181410;
+  --surface-2: #201b12;
+  --border: #362e20;
   --text: #f0e6d3;
   --text-muted: #8c7e68;
   --gold: #4f9d6e;
@@ -54,9 +54,9 @@ const CSS = `
   font-family: 'Inter', -apple-system, sans-serif;
   color: var(--text);
   background:
-    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(212,168,67,0.11), transparent 60%),
-    radial-gradient(ellipse 600px 400px at 85% 90%, rgba(139,95,191,0.07), transparent 55%),
-    radial-gradient(ellipse 500px 300px at 50% 50%, rgba(180,120,40,0.04), transparent 70%),
+    radial-gradient(ellipse 700px 320px at 50% 105%, rgba(255,90,20,0.13), transparent 65%),
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(212,168,67,0.08), transparent 60%),
+    radial-gradient(ellipse 500px 300px at 50% 50%, rgba(180,100,20,0.04), transparent 70%),
     var(--bg);
   min-height: 100vh;
   line-height: 1.4;
@@ -523,6 +523,93 @@ const CSS = `
 .rf-arsenal-name{font-size:13.5px;font-weight:600}
 .rf-arsenal-desc{font-size:12px;color:var(--text-muted);margin-top:1px}
 .rf-arsenal-mana{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#8b7ff5;margin-top:2px}
+
+
+/* ===== FIREPLACE BACKGROUND ===== */
+.rf-root { position: relative; }
+.rf-page, .rf-center { position: relative; z-index: 1; }
+.rf-fp-wrap {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 300px;
+  pointer-events: none; z-index: 0; overflow: hidden;
+}
+/* Ambient glow */
+.rf-fp-glow {
+  position: absolute; bottom: -60px; left: 50%; transform: translateX(-50%);
+  width: 700px; height: 340px;
+  background: radial-gradient(ellipse, rgba(255,110,20,0.22) 0%, rgba(255,60,0,0.10) 45%, transparent 70%);
+  animation: rf-glow 2.8s ease-in-out infinite alternate;
+}
+@keyframes rf-glow {
+  0%   { opacity: 0.75; transform: translateX(-50%) scale(1); }
+  50%  { opacity: 1;    transform: translateX(-50%) scale(1.06); }
+  100% { opacity: 0.88; transform: translateX(-50%) scale(0.97); }
+}
+/* Page ambient warm light */
+.rf-root::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse 80% 35% at 50% 105%, rgba(255,80,15,0.09), transparent 65%);
+  animation: rf-ambient 3.4s ease-in-out infinite alternate;
+}
+@keyframes rf-ambient {
+  0%   { opacity: 0.65; } 40%  { opacity: 1; }
+  70%  { opacity: 0.80; } 100% { opacity: 0.90; }
+}
+/* Flames */
+.rf-fp-flame {
+  position: absolute; bottom: 80px;
+  border-radius: 50% 50% 20% 20%;
+  transform-origin: center bottom;
+  mix-blend-mode: screen;
+}
+.rf-fp-flame-1 { left:43%; width:90px;  height:150px; background:linear-gradient(to top,rgba(255,200,20,0.95),rgba(255,100,0,0.75),rgba(255,40,0,0.35),transparent); animation:rf-fl 1.9s ease-in-out infinite; }
+.rf-fp-flame-2 { left:47%; width:65px;  height:115px; background:linear-gradient(to top,rgba(255,220,50,0.90),rgba(255,140,0,0.70),rgba(255,60,0,0.30),transparent); animation:rf-fl 1.4s ease-in-out infinite reverse; animation-delay:.22s; }
+.rf-fp-flame-3 { left:40%; width:55px;  height: 95px; background:linear-gradient(to top,rgba(255,180,0,0.85),rgba(255,100,0,0.55),transparent); animation:rf-fl 1.7s ease-in-out infinite; animation-delay:.55s; }
+.rf-fp-flame-4 { left:52%; width:50px;  height: 90px; background:linear-gradient(to top,rgba(255,200,30,0.85),rgba(255,120,0,0.55),transparent); animation:rf-fl 2.0s ease-in-out infinite reverse; animation-delay:.35s; }
+.rf-fp-flame-5 { left:45%; width:110px; height:125px; background:linear-gradient(to top,rgba(255,150,0,0.60),rgba(255,80,0,0.30),transparent); animation:rf-fl 2.3s ease-in-out infinite; animation-delay:.75s; }
+.rf-fp-flame-6 { left:49%; width:40px;  height: 70px; background:linear-gradient(to top,rgba(255,240,80,0.95),rgba(255,200,0,0.70),transparent); animation:rf-fl 1.2s ease-in-out infinite; animation-delay:.1s; }
+@keyframes rf-fl {
+  0%,100% { transform:scaleX(1)   scaleY(1)    rotate(-1.0deg); }
+  20%     { transform:scaleX(0.91)scaleY(1.09) rotate( 1.8deg); }
+  45%     { transform:scaleX(1.07)scaleY(0.93) rotate(-0.4deg); }
+  70%     { transform:scaleX(0.95)scaleY(1.05) rotate( 2.2deg); }
+}
+/* Logs */
+.rf-fp-log {
+  position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%);
+  width: 220px; height: 26px;
+  background: linear-gradient(to bottom, #4a2a12, #2c1508);
+  border-radius: 13px;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.6), 0 0 20px rgba(255,80,0,0.15);
+}
+.rf-fp-log::before {
+  content: ''; position: absolute; top: 3px; left: 15px; width: 190px; height: 14px;
+  background: linear-gradient(to bottom, #5a3418, #3a1c08);
+  border-radius: 7px; transform: rotate(-4deg);
+}
+.rf-fp-log::after {
+  content: ''; position: absolute; top: 1px; left: 25px; width: 170px; height: 16px;
+  background: linear-gradient(to bottom, #6a3c1c, #4a2410);
+  border-radius: 8px; transform: rotate(3.5deg);
+}
+/* Embers */
+.rf-fp-ember {
+  position: absolute; bottom: 80px;
+  width: 3px; height: 3px; border-radius: 50%;
+  background: rgba(255,200,60,0.95);
+  box-shadow: 0 0 5px rgba(255,140,0,0.9);
+  animation: rf-ember linear infinite;
+}
+@keyframes rf-ember {
+  0%   { transform:translateY(0)   translateX(0)   scale(1);   opacity:.9; }
+  40%  { transform:translateY(-90px) translateX(10px)  scale(.75); opacity:.65; }
+  75%  { transform:translateY(-170px)translateX(-6px)  scale(.4);  opacity:.3; }
+  100% { transform:translateY(-230px)translateX(4px)   scale(0);   opacity:0; }
+}
+/* floor glow */
+.rf-fp-floor {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 55px;
+  background: linear-gradient(to top, rgba(255,70,10,0.10), transparent);
+}
 
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
@@ -1549,6 +1636,41 @@ function PlayerInventorySection({ player, items }) {
 }
 
 
+
+
+/* ============================================================
+   FIREPLACE BACKGROUND
+   ============================================================ */
+
+const EMBER_DATA = [
+  {l:'33%',d:'0.0s',dr:'2.5s'},{l:'37%',d:'0.4s',dr:'3.2s'},
+  {l:'42%',d:'0.9s',dr:'2.1s'},{l:'46%',d:'1.3s',dr:'3.5s'},
+  {l:'50%',d:'0.2s',dr:'2.8s'},{l:'53%',d:'1.7s',dr:'2.2s'},
+  {l:'57%',d:'0.6s',dr:'3.4s'},{l:'61%',d:'1.1s',dr:'2.7s'},
+  {l:'36%',d:'1.9s',dr:'3.0s'},{l:'44%',d:'2.3s',dr:'2.4s'},
+  {l:'55%',d:'0.8s',dr:'2.6s'},{l:'65%',d:'1.5s',dr:'2.9s'},
+  {l:'40%',d:'2.8s',dr:'3.1s'},{l:'59%',d:'2.1s',dr:'2.3s'},
+];
+
+function FireplaceBackground() {
+  return (
+    <div className="rf-fp-wrap">
+      <div className="rf-fp-glow"/>
+      <div className="rf-fp-flame rf-fp-flame-1"/>
+      <div className="rf-fp-flame rf-fp-flame-2"/>
+      <div className="rf-fp-flame rf-fp-flame-3"/>
+      <div className="rf-fp-flame rf-fp-flame-4"/>
+      <div className="rf-fp-flame rf-fp-flame-5"/>
+      <div className="rf-fp-flame rf-fp-flame-6"/>
+      <div className="rf-fp-log"/>
+      <div className="rf-fp-floor"/>
+      {EMBER_DATA.map((e,i)=>(
+        <div key={i} className="rf-fp-ember"
+          style={{left:e.l,animationDelay:e.d,animationDuration:e.dr}}/>
+      ))}
+    </div>
+  );
+}
 
 /* ============================================================
    ENCOUNTERS
@@ -3273,7 +3395,8 @@ export default function App() {
 
   return (
     <div className="rf-root">
-      <style>{CSS}</style>
+      <FireplaceBackground/>
+    <style>{CSS}</style>
       {toast && <div className="rf-toast">{toast}</div>}
 
       {phase === 'loading' && <div className="rf-center"><div className="rf-loading">Unsealing the rune vault…</div></div>}
