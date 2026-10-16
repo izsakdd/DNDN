@@ -368,7 +368,7 @@ const CSS = `
 .rf-race-btn { padding:6px 13px; background:var(--surface-2); border:1px solid var(--border); border-radius:20px; color:var(--text-muted); font-size:12.5px; transition:all .15s; cursor:pointer; }
 .rf-race-btn:hover { border-color:var(--text-muted); color:var(--text); }
 .rf-race-btn--active { border-color:var(--gold); color:var(--gold); background:rgba(212,168,67,0.08); }
-.rf-stat-setup-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:8px; }
+.rf-stat-setup-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(74px,1fr)); gap:8px; margin-bottom:8px; }
 .rf-stat-setup-box { display:flex; flex-direction:column; align-items:center; gap:4px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:10px 4px; }
 .rf-stat-setup-label { font-family:'Cinzel',serif; font-size:9px; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); }
 .rf-stat-setup-mod { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:var(--gold); }
@@ -388,7 +388,7 @@ const CSS = `
 .rf-level-badge-val { font-family:'Cinzel',serif; font-size:24px; font-weight:700; color:var(--gold); line-height:1.1; }
 .rf-char-edit-btn { background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:7px; padding:5px 10px; font-size:11.5px; cursor:pointer; white-space:nowrap; margin-top:2px; }
 .rf-char-edit-btn:hover { border-color:var(--gold); color:var(--gold); }
-.rf-stat-block { display:grid; grid-template-columns:repeat(6,1fr); gap:7px; }
+.rf-stat-block { display:grid; grid-template-columns:repeat(auto-fill,minmax(68px,1fr)); gap:7px; }
 .rf-stat-box { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:9px 4px; text-align:center; }
 .rf-stat-box-label { font-family:'Cinzel',serif; font-size:9px; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); margin-bottom:3px; }
 .rf-stat-box-mod { font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700; color:var(--gold); }
@@ -611,6 +611,36 @@ const CSS = `
   background: linear-gradient(to top, rgba(255,70,10,0.10), transparent);
 }
 
+
+/* ===== FOREST THEME ===== */
+.rf-forest-wrap { position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden; }
+.rf-forest-glow { position:absolute;bottom:-60px;left:50%;transform:translateX(-50%);width:700px;height:350px;background:radial-gradient(ellipse,rgba(50,160,70,0.22) 0%,rgba(20,100,40,0.10) 45%,transparent 70%);animation:rf-glow 3.2s ease-in-out infinite alternate; }
+.rf-forest-floor { position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(to top,rgba(10,50,15,0.18),transparent); }
+.rf-forest-canopy { position:absolute;top:0;left:0;right:0;height:120px;background:linear-gradient(to bottom,rgba(5,30,10,0.25),transparent); }
+.rf-leaf { position:absolute;font-size:13px;animation:rf-leaf-fall linear infinite; }
+@keyframes rf-leaf-fall {
+  0%   { transform:translateY(-20px) translateX(0)   rotate(0deg);   opacity:0;   }
+  8%   { opacity:0.75; }
+  90%  { opacity:0.45; }
+  100% { transform:translateY(105vh) translateX(40px) rotate(400deg); opacity:0; }
+}
+.rf-root::before { display:none; }
+/* ===== ICE THEME ===== */
+.rf-ice-wrap { position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden; }
+.rf-ice-glow { position:absolute;bottom:-60px;left:50%;transform:translateX(-50%);width:700px;height:350px;background:radial-gradient(ellipse,rgba(80,160,220,0.20) 0%,rgba(40,100,180,0.09) 45%,transparent 70%);animation:rf-glow 4s ease-in-out infinite alternate; }
+.rf-ice-top  { position:absolute;top:0;left:0;right:0;height:80px;background:linear-gradient(to bottom,rgba(60,120,200,0.12),transparent); }
+.rf-snow { position:absolute;top:-20px;color:rgba(200,230,255,0.75);animation:rf-snow-fall linear infinite; }
+@keyframes rf-snow-fall {
+  0%   { transform:translateY(-10px) translateX(0)   rotate(0deg); opacity:0; }
+  8%   { opacity:0.9; }
+  90%  { opacity:0.3; }
+  100% { transform:translateY(105vh)  translateX(25px) rotate(180deg); opacity:0; }
+}
+.rf-ice-floor { position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to top,rgba(40,100,180,0.12),transparent); }
+/* ===== THEME SELECTOR ===== */
+.rf-theme-sel { font-size:12px;padding:5px 8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:7px;cursor:pointer;outline:none; }
+.rf-theme-sel:focus { border-color:var(--gold); }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -710,7 +740,14 @@ const CAT_ICONS    = { weapon:'\u2694\uFE0F', armor:'\uD83D\uDEE1\uFE0F', consum
 const DND_CLASSES = ['Barbarian','Bard','Cleric','Druid','Fighter','Monk','Paladin','Ranger','Rogue','Sorcerer','Warlock','Wizard','Artificer','Tactician','Kalas'];
 const DND_RACES   = ['Human','Elf','High Elf','Wood Elf','Dark Elf','Dwarf','Halfling','Half-Orc','Half-Elf','Tiefling','Gnome','Dragonborn','Aasimar','Tabaxi','Goliath','Tortle'];
 const CLASS_ICONS = {Tactician:'🎯',Kalas:'🌑',Barbarian:'\u2694\uFE0F',Bard:'\uD83C\uDFB5',Cleric:'\u2695\uFE0F',Druid:'\uD83C\uDF3F',Fighter:'\uD83D\uDEE1\uFE0F',Monk:'\uD83D\uDC4A',Paladin:'\u2728',Ranger:'\uD83C\uDFF9',Rogue:'\uD83D\uDDE1\uFE0F',Sorcerer:'\uD83D\uDCAB',Warlock:'\uD83D\uDC80',Wizard:'\uD83D\uDD2E',Artificer:'\u2699\uFE0F'};
-const STATS=[{key:'str_score',label:'STR'},{key:'dex_score',label:'DEX'},{key:'con_score',label:'CON'},{key:'int_score',label:'INT'},{key:'wis_score',label:'WIS'},{key:'cha_score',label:'CHA'}];
+const STATS=[{key:'str_score',label:'STR'},{key:'dex_score',label:'DEX'},{key:'con_score',label:'CON'},{key:'int_score',label:'INT'},{key:'wis_score',label:'WIS'},{key:'cha_score',label:'CHA'},{key:'wor_score',label:'WOR'}];
+
+const THEMES = {
+  campfire: { label:'Campfire', icon:'🔥', vars:{'--bg':'#0d0b08','--surface':'#181410','--surface-2':'#201b12','--border':'#362e20','--gold':'#d4a843','--text':'#f0e6d3','--text-muted':'#8c7e68','--mana':'#8b7ff5'} },
+  forest:   { label:'Forest',   icon:'🌿', vars:{'--bg':'#060e07','--surface':'#0d190f','--surface-2':'#122014','--border':'#1c3420','--gold':'#5ab87a','--text':'#d4ecd8','--text-muted':'#608868','--mana':'#7fb87a'} },
+  ice:      { label:'Ice',      icon:'❄️', vars:{'--bg':'#07101a','--surface':'#0f1e2e','--surface-2':'#132438','--border':'#1a2e44','--gold':'#5ec4e8','--text':'#d0eaf8','--text-muted':'#6080a0','--mana':'#5ec4e8'} },
+};
+function getThemeVars(theme) { return (THEMES[theme]||THEMES.campfire).vars; }
 const statMod=v=>Math.floor(((v||10)-10)/2);
 const modStr=v=>{const m=statMod(v);return m>=0?'+'+m:''+m;};
 
@@ -1672,6 +1709,59 @@ function FireplaceBackground() {
   );
 }
 
+
+function ForestBackground() {
+  return (
+    <div className="rf-forest-wrap">
+      <div className="rf-forest-canopy"/>
+      <div className="rf-forest-glow"/>
+      <div className="rf-leaf" style={{left:"8%",animationDelay:"0s",animationDuration:"7s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"15%",animationDelay:"1.2s",animationDuration:"8.5s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"22%",animationDelay:"2.5s",animationDuration:"6.8s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"30%",animationDelay:"0.5s",animationDuration:"9s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"38%",animationDelay:"3.1s",animationDuration:"7.5s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"46%",animationDelay:"1.7s",animationDuration:"8s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"54%",animationDelay:"0.3s",animationDuration:"6.5s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"62%",animationDelay:"2.2s",animationDuration:"9.5s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"70%",animationDelay:"1.0s",animationDuration:"7.8s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"78%",animationDelay:"2.8s",animationDuration:"8.3s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"85%",animationDelay:"0.8s",animationDuration:"7.2s"}}>🍃</div>
+      <div className="rf-leaf" style={{left:"92%",animationDelay:"1.5s",animationDuration:"9.2s"}}>🍃</div>
+      <div className="rf-forest-floor"/>
+    </div>
+  );
+}
+
+function IceBackground() {
+  return (
+    <div className="rf-ice-wrap">
+      <div className="rf-ice-top"/>
+      <div className="rf-ice-glow"/>
+      <div className="rf-snow" style={{left:"5%",animationDelay:"0s",animationDuration:"8s",fontSize:"16px"}}>❄</div>
+      <div className="rf-snow" style={{left:"12%",animationDelay:"1.4s",animationDuration:"10s",fontSize:"12px"}}>❄</div>
+      <div className="rf-snow" style={{left:"20%",animationDelay:"2.8s",animationDuration:"7.5s",fontSize:"18px"}}>❄</div>
+      <div className="rf-snow" style={{left:"28%",animationDelay:"0.6s",animationDuration:"9s",fontSize:"14px"}}>❄</div>
+      <div className="rf-snow" style={{left:"36%",animationDelay:"3.5s",animationDuration:"8.5s",fontSize:"11px"}}>❄</div>
+      <div className="rf-snow" style={{left:"44%",animationDelay:"1.0s",animationDuration:"11s",fontSize:"16px"}}>❄</div>
+      <div className="rf-snow" style={{left:"52%",animationDelay:"2.1s",animationDuration:"7.8s",fontSize:"13px"}}>❄</div>
+      <div className="rf-snow" style={{left:"60%",animationDelay:"0.2s",animationDuration:"9.5s",fontSize:"15px"}}>❄</div>
+      <div className="rf-snow" style={{left:"68%",animationDelay:"3.0s",animationDuration:"8.2s",fontSize:"12px"}}>❄</div>
+      <div className="rf-snow" style={{left:"76%",animationDelay:"1.7s",animationDuration:"10.5s",fontSize:"17px"}}>❄</div>
+      <div className="rf-snow" style={{left:"84%",animationDelay:"0.9s",animationDuration:"7.2s",fontSize:"14px"}}>❄</div>
+      <div className="rf-snow" style={{left:"92%",animationDelay:"2.4s",animationDuration:"9.8s",fontSize:"11px"}}>❄</div>
+      <div className="rf-snow" style={{left:"18%",animationDelay:"4.0s",animationDuration:"8.8s",fontSize:"13px"}}>❄</div>
+      <div className="rf-snow" style={{left:"72%",animationDelay:"1.3s",animationDuration:"11.5s",fontSize:"15px"}}>❄</div>
+      <div className="rf-ice-floor"/>
+    </div>
+  );
+}
+
+function ThemedBackground({ theme }) {
+  if (theme === 'forest')   return <ForestBackground/>;
+  if (theme === 'ice')      return <IceBackground/>;
+  return <FireplaceBackground/>;
+}
+
 /* ============================================================
    ENCOUNTERS
    ============================================================ */
@@ -2073,7 +2163,7 @@ function SetStatsModal({ player, onClose, onSave }) {
   );
 }
 
-function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel, onGiveSkillPoints, onOpenCompanions, onOpenEncounterAssign, onOpenStats }) {
+function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel, onGiveSkillPoints, onOpenCompanions, onOpenEncounterAssign, onOpenStats, onSetPlayerTheme }) {
   const [newName, setNewName] = useState('');
   const totalRunes = trees.reduce((sum, t) => sum + (t.runes || []).length, 0);
   const totalAbilities = abilitySets.reduce((sum, s) => sum + (s.abilities || []).length, 0);
@@ -2125,6 +2215,9 @@ function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDe
                 <button className="rf-btn-mana" onClick={() => onOpenAbilityGrant(p)}><Zap size={13} /> Abilities</button>
                 <button className="rf-btn-ghost-sm" onClick={() => onOpenInventory(p)}><Package size={13}/> Items</button>
                 <button className="rf-btn-ghost-sm" onClick={() => onOpenStats && onOpenStats(p)}>📊 Stats</button>
+                <select className="rf-theme-sel" value={p.player_theme||'campfire'} onChange={e=>onSetPlayerTheme&&onSetPlayerTheme(p.id,e.target.value)}>
+                  {Object.entries(THEMES).map(([k,v])=><option key={k} value={k}>{v.icon} {v.label}</option>)}
+                </select>
                 <button className="rf-btn-ghost-sm" onClick={() => onOpenCompanions(p)}>\uD83D\uDC3E Companions</button>
                 <DeleteConfirmButton onConfirm={() => onDeletePlayer(p.id)} label="remove" />
               </div>
@@ -2208,7 +2301,7 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onSetPlayerStats, onSaveMeta, onExit, onReset, onRefresh }) {
+function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onSetPlayerStats, onSetPlayerTheme, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
@@ -2240,7 +2333,7 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
       <div>
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
         {tab === 'abilities' && <AbilitiesTab abilitySets={abilitySets} onOpenEditor={setEditingAbilitySet} />}
-        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} companions={companions} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel} onGiveSkillPoints={onGiveSkillPoints} onOpenCompanions={setCompanionFor} onOpenStats={setStatsFor}/>}
+        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} companions={companions} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel} onGiveSkillPoints={onGiveSkillPoints} onOpenCompanions={setCompanionFor} onOpenStats={setStatsFor} onSetPlayerTheme={onSetPlayerTheme}/>}
         {tab === 'encounters' && <><EncountersTab encounters={encounters} onOpenEditor={setEditingEncounter} onActivate={onActivateEncounter} onEnd={onEndEncounter}/>{activeEncounter&&<div style={{marginTop:18}}><ActiveEncounterView encounter={activeEncounter} isGM={true} onUpdateHP={(cId,d)=>onUpdateCombatantHP(activeEncounter.id,cId,d)} onNextTurn={()=>onNextTurn(activeEncounter.id)} onEndEncounter={onEndEncounter}/></div>}</>
         }
         {tab === 'companions' && <CompanionsTab companions={companions} onOpenEditor={setEditingCompanion}/>}
@@ -2407,7 +2500,7 @@ function PlayerNotepad({ player, onSave }) {
   );
 }
 
-function PlayerDashboard({ meta, trees, players, abilitySets, companions, encounters, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh }) {
+function PlayerDashboard({ meta, trees, players, abilitySets, companions, encounters, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh, themeVars }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
@@ -2444,7 +2537,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
   return (
     <div className="rf-page">
       <TopHeader meta={meta} role="player" playerName={player.name} onExit={onExit} onRefresh={onRefresh} onSwitchPlayer={() => onSelectPlayer(null)} live={live} />
-      <div>
+      <div style={themeVars||{}}>
         {/* Active encounter */}
         {(()=>{const ae=encounters&&encounters.find(e=>e.active);return ae?(<><ActiveEncounterView encounter={ae} isGM={false} onUpdateHP={()=>{}} onNextTurn={()=>{}} onEndEncounter={()=>{}}/><PlayerArsenal player={player} items={items} abilitySets={abilitySets}/></>):null;})()}
         {/* Character header */}
@@ -3301,6 +3394,11 @@ export default function App() {
     else showToast(`+1 ${statKey.replace('_score','').toUpperCase().replace('INT','INT').replace('_','')} — ${updates.skill_points} point${updates.skill_points !== 1 ? 's' : ''} remaining`);
   };
 
+  const handleSetPlayerTheme = async (playerId, player_theme) => {
+    setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,player_theme}:p));
+    await supabase.from('players').update({player_theme}).eq('id',playerId);
+  };
+
   const handleSetPlayerStats = async (playerId, stats) => {
     setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,...stats}:p));
     const {error}=await supabase.from('players').update(stats).eq('id',playerId);
@@ -3395,7 +3493,7 @@ export default function App() {
 
   return (
     <div className="rf-root">
-      <FireplaceBackground/>
+      {(()=>{const p=players.find(x=>x.id===currentPlayerId);const t=p?.player_theme||'campfire';return(phase==='player'&&currentPlayerId)?<ThemedBackground theme={t}/>:<FireplaceBackground/>;})()}
     <style>{CSS}</style>
       {toast && <div className="rf-toast">{toast}</div>}
 
@@ -3463,6 +3561,7 @@ export default function App() {
           onUpdateCombatantHP={handleUpdateCombatantHP}
           onNextTurn={handleNextTurn}
           onSetPlayerStats={handleSetPlayerStats}
+          onSetPlayerTheme={handleSetPlayerTheme}
           onSaveMeta={handleSaveMeta}
           onExit={handleExit}
           onReset={handleReset}
@@ -3488,6 +3587,7 @@ export default function App() {
           onUseAbility={handleUseAbility}
           onSpendSkillPoint={handleSpendSkillPoint}
           onSaveCharacter={handleSaveCharacter}
+          themeVars={getThemeVars(players.find(p=>p.id===currentPlayerId)?.player_theme||'campfire')}
           onSaveNotes={handleSaveNotes}
           onExit={handleExit}
           onRefresh={refreshNow}
