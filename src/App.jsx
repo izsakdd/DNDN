@@ -641,6 +641,21 @@ const CSS = `
 .rf-theme-sel { font-size:12px;padding:5px 8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:7px;cursor:pointer;outline:none; }
 .rf-theme-sel:focus { border-color:var(--gold); }
 
+
+/* ===== UI CLARITY + MANA ITEMS ===== */
+.rf-section-sub { font-size:12.5px; color:var(--text-muted); margin-top:3px; line-height:1.4; max-width:520px; }
+.rf-loadout-hint { font-size:12px; color:var(--text-muted); margin-top:2px; line-height:1.4; }
+.rf-guide { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; margin-bottom:18px; }
+.rf-guide summary { cursor:pointer; font-family:'Cinzel',serif; font-weight:600; font-size:14px; list-style:none; }
+.rf-guide summary::-webkit-details-marker { display:none; }
+.rf-guide ol { margin:12px 0 4px; padding-left:20px; color:var(--text-muted); font-size:13px; line-height:1.75; }
+.rf-guide ol b { color:var(--text); font-weight:600; }
+.rf-inv-use-btn { display:inline-flex; align-items:center; gap:5px; background:transparent; border:1px solid rgba(139,127,245,0.45); color:var(--mana,#8b7ff5); border-radius:7px; padding:6px 11px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.rf-inv-use-btn:hover:not(:disabled) { background:rgba(139,127,245,0.14); border-color:var(--mana,#8b7ff5); }
+.rf-inv-use-btn:disabled { opacity:.35; cursor:not-allowed; }
+.rf-inv-item-mana { font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--mana,#8b7ff5); margin-top:3px; }
+.rf-item-mana b, .rf-item-stat.rf-item-mana { color:var(--mana,#8b7ff5); }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -989,7 +1004,7 @@ function CharacterSetup({ player, onSave, onBack, statBudget=27 }) {
             })}
           </div>
           <div style={{fontSize:11.5,color:'var(--text-muted)',marginBottom:22}}>
-            \u2022 Stats range 8\u201315 \u2022 Cost: 9=1 \u00b7 10=2 \u00b7 11=3 \u00b7 12=4 \u00b7 13=5 \u00b7 14=7 \u00b7 15=9
+            • Stats range 8–15 • Cost: 9=1 · 10=2 · 11=3 · 12=4 · 13=5 · 14=7 · 15=9
           </div>
           <button className="rf-btn-primary" style={{width:'100%',marginBottom:8}} disabled={!cls||!race} onClick={handleSave}>
             Begin Adventure
@@ -1024,6 +1039,7 @@ function ManaBar({ currentMana, maxMana, onAdjust, onRestore }) {
           <RefreshCw size={12} /> Restore All
         </button>
       </div>
+      <div className="rf-loadout-hint" style={{ marginTop: 10 }}>Mana is spent when you use abilities. Mana potions in your inventory refill it.</div>
     </div>
   );
 }
@@ -1228,7 +1244,7 @@ function TreesTab({ trees, onOpenEditor }) {
   return (
     <div>
       <div className="rf-section-header">
-        <h2 className="rf-section-title">Rune Paths</h2>
+        <div><h2 className="rf-section-title">Rune Paths</h2><div className="rf-section-sub">Skill trees you design. Unlock runes for players from the Players tab; players choose which to equip.</div></div>
         <button className="rf-btn-primary" onClick={() => onOpenEditor(null)}><Plus size={15} /> New Path</button>
       </div>
       {trees.length === 0 ? (
@@ -1447,7 +1463,7 @@ function AbilitiesTab({ abilitySets, onOpenEditor }) {
   return (
     <div>
       <div className="rf-section-header">
-        <h2 className="rf-section-title">Ability Sets</h2>
+        <div><h2 className="rf-section-title">Ability Sets</h2><div className="rf-section-sub">Spells and skills that cost mana. Give them to players from the Players tab.</div></div>
         <button className="rf-btn-primary" onClick={() => onOpenEditor(null)}><Plus size={15} /> New Set</button>
       </div>
       {abilitySets.length === 0 ? (
@@ -1479,10 +1495,11 @@ function ItemEditorModal({ item, onClose, onSave, onDelete }) {
   const [cat,     setCat]     = useState(item?.category || 'misc');
   const [weight,  setWeight]  = useState(item?.weight ?? 0);
   const [goldVal, setGoldVal] = useState(item?.gold_value ?? 0);
+  const [manaRestore, setManaRestore] = useState(item?.mana_restore ?? 0);
 
   const handleSave = () => {
     if (!name.trim()) return;
-    onSave({ id: item ? item.id : uid('item'), name:name.trim(), description:desc.trim(), category:cat, weight:Number(weight)||0, gold_value:Number(goldVal)||0 });
+    onSave({ id: item ? item.id : uid('item'), name:name.trim(), description:desc.trim(), category:cat, weight:Number(weight)||0, gold_value:Number(goldVal)||0, mana_restore:Math.max(0, Number(manaRestore)||0) });
   };
   return (
     <div className="rf-modal-overlay" onClick={onClose}>
@@ -1515,6 +1532,9 @@ function ItemEditorModal({ item, onClose, onSave, onDelete }) {
               <input className="rf-input" type="number" min="0" step="0.5" value={goldVal} onChange={e=>setGoldVal(e.target.value)}/>
             </div>
           </div>
+          <label className="rf-label">Restores mana (optional)</label>
+          <input className="rf-input" type="number" min="0" value={manaRestore} onChange={e=>setManaRestore(e.target.value)} placeholder="0 = does not restore mana"/>
+          <div className="rf-hint">Set above 0 to make this a mana potion. Players get a Use button on it; using it removes 1 from their inventory and refills that much mana, up to their max.</div>
         </div>
         <div className="rf-modal-footer">
           {!isNew && <DeleteConfirmButton onConfirm={()=>onDelete(item.id)} label="delete item"/>}
@@ -1591,7 +1611,7 @@ function ItemsTab({ items, onOpenEditor }) {
   return (
     <div>
       <div className="rf-section-header">
-        <h2 className="rf-section-title">Item Catalog</h2>
+        <div><h2 className="rf-section-title">Item Catalog</h2><div className="rf-section-sub">Everything players can carry. Set weight (kg), gold value, and optional mana restore for potions.</div></div>
         <button className="rf-btn-primary" onClick={()=>onOpenEditor(null)}><Plus size={15}/> New Item</button>
       </div>
       {items.length === 0 ? (
@@ -1606,6 +1626,7 @@ function ItemsTab({ items, onOpenEditor }) {
               <div className="rf-item-stats">
                 {item.weight>0 && <div className="rf-item-stat">{item.weight}<b>kg</b></div>}
                 {item.gold_value>0 && <div className="rf-item-stat">{item.gold_value}<b>gp</b></div>}
+                {item.mana_restore>0 && <div className="rf-item-stat rf-item-mana">💧 +{item.mana_restore} mana</div>}
               </div>
             </div>
           ))}
@@ -1615,7 +1636,7 @@ function ItemsTab({ items, onOpenEditor }) {
   );
 }
 
-function PlayerInventorySection({ player, items }) {
+function PlayerInventorySection({ player, items, onUseItem }) {
   const inv = (player.inventory||[])
     .map(e => ({ ...e, item: items.find(i=>i.id===e.item_id) }))
     .filter(e => e.item && e.quantity>0);
@@ -1623,14 +1644,16 @@ function PlayerInventorySection({ player, items }) {
   const totalW = inv.reduce((s,e)=>s+e.item.weight*e.quantity,0);
   const totalG = inv.reduce((s,e)=>s+e.item.gold_value*e.quantity,0);
   const maxCarry = player.max_carry_weight ?? 75;
+  const manaMax = player.max_mana ?? 10;
+  const manaNow = Math.min(player.current_mana ?? manaMax, manaMax);
   const load = getLoadTier(totalW, maxCarry);
   return (
     <div className="rf-inv-section">
       <div className="rf-inv-header">
         <div className="rf-inv-title"><Package size={16}/>Inventory</div>
         <div className="rf-inv-totals">
-          {totalW>0 && <span className="rf-inv-total">\u2696\uFE0F {totalW%1===0?totalW:totalW.toFixed(1)} lb</span>}
-          {totalG>0 && <span className="rf-inv-total">\uD83E\uDE99 {totalG%1===0?totalG:totalG.toFixed(1)} gp</span>}
+          {totalW>0 && <span className="rf-inv-total">⚖️ {totalW%1===0?totalW:totalW.toFixed(1)} kg</span>}
+          {totalG>0 && <span className="rf-inv-total">🪙 {totalG%1===0?totalG:totalG.toFixed(1)} gp</span>}
         </div>
       </div>
       {(player.max_carry_weight??75)>0 && (() => {
@@ -1663,8 +1686,16 @@ function PlayerInventorySection({ player, items }) {
                   {e.item.gold_value>0 && <span>{e.item.gold_value}gp ea</span>}
                 </div>
               )}
+              {e.item.mana_restore>0 && <div className="rf-inv-item-mana">💧 Restores {e.item.mana_restore} mana when used</div>}
             </div>
-            <div className="rf-inv-item-qty">\xD7{e.quantity}</div>
+            {e.item.mana_restore>0 && onUseItem && (
+              <button className="rf-inv-use-btn" disabled={manaNow>=manaMax}
+                title={manaNow>=manaMax ? 'Your mana is already full' : `Use 1 to restore ${e.item.mana_restore} mana`}
+                onClick={()=>onUseItem(player.id, e.item)}>
+                <Droplet size={12}/> Use
+              </button>
+            )}
+            <div className="rf-inv-item-qty">×{e.quantity}</div>
           </div>
         ))}
       </div>
@@ -1867,7 +1898,7 @@ function EncountersTab({ encounters, onOpenEditor, onActivate, onEnd }) {
   return(
     <div>
       <div className="rf-section-header">
-        <h2 className="rf-section-title">Encounters</h2>
+        <div><h2 className="rf-section-title">Encounters</h2><div className="rf-section-sub">Run combat with initiative and HP. Players see the active fight live on their screen.</div></div>
         <button className="rf-btn-primary" onClick={()=>onOpenEditor(null)}><Plus size={15}/> New</button>
       </div>
       {active&&<div className="rf-enc-active-banner">⚔️ Active: {active.name} — Round {active.round}<button style={{marginLeft:'auto',background:'transparent',border:'1px solid var(--danger)',color:'var(--danger)',borderRadius:7,padding:'5px 10px',fontSize:12,cursor:'pointer'}} onClick={onEnd}>End</button></div>}
@@ -2068,7 +2099,7 @@ function CompanionsTab({ companions, onOpenEditor }) {
   return(
     <div>
       <div className="rf-section-header">
-        <h2 className="rf-section-title">Companions</h2>
+        <div><h2 className="rf-section-title">Companions</h2><div className="rf-section-sub">Pets, mounts and sidekicks. Assign them to players from the Players tab.</div></div>
         <button className="rf-btn-primary" onClick={()=>onOpenEditor(null)}><Plus size={15}/> New</button>
       </div>
       {companions.length===0?(
@@ -2097,7 +2128,7 @@ function PlayerCompanionsSection({ player, companions }) {
   if(mine.length===0) return null;
   return(
     <div className="rf-companions-section">
-      <div className="rf-companions-header">\uD83D\uDC3E Companions & Buddies</div>
+      <div className="rf-companions-header">🐾 Companions & Buddies</div>
       <div className="rf-companions-list">
         {mine.map(comp=>(
           <div key={comp.id} className="rf-companion-item">
@@ -2175,7 +2206,7 @@ function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDe
   return (
     <div>
       <div className="rf-section-header">
-        <h2 className="rf-section-title">Players</h2>
+        <div><h2 className="rf-section-title">Players</h2><div className="rf-section-sub">Manage each player: level, skill points, runes, abilities, items, stats and companions.</div></div>
       </div>
       <div className="rf-add-player-row">
         <input
@@ -2198,27 +2229,27 @@ function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDe
                 {p.character_class&&<div className="rf-class-badge">{CLASS_ICONS[p.character_class]} {p.character_class}</div>}
               </div>
               <div className="rf-level-ctrl">
-                <span style={{fontSize:11,color:"var(--text-muted)",fontFamily:"'Cinzel',serif",marginRight:2}}>Lv</span>
+                <span style={{fontSize:11,color:"var(--text-muted)",fontFamily:"'Cinzel',serif",marginRight:2}} title="Player level. Abilities and runes can require a minimum level.">Level</span>
                 <button className="rf-level-ctrl-btn" onClick={()=>onSetPlayerLevel(p.id,Math.max(1,(p.level||1)-1))}>-</button>
                 <div className="rf-level-ctrl-val">{p.level||1}</div>
                 <button className="rf-level-ctrl-btn" onClick={()=>onSetPlayerLevel(p.id,Math.min(20,(p.level||1)+1))}>+</button>
               </div>
               <div className="rf-sp-ctrl">
-                <span className="rf-sp-ctrl-label">SP</span>
+                <span className="rf-sp-ctrl-label" title="Skill points: unspent points the player can spend to raise stats">Skill pts</span>
                 <button className="rf-level-ctrl-btn" onClick={()=>onGiveSkillPoints(p.id,-1)} disabled={(p.skill_points||0)<=0}>-</button>
                 <div className="rf-sp-ctrl-val">{p.skill_points||0}</div>
                 <button className="rf-level-ctrl-btn" onClick={()=>onGiveSkillPoints(p.id,+1)}>+</button>
               </div>
-              <div className="rf-player-row-meta" style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>{(p.unlocked_runes || []).length}/{totalRunes} runes · {(p.granted_abilities || []).length}/{totalAbilities} abilities <span className="rf-mana-pill"><Droplet size={10}/> {p.current_mana ?? p.max_mana ?? 10}/{p.max_mana ?? 10}</span></div>
+              <div className="rf-player-row-meta" style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>{(p.unlocked_runes || []).length}/{totalRunes} runes unlocked · {(p.granted_abilities || []).length}/{totalAbilities} abilities given <span className="rf-mana-pill" title="Current / max mana"><Droplet size={10}/> {p.current_mana ?? p.max_mana ?? 10}/{p.max_mana ?? 10}</span></div>
               <div className="rf-player-row-actions">
-                <button className="rf-btn-ghost-sm" onClick={() => onOpenGrant(p)}><Sparkles size={13} /> Runes</button>
-                <button className="rf-btn-mana" onClick={() => onOpenAbilityGrant(p)}><Zap size={13} /> Abilities</button>
-                <button className="rf-btn-ghost-sm" onClick={() => onOpenInventory(p)}><Package size={13}/> Items</button>
-                <button className="rf-btn-ghost-sm" onClick={() => onOpenStats && onOpenStats(p)}>📊 Stats</button>
-                <select className="rf-theme-sel" value={p.player_theme||'campfire'} onChange={e=>onSetPlayerTheme&&onSetPlayerTheme(p.id,e.target.value)}>
+                <button className="rf-btn-ghost-sm" onClick={() => onOpenGrant(p)} title="Unlock or lock runes for this player"><Sparkles size={13} /> Runes</button>
+                <button className="rf-btn-mana" onClick={() => onOpenAbilityGrant(p)} title="Give abilities and set this player's max mana"><Zap size={13} /> Abilities</button>
+                <button className="rf-btn-ghost-sm" onClick={() => onOpenInventory(p)} title="Give items and set max carry weight"><Package size={13}/> Items</button>
+                <button className="rf-btn-ghost-sm" onClick={() => onOpenStats && onOpenStats(p)} title="Set any stat to any value, including negatives">📊 Stats</button>
+                <select className="rf-theme-sel" title="Visual theme this player sees" value={p.player_theme||'campfire'} onChange={e=>onSetPlayerTheme&&onSetPlayerTheme(p.id,e.target.value)}>
                   {Object.entries(THEMES).map(([k,v])=><option key={k} value={k}>{v.icon} {v.label}</option>)}
                 </select>
-                <button className="rf-btn-ghost-sm" onClick={() => onOpenCompanions(p)}>\uD83D\uDC3E Companions</button>
+                <button className="rf-btn-ghost-sm" onClick={() => onOpenCompanions(p)} title="Assign pets, mounts and sidekicks">🐾 Companions</button>
                 <DeleteConfirmButton onConfirm={() => onDeletePlayer(p.id)} label="remove" />
               </div>
             </div>
@@ -2273,7 +2304,7 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
 
         <label className="rf-label">Character creation point budget</label>
         <input className="rf-input" type="number" min="1" max="100" value={statPts} onChange={e=>setStatPts(e.target.value)}/>
-        <div className="rf-hint">Standard D\u0026D point buy: 27 pts. Raise it for more powerful characters.</div>
+        <div className="rf-hint">Standard D&D point buy: 27 pts. Raise it for more powerful characters.</div>
 
         <label className="rf-label">Change DM passcode</label>
         <input className="rf-input" type="text" value={newPasscode} onChange={(e) => setNewPasscode(e.target.value)} placeholder="Leave blank to keep current passcode" />
@@ -2326,10 +2357,20 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
         <button className={`rf-tab${tab === 'abilities' ? ' rf-tab--active' : ''}`} onClick={() => setTab('abilities')}><Zap size={15} /> Abilities</button>
         <button className={`rf-tab${tab === 'players' ? ' rf-tab--active' : ''}`} onClick={() => setTab('players')}><Users size={15} /> Players</button>
         <button className={`rf-tab${tab === 'encounters' ? ' rf-tab--active' : ''}`} onClick={() => setTab('encounters')}>⚔️ Encounters</button>
-        <button className={`rf-tab${tab === 'companions' ? ' rf-tab--active' : ''}`} onClick={() => setTab('companions')}>\uD83D\uDC3E Companions</button>
+        <button className={`rf-tab${tab === 'companions' ? ' rf-tab--active' : ''}`} onClick={() => setTab('companions')}>🐾 Companions</button>
         <button className={`rf-tab${tab === 'items' ? ' rf-tab--active' : ''}`} onClick={() => setTab('items')}><Package size={15}/> Items</button>
         <button className={`rf-tab${tab === 'settings' ? ' rf-tab--active' : ''}`} onClick={() => setTab('settings')}><Settings size={15} /> Settings</button>
       </div>
+      <details className="rf-guide">
+        <summary>❓ How this works (tap to open)</summary>
+        <ol>
+          <li><b>Build your content</b> in the Rune Paths, Abilities, Items and Companions tabs.</li>
+          <li><b>Add players</b> in the Players tab, or share the campaign link and let them join themselves.</li>
+          <li><b>Give things out</b> with the buttons on each player row (Runes, Abilities, Items, Companions).</li>
+          <li><b>Players take it from there:</b> they equip runes, use abilities and potions, and spend skill points.</li>
+          <li><b>Run fights</b> from the Encounters tab; everyone sees initiative and HP live.</li>
+        </ol>
+      </details>
       <div>
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
         {tab === 'abilities' && <AbilitiesTab abilitySets={abilitySets} onOpenEditor={setEditingAbilitySet} />}
@@ -2500,7 +2541,7 @@ function PlayerNotepad({ player, onSave }) {
   );
 }
 
-function PlayerDashboard({ meta, trees, players, abilitySets, companions, encounters, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh, themeVars }) {
+function PlayerDashboard({ meta, trees, players, abilitySets, companions, encounters, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onUseItem, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh, themeVars }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
@@ -2569,7 +2610,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
 
         <div className="rf-loadout">
           <div className="rf-loadout-header">
-            <div className="rf-loadout-title">Current Loadout</div>
+            <div><div className="rf-loadout-title">Equipped Runes</div><div className="rf-loadout-hint">Runes your DM unlocked for you. Tap one below to equip or unequip it.</div></div>
             <div className="rf-loadout-count">{equipped.length}{maxSlots > 0 ? `/${maxSlots}` : ''} equipped</div>
           </div>
           {equippedRuneObjs.length === 0 ? (
@@ -2602,7 +2643,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
         )}
 
         <PlayerCompanionsSection player={player} companions={companions}/>
-        <PlayerInventorySection player={player} items={items}/>
+        <PlayerInventorySection player={player} items={items} onUseItem={onUseItem}/>
         {grantedAbilitySets.length > 0 && (
           <div className="rf-abilities-wrap">
             <div className="rf-section-header" style={{ marginBottom: 14 }}>
@@ -3258,6 +3299,24 @@ export default function App() {
     if (error) { console.error(error); showToast('Failed to update mana.'); }
   };
 
+  const handleUseItem = async (playerId, item) => {
+    const player = players.find((p) => p.id === playerId);
+    if (!player || !item || !(item.mana_restore > 0)) return;
+    const entry = (player.inventory || []).find((e) => e.item_id === item.id);
+    if (!entry || entry.quantity <= 0) return;
+    const max_mana = player.max_mana ?? 10;
+    const cur = Math.min(player.current_mana ?? max_mana, max_mana);
+    if (cur >= max_mana) { showToast('Your mana is already full.'); return; }
+    const current_mana = Math.min(max_mana, cur + item.mana_restore);
+    const inventory = (player.inventory || [])
+      .map((e) => (e.item_id === item.id ? { ...e, quantity: e.quantity - 1 } : e))
+      .filter((e) => e.quantity > 0);
+    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, inventory, current_mana } : p)));
+    const { error } = await supabase.from('players').update({ inventory, current_mana }).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to use item.'); return; }
+    showToast(`💧 Used ${item.name} · +${current_mana - cur} mana`);
+  };
+
   const handleUseAbility = async (playerId, ability) => {
     const player = players.find((p) => p.id === playerId);
     if (!player) return;
@@ -3584,6 +3643,7 @@ export default function App() {
           onJoinAsNew={handleJoinAsNew}
           onToggleEquip={handleToggleEquip}
           onAdjustMana={handleAdjustMana}
+          onUseItem={handleUseItem}
           onUseAbility={handleUseAbility}
           onSpendSkillPoint={handleSpendSkillPoint}
           onSaveCharacter={handleSaveCharacter}
