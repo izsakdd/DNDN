@@ -656,6 +656,23 @@ const CSS = `
 .rf-inv-item-mana { font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--mana,#8b7ff5); margin-top:3px; }
 .rf-item-mana b, .rf-item-stat.rf-item-mana { color:var(--mana,#8b7ff5); }
 
+
+/* ===== VOICE CASTING ===== */
+.rf-voice-panel { background:rgba(139,127,245,0.07); border:1px solid rgba(139,127,245,0.28); border-radius:var(--radius); padding:14px 16px; margin-bottom:14px; }
+.rf-voice-title { font-family:'Cinzel',serif; font-weight:600; font-size:14px; margin-bottom:8px; }
+.rf-voice-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.rf-voice-btn { display:inline-flex; align-items:center; gap:8px; background:var(--mana,#8b7ff5); color:#14102a; border:none; border-radius:999px; padding:12px 22px; font-size:14px; font-weight:700; cursor:pointer; touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; transition:transform .1s; }
+.rf-voice-btn:active { transform:scale(0.97); }
+.rf-voice-btn--live { background:#ff6b6b; color:#fff; transform:scale(0.97); animation:rf-voice-pulse 1.1s ease-in-out infinite; }
+@keyframes rf-voice-pulse { 0%,100% { box-shadow:0 0 0 0 rgba(255,107,107,0.55); } 50% { box-shadow:0 0 0 10px rgba(255,107,107,0); } }
+.rf-voice-hint { font-size:12.5px; color:var(--text-muted); flex:1; min-width:180px; line-height:1.45; }
+.rf-voice-status { margin-top:10px; font-size:13px; font-weight:600; border-radius:8px; padding:8px 12px; line-height:1.4; }
+.rf-voice-status--ok { color:#4caf50; background:rgba(76,175,80,0.12); border:1px solid rgba(76,175,80,0.35); }
+.rf-voice-status--warn { color:#ffc107; background:rgba(255,193,7,0.10); border:1px solid rgba(255,193,7,0.35); }
+.rf-voice-status--err { color:var(--danger); background:rgba(196,69,60,0.10); border:1px solid rgba(196,69,60,0.4); }
+.rf-ability-voice-tag { font-size:11.5px; color:var(--mana,#8b7ff5); margin-top:5px; font-family:'JetBrains Mono',monospace; }
+.rf-ability-voice-lock { font-size:12px; font-weight:600; color:var(--mana,#8b7ff5); border:1px dashed rgba(139,127,245,0.5); border-radius:7px; padding:7px 11px; white-space:nowrap; }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -1044,20 +1061,169 @@ function ManaBar({ currentMana, maxMana, onAdjust, onRestore }) {
   );
 }
 
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+const normSpeech = (s) => (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+
+function matchSpokenAbility(heardList, abilities) {
+  let best = null, bestScore = 0, bestLen = 0;
+  for (const raw of heardList) {
+    const heard = normSpeech(raw);
+    if (!heard) continue;
+    for (const ab of abilities) {
+      const name = normSpeech(ab.name);
+      if (!name) continue;
+      let score = 0;
+      if (heard === name || (' ' + heard + ' ').includes(' ' + name + ' ')) {
+        score = 1;
+      } else {
+        const words = heard.split(' ');
+        const size = name.split(' ').length;
+        for (let i = 0; i + size <= words.length; i++) {
+          const chunk = words.slice(i, i + size).join(' ');
+          const sim = 1 - levenshtein(chunk, name) / Math.max(chunk.length, name.length);
+          if (sim > score) score = sim;
+        }
+      }
+      if (score > bestScore || (score === bestScore && score > 0 && name.length > bestLen)) {
+        best = ab; bestScore = score; bestLen = name.length;
+      }
+    }
+  }
+  return bestScore >= 0.78 ? best : null;
+}
+
+function VoiceCastPanel({ abilities, currentMana, onCast }) {
+  const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+  const recRef = useRef(null);
+  const heardRef = useRef([]);
+  const errRef = useRef(null);
+  const timerRef = useRef(null);
+  const latest = useRef({ abilities, currentMana, onCast });
+  latest.current = { abilities, currentMana, onCast };
+  const [listening, setListening] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  const say = (kind, text) => {
+    setStatus({ kind, text });
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setStatus(null), 7000);
+  };
+
+  useEffect(() => () => {
+    clearTimeout(timerRef.current);
+    try { if (recRef.current) recRef.current.abort(); } catch (e) { /* ignore */ }
+  }, []);
+
+  if (!SR) {
+    return (
+      <div className="rf-voice-panel">
+        <div className="rf-voice-title">🎤 Voice casting</div>
+        <div className="rf-voice-status rf-voice-status--warn">Voice casting isn't supported in this browser. Try Chrome, Edge or Safari.</div>
+      </div>
+    );
+  }
+
+  const start = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (recRef.current) return;
+    heardRef.current = [];
+    errRef.current = null;
+    const rec = new SR();
+    rec.lang = 'en-US';
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.maxAlternatives = 3;
+    rec.onresult = (ev) => {
+      const results = Array.from(ev.results);
+      const maxAlt = Math.max(1, ...results.map((r) => r.length));
+      const alts = [];
+      for (let j = 0; j < maxAlt; j++) {
+        alts.push(results.map((r) => (r[j] || r[0]).transcript).join(' ').trim());
+      }
+      heardRef.current = alts;
+    };
+    rec.onerror = (ev) => { errRef.current = ev.error; };
+    rec.onend = () => {
+      recRef.current = null;
+      setListening(false);
+      const err = errRef.current;
+      if (err === 'aborted') return;
+      if (err === 'not-allowed' || err === 'service-not-allowed') return say('err', 'Microphone access is blocked. Allow the microphone for this site, then try again.');
+      if (err === 'network') return say('err', "Speech recognition can't reach its service in this browser (Brave blocks it). Try Chrome, Edge or Safari.");
+      if (err === 'audio-capture') return say('err', 'No microphone was found.');
+      const heard = heardRef.current;
+      if (!heard.length || err === 'no-speech') return say('warn', "Didn't hear anything. Hold the button, say the spell, then let go.");
+      const { abilities: list, currentMana: mana, onCast: cast } = latest.current;
+      const hit = matchSpokenAbility(heard, list);
+      if (!hit) return say('warn', `Heard "${heard[0]}", but that doesn't match any of your abilities.`);
+      if (mana < hit.mana_cost) return say('warn', `Not enough mana to cast ${hit.name} (needs ${hit.mana_cost}, you have ${mana}).`);
+      cast(hit);
+      say('ok', `${hit.name} cast!`);
+    };
+    recRef.current = rec;
+    setListening(true);
+    try { rec.start(); } catch (err) { recRef.current = null; setListening(false); }
+  };
+
+  const stop = () => {
+    try { if (recRef.current) recRef.current.stop(); } catch (e) { /* ignore */ }
+  };
+
+  const example = abilities[0] ? abilities[0].name : null;
+  return (
+    <div className="rf-voice-panel">
+      <div className="rf-voice-row">
+        <button type="button"
+          className={`rf-voice-btn${listening ? ' rf-voice-btn--live' : ''}`}
+          onPointerDown={start} onPointerUp={stop} onPointerLeave={stop} onPointerCancel={stop}
+          onContextMenu={(e) => e.preventDefault()}
+          onKeyDown={(e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) start(e); }}
+          onKeyUp={(e) => { if (e.key === ' ' || e.key === 'Enter') stop(); }}>
+          🎤 {listening ? 'Listening… let go when done' : 'Hold to speak'}
+        </button>
+        <div className="rf-voice-hint">
+          Hold the button and say a spell's name{example ? <>, like “{example}”</> : null}. Spells marked voice only can't be cast any other way.
+        </div>
+      </div>
+      {status && <div className={`rf-voice-status rf-voice-status--${status.kind}`}>{status.text}</div>}
+    </div>
+  );
+}
+
 function AbilityItem({ ability, currentMana, onUse }) {
   const canAfford = currentMana >= ability.mana_cost;
+  const voiceOnly = !!ability.voice_only;
   return (
     <div className="rf-ability-item">
       <div className="rf-ability-item-body">
         <div className="rf-ability-item-name">{ability.name}</div>
         {ability.effect && <div className="rf-ability-item-effect">{ability.effect}</div>}
         {ability.description && <div className="rf-ability-item-desc">{ability.description}</div>}
+        {voiceOnly && <div className="rf-ability-voice-tag">🎤 Voice only: hold the speak button and say “{ability.name}”</div>}
       </div>
       <div className="rf-ability-side">
         <div className="rf-ability-cost"><Droplet size={12} /> {ability.mana_cost}</div>
-        <button className="rf-ability-use" disabled={!canAfford} onClick={() => onUse(ability)}>
-          <Zap size={12} /> Use
-        </button>
+        {voiceOnly ? (
+          <div className="rf-ability-voice-lock" title="Your DM made this spell voice-cast only">🎤 Voice only</div>
+        ) : (
+          <button className="rf-ability-use" disabled={!canAfford} onClick={() => onUse(ability)}>
+            <Zap size={12} /> Use
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1374,6 +1540,10 @@ function AbilitySetEditorModal({ set, onClose, onSave, onDelete }) {
               <div>
                 <textarea className="rf-textarea rf-textarea-sm" rows={2} value={ab.description} onChange={e=>updateAbility(ab.id,{description:e.target.value})} placeholder="Flavor / lore (optional)"/>
               </div>
+              <label style={{display:'flex',alignItems:'flex-start',gap:8,marginTop:8,cursor:'pointer',fontSize:12.5,lineHeight:1.4}}>
+                <input type="checkbox" checked={!!ab.voice_only} onChange={e=>updateAbility(ab.id,{voice_only:e.target.checked})} style={{marginTop:2}}/>
+                <span>🎤 Voice cast only <span style={{color:'var(--text-muted)'}}>(no Use button: the player must say “{ab.name||'the spell name'}” while holding the speak button)</span></span>
+              </label>
               <div style={{display:'flex',alignItems:'center',gap:8,marginTop:6,flexWrap:'wrap'}}>
                 <span style={{fontSize:11.5,color:'var(--text-muted)',fontFamily:"'Cinzel',serif"}}>Min Level</span>
                 <input className="rf-input rf-input-sm" type="number" min="0" max="20" value={ab.req_level||0} onChange={e=>updateAbility(ab.id,{req_level:Number(e.target.value)||0})} style={{width:60,textAlign:'center'}}/>
@@ -2649,6 +2819,10 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
             <div className="rf-section-header" style={{ marginBottom: 14 }}>
               <h2 className="rf-section-title" style={{ fontSize: 16 }}><Zap size={16} style={{ display:'inline', verticalAlign:'middle', marginRight:6 }} />Abilities</h2>
             </div>
+            <VoiceCastPanel
+              abilities={grantedAbilitySets.flatMap(s => s.abilities)}
+              currentMana={currentMana}
+              onCast={(ab) => onUseAbility(player.id, ab, 'voice')} />
             {grantedAbilitySets.map(s => {
               const color = TREE_COLORS[s.color] || TREE_COLORS.violet;
               return (
@@ -3317,9 +3491,14 @@ export default function App() {
     showToast(`💧 Used ${item.name} · +${current_mana - cur} mana`);
   };
 
-  const handleUseAbility = async (playerId, ability) => {
+  const handleUseAbility = async (playerId, ability, via = 'button') => {
     const player = players.find((p) => p.id === playerId);
     if (!player) return;
+    const latest = abilitySets.flatMap((s) => s.abilities || []).find((a) => a.id === ability.id) || ability;
+    if (latest.voice_only && via !== 'voice') {
+      showToast(`${latest.name} can only be cast by voice. Hold the speak button and say its name.`);
+      return;
+    }
     const max_mana = player.max_mana ?? 10;
     const cur = player.current_mana ?? max_mana;
     if (cur < ability.mana_cost) return;
