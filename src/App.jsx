@@ -673,6 +673,56 @@ const CSS = `
 .rf-ability-voice-tag { font-size:11.5px; color:var(--mana,#8b7ff5); margin-top:5px; font-family:'JetBrains Mono',monospace; }
 .rf-ability-voice-lock { font-size:12px; font-weight:600; color:var(--mana,#8b7ff5); border:1px dashed rgba(139,127,245,0.5); border-radius:7px; padding:7px 11px; white-space:nowrap; }
 
+
+/* ===== HP / STATUS EFFECTS ===== */
+.rf-hp-section { background:rgba(196,69,60,0.06); border:1px solid rgba(196,69,60,0.28); border-radius:var(--radius); padding:16px 20px; margin-bottom:18px; }
+.rf-hp-title { font-family:'Cinzel',serif; font-size:13.5px; font-weight:600; color:#e8736b; }
+.rf-hp-count { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; }
+.rf-hp-fill { height:100%; border-radius:4px; transition:width .4s ease, background .3s; }
+.rf-hp-pill, .rf-ac-pill { display:inline-flex; align-items:center; gap:4px; border-radius:6px; padding:2px 7px; font-size:11px; }
+.rf-hp-pill { color:#e8736b; background:rgba(196,69,60,0.12); border:1px solid rgba(196,69,60,0.28); }
+.rf-ac-pill { color:var(--gold); background:rgba(212,168,67,0.10); border:1px solid rgba(212,168,67,0.28); }
+.rf-item-heal { color:#e8736b; }
+.rf-enc-effects { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.rf-fx-badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:var(--text); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:2px 8px; }
+.rf-fx-badge--skip { border-color:rgba(196,69,60,0.5); background:rgba(196,69,60,0.12); }
+.rf-fx-x { background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:13px; line-height:1; padding:0 0 0 2px; }
+.rf-fx-x:hover { color:var(--danger); }
+.rf-enc-fx-btn { background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:7px; width:30px; height:28px; cursor:pointer; flex-shrink:0; }
+.rf-enc-fx-btn:hover { border-color:var(--gold); color:var(--gold); }
+.rf-enc-fx-panel { background:var(--surface-2); border-bottom:1px solid var(--border); padding:12px 16px; }
+.rf-enc-fx-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.rf-enc-fx-label { font-size:12px; color:var(--text-muted); }
+.rf-enc-fx-presets { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.rf-fx-chip { background:var(--bg); border:1px solid var(--border); color:var(--text); border-radius:999px; padding:5px 11px; font-size:12px; cursor:pointer; }
+.rf-fx-chip:hover { border-color:var(--gold); color:var(--gold); }
+.rf-enc-fx-custom { display:flex; gap:8px; }
+.rf-fx-banner { display:flex; flex-direction:column; gap:6px; background:rgba(196,69,60,0.12); border:1px solid rgba(196,69,60,0.45); border-radius:11px; padding:11px 15px; margin-bottom:14px; }
+.rf-fx-banner-item { font-weight:600; font-size:13.5px; color:var(--danger); }
+
+
+/* ===== ARMOR + TRINKETS ===== */
+.rf-gear-fields { background:var(--surface-2); border:1px solid var(--border); border-radius:11px; padding:12px 14px; margin-top:14px; }
+.rf-gear-stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); gap:8px; }
+.rf-gear-stat-label { font-family:'Cinzel',serif; font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); margin-bottom:4px; }
+.rf-item-gear { color:var(--gold); }
+.rf-stat-gear { font-size:10px; color:var(--gold); }
+.rf-ac-badge { display:flex; flex-direction:column; align-items:center; background:rgba(154,165,184,0.10); border:2px solid rgba(154,165,184,0.4); border-radius:10px; padding:8px 14px; }
+.rf-ac-badge-label { font-size:9px; text-transform:uppercase; letter-spacing:.12em; color:#9aa5b8; font-family:'Cinzel',serif; }
+.rf-ac-badge-val { font-family:'Cinzel',serif; font-size:24px; font-weight:700; color:#9aa5b8; line-height:1.1; }
+.rf-equip-section { background:linear-gradient(135deg,var(--surface),var(--surface-2)); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; margin-bottom:18px; }
+.rf-equip-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
+.rf-equip-slot { background:var(--bg); border:1px dashed var(--border); border-radius:10px; padding:10px 12px; min-height:84px; display:flex; flex-direction:column; gap:4px; }
+.rf-equip-slot--filled { border-style:solid; border-color:rgba(212,168,67,0.45); }
+.rf-equip-slot-label { font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); font-family:'JetBrains Mono',monospace; }
+.rf-equip-slot-name { font-size:13px; font-weight:600; }
+.rf-equip-slot-bonus { font-size:11px; color:var(--gold); font-family:'JetBrains Mono',monospace; }
+.rf-equip-slot-empty { font-size:12px; color:var(--text-muted); font-style:italic; margin:auto 0; }
+.rf-equip-btn { align-self:flex-start; margin-top:auto; background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:6px; padding:3px 9px; font-size:11px; font-weight:600; cursor:pointer; }
+.rf-equip-btn:hover { border-color:var(--danger); color:var(--danger); }
+.rf-equip-btn--go { align-self:center; margin-top:0; border-color:rgba(212,168,67,0.5); color:var(--gold); padding:6px 12px; font-size:12px; }
+.rf-equip-btn--go:hover { background:rgba(212,168,67,0.12); border-color:var(--gold); color:var(--gold); }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -765,8 +815,8 @@ function compressImage(file) {
   });
 }
 
-const CATEGORIES   = ['weapon','armor','consumable','tool','magic','currency','misc'];
-const CAT_ICONS    = { weapon:'\u2694\uFE0F', armor:'\uD83D\uDEE1\uFE0F', consumable:'\uD83E\uDDEA', tool:'\uD83D\uDD27', magic:'\u2728', currency:'\uD83E\uDE99', misc:'\uD83D\uDCE6' };
+const CATEGORIES   = ['weapon','armor','trinket','consumable','tool','magic','currency','misc'];
+const CAT_ICONS    = { weapon:'\u2694\uFE0F', armor:'\uD83D\uDEE1\uFE0F', trinket:'\uD83D\uDCFF', consumable:'\uD83E\uDDEA', tool:'\uD83D\uDD27', magic:'\u2728', currency:'\uD83E\uDE99', misc:'\uD83D\uDCE6' };
 
 
 const DND_CLASSES = ['Barbarian','Bard','Cleric','Druid','Fighter','Monk','Paladin','Ranger','Rogue','Sorcerer','Warlock','Wizard','Artificer','Tactician','Kalas'];
@@ -780,7 +830,139 @@ const THEMES = {
   ice:      { label:'Ice',      icon:'❄️', vars:{'--bg':'#07101a','--surface':'#0f1e2e','--surface-2':'#132438','--border':'#1a2e44','--gold':'#5ec4e8','--text':'#d0eaf8','--text-muted':'#6080a0','--mana':'#5ec4e8'} },
 };
 function getThemeVars(theme) { return (THEMES[theme]||THEMES.campfire).vars; }
-const statMod=v=>Math.floor(((v||10)-10)/2);
+const statMod=v=>Math.floor(((v??10)-10)/2);
+
+/* <game-helpers> */
+const STATUS_EFFECTS = [
+  { name: 'Stunned', icon: '💫', skips: true },
+  { name: 'Paralyzed', icon: '⚡', skips: true },
+  { name: 'Frozen', icon: '🧊', skips: true },
+  { name: 'Asleep', icon: '💤', skips: true },
+  { name: 'Poisoned', icon: '☠️' },
+  { name: 'Burning', icon: '🔥' },
+  { name: 'Bleeding', icon: '🩸' },
+  { name: 'Blinded', icon: '🙈' },
+  { name: 'Frightened', icon: '😱' },
+  { name: 'Charmed', icon: '💖' },
+  { name: 'Slowed', icon: '🐌' },
+  { name: 'Prone', icon: '⬇️' },
+  { name: 'Blessed', icon: '✨' },
+  { name: 'Shielded', icon: '🛡️' },
+];
+
+const TRINKET_SLOTS = 2;
+const ARMOR_SLOTS = [
+  { key: 'head', label: 'Head', icon: '⛑️' },
+  { key: 'chest', label: 'Chest', icon: '🥋' },
+  { key: 'hands', label: 'Hands', icon: '🧤' },
+  { key: 'feet', label: 'Feet', icon: '🥾' },
+  { key: 'shield', label: 'Shield', icon: '🛡️' },
+];
+const slotLabel = (k) => (ARMOR_SLOTS.find((s) => s.key === k) || {}).label || (k === 'trinket' ? 'Trinket' : '');
+
+function playerHP(p) {
+  const max = Math.max(1, Number(p.max_hp ?? 20) || 20);
+  const cur = Math.max(0, Math.min(Number(p.current_hp ?? max) || 0, max));
+  return { cur, max };
+}
+
+function itemUseState(player, item) {
+  const heal = Math.max(0, Number(item.heal_amount) || 0);
+  const mana = Math.max(0, Number(item.mana_restore) || 0);
+  if (!(heal > 0 || mana > 0)) return null;
+  const hp = playerHP(player);
+  const mMax = player.max_mana ?? 10;
+  const mNow = Math.min(player.current_mana ?? mMax, mMax);
+  const usable = (heal > 0 && hp.cur < hp.max) || (mana > 0 && mNow < mMax);
+  const parts = [];
+  if (heal > 0) parts.push(`❤️ +${heal} HP`);
+  if (mana > 0) parts.push(`💧 +${mana} mana`);
+  const full = heal > 0 && mana > 0 ? 'Your health and mana are already full'
+    : heal > 0 ? 'Your health is already full' : 'Your mana is already full';
+  return { usable, label: parts.join(' · '), full };
+}
+
+function cleanStatBonus(obj) {
+  const out = {};
+  STATS.forEach(({ key }) => {
+    const n = Number(obj && obj[key]);
+    if (n && Number.isFinite(n)) out[key] = Math.trunc(n);
+  });
+  return out;
+}
+
+function getGear(player, items) {
+  const inv = player.inventory || [];
+  const owned = (id) => inv.some((e) => e.item_id === id && e.quantity > 0);
+  const find = (id) => (items || []).find((i) => i.id === id);
+  const eq = player.equipment || {};
+  const slots = {};
+  ARMOR_SLOTS.forEach(({ key }) => {
+    const it = eq[key] ? find(eq[key]) : null;
+    slots[key] = it && it.slot === key && owned(it.id) ? it : null;
+  });
+  const trinkets = (eq.trinkets || []).map(find)
+    .filter((it) => it && it.slot === 'trinket' && owned(it.id)).slice(0, TRINKET_SLOTS);
+  return { slots, trinkets, all: [...Object.values(slots).filter(Boolean), ...trinkets] };
+}
+
+function gearBonuses(player, items) {
+  const { all } = getGear(player, items);
+  const stats = {};
+  let ac = 0;
+  all.forEach((it) => {
+    ac += Number(it.ac_bonus) || 0;
+    const sb = it.stat_bonus || {};
+    STATS.forEach(({ key }) => { if (sb[key]) stats[key] = (stats[key] || 0) + Number(sb[key]); });
+  });
+  return { ac, stats };
+}
+
+function playerAC(player, items) {
+  const { ac, stats } = gearBonuses(player, items);
+  const dex = (player.dex_score ?? 10) + (stats.dex_score || 0);
+  return 10 + statMod(dex) + ac;
+}
+
+function gearSummary(item) {
+  const parts = [];
+  if (item.slot) parts.push(slotLabel(item.slot));
+  if (Number(item.ac_bonus)) parts.push(`AC ${item.ac_bonus > 0 ? '+' : ''}${item.ac_bonus}`);
+  const sb = item.stat_bonus || {};
+  STATS.forEach(({ key, label }) => { if (sb[key]) parts.push(`${label} ${sb[key] > 0 ? '+' : ''}${sb[key]}`); });
+  return parts.join(' · ');
+}
+
+function advanceTurn(enc) {
+  const combatants = enc.combatants.map((c) => ({ ...c, effects: [...(c.effects || [])] }));
+  const n = combatants.length;
+  if (!n) return { combatants, turn_index: 0, round: enc.round || 1, notes: [] };
+  const notes = [];
+  const tick = (i) => {
+    const wore = [];
+    combatants[i].effects = combatants[i].effects.reduce((keep, ef) => {
+      if (!(ef.rounds > 0)) { keep.push(ef); return keep; }
+      if (ef.rounds - 1 <= 0) { wore.push(ef.name); return keep; }
+      keep.push({ ...ef, rounds: ef.rounds - 1 });
+      return keep;
+    }, []);
+    if (wore.length) notes.push(`${combatants[i].name}: ${wore.join(', ')} wore off`);
+  };
+  let idx = Math.min(Math.max(enc.turn_index || 0, 0), n - 1);
+  let round = enc.round || 1;
+  tick(idx);
+  for (let step = 0; step < n; step++) {
+    idx += 1;
+    if (idx >= n) { idx = 0; round += 1; }
+    const skip = combatants[idx].effects.find((ef) => ef.skips);
+    if (!skip) break;
+    notes.push(`${combatants[idx].name} is ${skip.name.toLowerCase()} and loses their turn`);
+    tick(idx);
+  }
+  return { combatants, turn_index: idx, round, notes };
+}
+/* </game-helpers> */
+
 const modStr=v=>{const m=statMod(v);return m>=0?'+'+m:''+m;};
 
 const POINT_COSTS={8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9};
@@ -922,18 +1104,52 @@ function TopHeader({ meta, role, playerName, onExit, onRefresh, onSwitchPlayer, 
    CHARACTER CREATION & STAT BLOCK
    ============================================================ */
 
-function StatBlock({ player, onSpend }) {
+/* <gear-actions> */
+function equipItem(player, items, item) {
+  if (!item || !item.slot) return { ok: false, reason: 'This item cannot be equipped.' };
+  const owned = (player.inventory || []).some((e) => e.item_id === item.id && e.quantity > 0);
+  if (!owned) return { ok: false, reason: "You don't have that item." };
+  const gear = getGear(player, items);
+  const equipment = { ...(player.equipment || {}) };
+  if (item.slot === 'trinket') {
+    if (gear.trinkets.some((t) => t.id === item.id)) return { ok: false, reason: 'Already equipped.' };
+    const keep = gear.trinkets.map((t) => t.id);
+    if (keep.length >= TRINKET_SLOTS) return { ok: false, reason: `Trinket slots are full (${TRINKET_SLOTS}). Unequip one first.` };
+    equipment.trinkets = [...keep, item.id];
+  } else if (ARMOR_SLOTS.some((s) => s.key === item.slot)) {
+    equipment[item.slot] = item.id;
+  } else {
+    return { ok: false, reason: 'This item cannot be equipped.' };
+  }
+  return { ok: true, equipment };
+}
+
+function unequipItem(player, slotKey, itemId) {
+  const equipment = { ...(player.equipment || {}) };
+  if (slotKey === 'trinket') equipment.trinkets = (equipment.trinkets || []).filter((id) => id !== itemId);
+  else delete equipment[slotKey];
+  return equipment;
+}
+/* </gear-actions> */
+
+function StatBlock({ player, onSpend, items }) {
   const pts = player.skill_points || 0;
+  const bonus = gearBonuses(player, items || []).stats;
   return (
     <div className="rf-stat-block">
       {STATS.map(({key,label}) => {
-        const v = player[key]||10;
-        const canSpend = pts > 0 && onSpend && v < 30;
+        const base = player[key] ?? 10;
+        const extra = bonus[key] || 0;
+        const v = base + extra;
+        const canSpend = pts > 0 && onSpend && base < 30;
         return (
           <div key={key} className="rf-stat-box">
             <div className="rf-stat-box-label">{label}</div>
             <div className="rf-stat-box-mod">{modStr(v)}</div>
-            <div className="rf-stat-box-score">{v}</div>
+            <div className="rf-stat-box-score">
+              {v}
+              {extra !== 0 && <span className="rf-stat-gear" title={`${base} base, ${extra > 0 ? '+' : ''}${extra} from gear`}> ({extra > 0 ? '+' : ''}{extra})</span>}
+            </div>
             {canSpend && (
               <button className="rf-stat-spend-btn" onClick={() => onSpend(key)}>+1</button>
             )}
@@ -1666,10 +1882,14 @@ function ItemEditorModal({ item, onClose, onSave, onDelete }) {
   const [weight,  setWeight]  = useState(item?.weight ?? 0);
   const [goldVal, setGoldVal] = useState(item?.gold_value ?? 0);
   const [manaRestore, setManaRestore] = useState(item?.mana_restore ?? 0);
+  const [healAmount, setHealAmount] = useState(item?.heal_amount ?? 0);
+  const [gearSlot, setGearSlot] = useState(item && item.category==='armor' && item.slot ? item.slot : 'chest');
+  const [acBonus, setAcBonus] = useState(item?.ac_bonus ?? 0);
+  const [statBonus, setStatBonus] = useState(item?.stat_bonus || {});
 
   const handleSave = () => {
     if (!name.trim()) return;
-    onSave({ id: item ? item.id : uid('item'), name:name.trim(), description:desc.trim(), category:cat, weight:Number(weight)||0, gold_value:Number(goldVal)||0, mana_restore:Math.max(0, Number(manaRestore)||0) });
+    onSave({ id: item ? item.id : uid('item'), name:name.trim(), description:desc.trim(), category:cat, weight:Number(weight)||0, gold_value:Number(goldVal)||0, mana_restore:Math.max(0, Number(manaRestore)||0), heal_amount:Math.max(0, Number(healAmount)||0), slot:(cat==='trinket'?'trinket':cat==='armor'?gearSlot:''), ac_bonus:(cat==='armor'?(Number(acBonus)||0):0), stat_bonus:((cat==='armor'||cat==='trinket')?cleanStatBonus(statBonus):{}) });
   };
   return (
     <div className="rf-modal-overlay" onClick={onClose}>
@@ -1702,6 +1922,37 @@ function ItemEditorModal({ item, onClose, onSave, onDelete }) {
               <input className="rf-input" type="number" min="0" step="0.5" value={goldVal} onChange={e=>setGoldVal(e.target.value)}/>
             </div>
           </div>
+          {(cat==='armor'||cat==='trinket')&&(
+            <div className="rf-gear-fields">
+              <div className="rf-label" style={{marginTop:0}}>{cat==='armor'?'Armor':'Trinket'} bonuses</div>
+              {cat==='armor'&&(
+                <>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:7,marginBottom:10}}>
+                    {ARMOR_SLOTS.map(s=>(
+                      <button key={s.key} type="button" style={{fontSize:12,padding:'5px 10px'}}
+                        className={gearSlot===s.key?'rf-btn-primary':'rf-btn-ghost'} onClick={()=>setGearSlot(s.key)}>{s.icon} {s.label}</button>
+                    ))}
+                  </div>
+                  <label className="rf-label" style={{marginTop:0}}>AC bonus</label>
+                  <input className="rf-input" type="number" value={acBonus} onChange={e=>setAcBonus(e.target.value)} style={{width:110}}/>
+                </>
+              )}
+              <label className="rf-label">Stat bonuses (use a minus sign for penalties)</label>
+              <div className="rf-gear-stat-grid">
+                {STATS.map(({key,label})=>(
+                  <div key={key} style={{textAlign:'center'}}>
+                    <div className="rf-gear-stat-label">{label}</div>
+                    <input className="rf-input rf-input-sm" type="number" placeholder="0" value={statBonus[key]??''}
+                      onChange={e=>setStatBonus(prev=>({...prev,[key]:e.target.value}))} style={{textAlign:'center'}}/>
+                  </div>
+                ))}
+              </div>
+              <div className="rf-hint">Players equip this from their inventory. {cat==='trinket'?`They can wear up to ${TRINKET_SLOTS} trinkets at once.`:'One item per slot; a new one replaces the old.'}</div>
+            </div>
+          )}
+          <label className="rf-label">Restores health (optional)</label>
+          <input className="rf-input" type="number" min="0" value={healAmount} onChange={e=>setHealAmount(e.target.value)} placeholder="0 = does not heal"/>
+          <div className="rf-hint">Set above 0 to make this a health potion. A potion can restore health, mana, or both.</div>
           <label className="rf-label">Restores mana (optional)</label>
           <input className="rf-input" type="number" min="0" value={manaRestore} onChange={e=>setManaRestore(e.target.value)} placeholder="0 = does not restore mana"/>
           <div className="rf-hint">Set above 0 to make this a mana potion. Players get a Use button on it; using it removes 1 from their inventory and refills that much mana, up to their max.</div>
@@ -1796,6 +2047,8 @@ function ItemsTab({ items, onOpenEditor }) {
               <div className="rf-item-stats">
                 {item.weight>0 && <div className="rf-item-stat">{item.weight}<b>kg</b></div>}
                 {item.gold_value>0 && <div className="rf-item-stat">{item.gold_value}<b>gp</b></div>}
+                {gearSummary(item) && <div className="rf-item-stat rf-item-gear">{gearSummary(item)}</div>}
+                {item.heal_amount>0 && <div className="rf-item-stat rf-item-heal">❤️ +{item.heal_amount} HP</div>}
                 {item.mana_restore>0 && <div className="rf-item-stat rf-item-mana">💧 +{item.mana_restore} mana</div>}
               </div>
             </div>
@@ -1856,15 +2109,15 @@ function PlayerInventorySection({ player, items, onUseItem }) {
                   {e.item.gold_value>0 && <span>{e.item.gold_value}gp ea</span>}
                 </div>
               )}
-              {e.item.mana_restore>0 && <div className="rf-inv-item-mana">💧 Restores {e.item.mana_restore} mana when used</div>}
+              {(()=>{const us=itemUseState(player,e.item);return us?<div className="rf-inv-item-mana">{us.label} when used</div>:null;})()}
             </div>
-            {e.item.mana_restore>0 && onUseItem && (
-              <button className="rf-inv-use-btn" disabled={manaNow>=manaMax}
-                title={manaNow>=manaMax ? 'Your mana is already full' : `Use 1 to restore ${e.item.mana_restore} mana`}
+            {(()=>{const us=itemUseState(player,e.item);return us&&onUseItem?(
+              <button className="rf-inv-use-btn" disabled={!us.usable}
+                title={us.usable?`Use 1 to restore ${us.label}`:us.full}
                 onClick={()=>onUseItem(player.id, e.item)}>
                 <Droplet size={12}/> Use
               </button>
-            )}
+            ):null;})()}
             <div className="rf-inv-item-qty">×{e.quantity}</div>
           </div>
         ))}
@@ -1967,7 +2220,7 @@ function ThemedBackground({ theme }) {
    ENCOUNTERS
    ============================================================ */
 
-function EncounterEditorModal({ encounter, players, onClose, onSave, onDelete }) {
+function EncounterEditorModal({ encounter, players, items, onClose, onSave, onDelete }) {
   const isNew = !encounter;
   const [name, setName] = React.useState(encounter?.name||'New Encounter');
   const [combatants, setCombatants] = React.useState(encounter?.combatants||[]);
@@ -1985,9 +2238,9 @@ function EncounterEditorModal({ encounter, players, onClose, onSave, onDelete })
   };
   const addPlayer = () => {
     const pl=players.find(p=>p.id===pId); if(!pl) return;
-    const hp=Number(pHP)||20;
-    setCombatants(prev=>sorted([...prev,{id:uid('c'),type:'player',player_id:pId,name:pl.name,initiative:Number(pInit)||0,max_hp:hp,current_hp:hp,ac:Number(pAC)||(10+statMod(pl.dex_score||10)),is_defeated:false}]));
-    setPId('');setPInit('');setPHP('');setPAC('');setMode(null);
+    const hp=playerHP(pl);
+    setCombatants(prev=>sorted([...prev,{id:uid('c'),type:'player',player_id:pId,name:pl.name,initiative:Number(pInit)||0,max_hp:hp.max,current_hp:hp.cur,ac:Number(pAC)||playerAC(pl,items),is_defeated:false}]));
+    setPId('');setPInit('');setPAC('');setMode(null);
   };
   return(
     <div className="rf-modal-overlay" onClick={onClose}>
@@ -2020,15 +2273,15 @@ function EncounterEditorModal({ encounter, players, onClose, onSave, onDelete })
           )}
           {mode==='player'&&(
             <div className="rf-enc-add-form">
-              <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:8,marginBottom:8}}>
-                <select className="rf-input rf-input-sm" value={pId} onChange={e=>{setPId(e.target.value);const pl=players.find(p=>p.id===e.target.value);if(pl)setPAC(String(10+statMod(pl.dex_score||10)));}} >
+              <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:8,marginBottom:8}}>
+                <select className="rf-input rf-input-sm" value={pId} onChange={e=>{setPId(e.target.value);const pl=players.find(p=>p.id===e.target.value);if(pl)setPAC(String(playerAC(pl,items)));}} >
                   <option value="">Select player...</option>
                   {players.filter(p=>!combatants.some(c=>c.player_id===p.id)).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
                 <input className="rf-input rf-input-sm" type="number" value={pInit} onChange={e=>setPInit(e.target.value)} placeholder="Init"/>
-                <input className="rf-input rf-input-sm" type="number" value={pHP} onChange={e=>setPHP(e.target.value)} placeholder="HP"/>
                 <input className="rf-input rf-input-sm" type="number" value={pAC} onChange={e=>setPAC(e.target.value)} placeholder="AC"/>
               </div>
+              <div className="rf-hint" style={{marginBottom:8}}>Health and armor come from the player's sheet. Set HP in Players, then Stats.</div>
               <div style={{display:'flex',gap:8}}>
                 <button className="rf-btn-ghost" onClick={()=>setMode(null)}>Cancel</button>
                 <button className="rf-btn-primary" disabled={!pId} onClick={addPlayer}>Add Player</button>
@@ -2093,8 +2346,14 @@ function EncountersTab({ encounters, onOpenEditor, onActivate, onEnd }) {
   );
 }
 
-function ActiveEncounterView({ encounter, isGM, onUpdateHP, onNextTurn, onEndEncounter }) {
+function ActiveEncounterView({ encounter, isGM, players, items, onUpdateHP, onNextTurn, onEndEncounter, onAddEffect, onRemoveEffect }) {
+  const [effectFor, setEffectFor] = React.useState(null);
+  const [rounds, setRounds] = React.useState(2);
+  const [custom, setCustom] = React.useState('');
   if(!encounter) return null;
+  const apply = (c, fx) => {
+    if (onAddEffect) onAddEffect(encounter.id, c.id, { name: fx.name, icon: fx.icon || '✨', skips: !!fx.skips, rounds: Math.max(0, Number(rounds) || 0) });
+  };
   return(
     <div className="rf-enc-view">
       <div className="rf-enc-view-header">
@@ -2107,33 +2366,68 @@ function ActiveEncounterView({ encounter, isGM, onUpdateHP, onNextTurn, onEndEnc
       </div>
       <div>
         {encounter.combatants.map((c,i)=>{
+          const pl = c.type==='player' && c.player_id ? (players||[]).find(p=>p.id===c.player_id) : null;
+          const hp = pl ? playerHP(pl) : { cur: c.current_hp, max: c.max_hp };
+          const ac = pl ? playerAC(pl, items) : c.ac;
           const cur=i===encounter.turn_index;
-          const dead=c.current_hp<=0;
-          const pct=Math.max(0,Math.min(100,(c.current_hp/c.max_hp)*100));
+          const dead=hp.cur<=0;
+          const pct=Math.max(0,Math.min(100,(hp.cur/hp.max)*100));
           const col=pct>50?'#4caf50':pct>25?'#ffc107':'#f44336';
+          const effects=c.effects||[];
           return(
-            <div key={c.id} className={`rf-enc-row${cur?' rf-enc-row--current':''}${dead?' rf-enc-row--dead':''}`}>
-              <div className="rf-enc-turn-arrow">{cur?'►':''}</div>
-              <div className="rf-enc-init">{c.initiative}</div>
-              <div className="rf-enc-icon">{c.type==='player'?'👤':'👹'}</div>
-              <div className="rf-enc-name-block">
-                <div className="rf-enc-name" style={{textDecoration:dead?'line-through':'none'}}>{c.name}</div>
-                <div className="rf-enc-hp-bar-wrap"><div className="rf-enc-hp-bar" style={{width:`${pct}%`,background:col}}/></div>
-              </div>
-              <div className="rf-enc-ac">🛡{c.ac}</div>
-              {isGM?(
-                <div className="rf-enc-hp-ctrl">
-                  <button onClick={()=>onUpdateHP(c.id,-5)}>-5</button>
-                  <button onClick={()=>onUpdateHP(c.id,-1)}>-1</button>
-                  <span className="rf-enc-hp-val">{c.current_hp}/{c.max_hp}</span>
-                  <button onClick={()=>onUpdateHP(c.id,+1)}>+1</button>
-                  <button onClick={()=>onUpdateHP(c.id,+5)}>+5</button>
+            <React.Fragment key={c.id}>
+              <div className={`rf-enc-row${cur?' rf-enc-row--current':''}${dead?' rf-enc-row--dead':''}`}>
+                <div className="rf-enc-turn-arrow">{cur?'►':''}</div>
+                <div className="rf-enc-init">{c.initiative}</div>
+                <div className="rf-enc-icon">{c.type==='player'?'👤':'👹'}</div>
+                <div className="rf-enc-name-block">
+                  <div className="rf-enc-name" style={{textDecoration:dead?'line-through':'none'}}>{c.name}</div>
+                  <div className="rf-enc-hp-bar-wrap"><div className="rf-enc-hp-bar" style={{width:`${pct}%`,background:col}}/></div>
+                  {effects.length>0&&(
+                    <div className="rf-enc-effects">
+                      {effects.map(ef=>(
+                        <span key={ef.id} className={`rf-fx-badge${ef.skips?' rf-fx-badge--skip':''}`} title={ef.skips?`${ef.name}: loses their turn`:ef.name}>
+                          {ef.icon} {ef.name}{ef.rounds>0?` · ${ef.rounds}`:''}
+                          {isGM&&<button type="button" className="rf-fx-x" title="Remove effect" onClick={()=>onRemoveEffect&&onRemoveEffect(encounter.id,c.id,ef.id)}>×</button>}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ):(
-                <div className="rf-enc-hp-display">{c.current_hp}/{c.max_hp}</div>
+                <div className="rf-enc-ac">🛡{ac}</div>
+                {isGM?(
+                  <div className="rf-enc-hp-ctrl">
+                    <button onClick={()=>onUpdateHP(c.id,-5)}>-5</button>
+                    <button onClick={()=>onUpdateHP(c.id,-1)}>-1</button>
+                    <span className="rf-enc-hp-val">{hp.cur}/{hp.max}</span>
+                    <button onClick={()=>onUpdateHP(c.id,+1)}>+1</button>
+                    <button onClick={()=>onUpdateHP(c.id,+5)}>+5</button>
+                  </div>
+                ):(
+                  <div className="rf-enc-hp-display">{hp.cur}/{hp.max}</div>
+                )}
+                {isGM&&c.attack&&<div className="rf-enc-atk">{c.attack}</div>}
+                {isGM&&<button type="button" className="rf-enc-fx-btn" title="Add a status effect (stunned, poisoned...)" onClick={()=>setEffectFor(effectFor===c.id?null:c.id)}>✨</button>}
+              </div>
+              {isGM&&effectFor===c.id&&(
+                <div className="rf-enc-fx-panel">
+                  <div className="rf-enc-fx-top">
+                    <span className="rf-enc-fx-label">Apply to {c.name} for</span>
+                    <input className="rf-input rf-input-sm" type="number" min="0" value={rounds} onChange={e=>setRounds(e.target.value)} style={{width:64,textAlign:'center'}}/>
+                    <span className="rf-enc-fx-label">of their turns (0 = until removed)</span>
+                  </div>
+                  <div className="rf-enc-fx-presets">
+                    {STATUS_EFFECTS.map(fx=>(
+                      <button key={fx.name} type="button" className="rf-fx-chip" title={fx.skips?'Skips their turn automatically':''} onClick={()=>apply(c,fx)}>{fx.icon} {fx.name}</button>
+                    ))}
+                  </div>
+                  <div className="rf-enc-fx-custom">
+                    <input className="rf-input rf-input-sm" value={custom} onChange={e=>setCustom(e.target.value)} placeholder="Custom effect name..."/>
+                    <button type="button" className="rf-btn-ghost-sm" disabled={!custom.trim()} onClick={()=>{apply(c,{name:custom.trim(),icon:'✨'});setCustom('');}}>Add</button>
+                  </div>
+                </div>
               )}
-              {isGM&&c.attack&&<div className="rf-enc-atk">{c.attack}</div>}
-            </div>
+            </React.Fragment>
           );
         })}
       </div>
@@ -2141,10 +2435,12 @@ function ActiveEncounterView({ encounter, isGM, onUpdateHP, onNextTurn, onEndEnc
   );
 }
 
-function PlayerArsenal({ player, items, abilitySets }) {
-  const weapons=(player.inventory||[]).map(e=>({...e,item:items.find(i=>i.id===e.item_id)})).filter(e=>e.item&&e.item.category==='weapon'&&e.quantity>0);
+function PlayerArsenal({ player, items, abilitySets, onUseItem }) {
+  const inv=(player.inventory||[]).map(e=>({...e,item:items.find(i=>i.id===e.item_id)})).filter(e=>e.item&&e.quantity>0);
+  const weapons=inv.filter(e=>e.item.category==='weapon');
+  const potions=inv.filter(e=>itemUseState(player,e.item));
   const abilities=abilitySets.flatMap(s=>(s.abilities||[]).filter(ab=>(player.granted_abilities||[]).includes(ab.id)).map(ab=>({...ab,setIcon:s.icon})));
-  if(!weapons.length&&!abilities.length) return null;
+  if(!weapons.length&&!abilities.length&&!potions.length) return null;
   return(
     <div className="rf-arsenal">
       <div className="rf-arsenal-title">⚔️ Your Arsenal</div>
@@ -2157,6 +2453,22 @@ function PlayerArsenal({ player, items, abilitySets }) {
           </div>
         ))}
       </div>}
+      {potions.length>0&&<div className="rf-arsenal-section">
+        <div className="rf-arsenal-sub">Potions</div>
+        {potions.map(e=>{
+          const us=itemUseState(player,e.item);
+          return(
+            <div key={e.item_id} className="rf-arsenal-item">
+              <span className="rf-arsenal-icon">🧪</span>
+              <div style={{flex:1}}>
+                <div className="rf-arsenal-name">{e.item.name} <span style={{color:'var(--text-muted)',fontWeight:400}}>×{e.quantity}</span></div>
+                <div className="rf-arsenal-mana">{us.label}</div>
+              </div>
+              {onUseItem&&<button type="button" className="rf-inv-use-btn" disabled={!us.usable} title={us.usable?`Use 1 to restore ${us.label}`:us.full} onClick={()=>onUseItem(player.id,e.item)}>Use</button>}
+            </div>
+          );
+        })}
+      </div>}
       {abilities.length>0&&<div className="rf-arsenal-section">
         <div className="rf-arsenal-sub">Abilities</div>
         {abilities.map(ab=>(
@@ -2166,6 +2478,78 @@ function PlayerArsenal({ player, items, abilitySets }) {
           </div>
         ))}
       </div>}
+    </div>
+  );
+}
+
+function PlayerEquipmentSection({ player, items, onEquip, onUnequip }) {
+  const gear = getGear(player, items);
+  const bonuses = gearBonuses(player, items);
+  const inv = (player.inventory || []).map((e) => ({ ...e, item: (items || []).find((i) => i.id === e.item_id) })).filter((e) => e.item && e.quantity > 0);
+  const equippable = inv.filter((e) => e.item.slot && !gear.all.some((g) => g.id === e.item.id));
+  if (!gear.all.length && !equippable.length) return null;
+  const bonusText = [
+    ...(bonuses.ac ? [`AC ${bonuses.ac > 0 ? '+' : ''}${bonuses.ac}`] : []),
+    ...STATS.filter(({ key }) => bonuses.stats[key]).map(({ key, label }) => `${label} ${bonuses.stats[key] > 0 ? '+' : ''}${bonuses.stats[key]}`),
+  ].join(' · ');
+  const slotCard = (key, label, icon, item, onRemove) => (
+    <div key={key} className={`rf-equip-slot${item ? ' rf-equip-slot--filled' : ''}`}>
+      <div className="rf-equip-slot-label">{icon} {label}</div>
+      {item ? (
+        <>
+          <div className="rf-equip-slot-name">{item.name}</div>
+          {gearSummary(item) && <div className="rf-equip-slot-bonus">{gearSummary(item)}</div>}
+          <button type="button" className="rf-equip-btn" onClick={onRemove}>Unequip</button>
+        </>
+      ) : (
+        <div className="rf-equip-slot-empty">Empty</div>
+      )}
+    </div>
+  );
+  return (
+    <div className="rf-equip-section">
+      <div className="rf-inv-header">
+        <div className="rf-inv-title">🛡️ Equipment</div>
+        {bonusText && <div className="rf-inv-total" title="Total bonuses from the gear you are wearing">{bonusText}</div>}
+      </div>
+      <div className="rf-equip-grid">
+        {ARMOR_SLOTS.map((s) => slotCard(s.key, s.label, s.icon, gear.slots[s.key], () => onUnequip(player.id, s.key, gear.slots[s.key].id)))}
+        {Array.from({ length: TRINKET_SLOTS }, (_, i) => slotCard('t' + i, `Trinket ${i + 1}`, '📿', gear.trinkets[i] || null, () => onUnequip(player.id, 'trinket', gear.trinkets[i].id)))}
+      </div>
+      {equippable.length > 0 && (
+        <>
+          <div className="rf-arsenal-sub" style={{ marginTop: 14 }}>In your bag: tap Equip to wear it</div>
+          <div className="rf-inv-list">
+            {equippable.map((e) => (
+              <div key={e.item_id} className="rf-inv-item">
+                <div className="rf-inv-item-icon">{CAT_ICONS[e.item.category] || '📦'}</div>
+                <div className="rf-inv-item-body">
+                  <div className="rf-inv-item-name">{e.item.name}</div>
+                  {gearSummary(e.item) && <div className="rf-inv-item-mana" style={{ color: 'var(--gold)' }}>{gearSummary(e.item)}</div>}
+                </div>
+                <button type="button" className="rf-equip-btn rf-equip-btn--go" onClick={() => onEquip(player.id, e.item)}>Equip</button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function HealthBar({ player }) {
+  const hp = playerHP(player);
+  const pct = Math.max(0, Math.min(100, (hp.cur / hp.max) * 100));
+  const col = pct > 50 ? '#4caf50' : pct > 25 ? '#ffc107' : '#f44336';
+  return (
+    <div className="rf-hp-section">
+      <div className="rf-mana-header">
+        <div className="rf-hp-title">❤️ Health</div>
+        <div className="rf-hp-count" style={{ color: col }}>{hp.cur} / {hp.max}</div>
+      </div>
+      <div className="rf-mana-track"><div className="rf-hp-fill" style={{ width: `${pct}%`, background: col }} /></div>
+      {hp.cur <= 0 && <div className="rf-over-warning" style={{ marginTop: 10 }}>You are down! Drink a health potion or ask your DM.</div>}
+      <div className="rf-loadout-hint" style={{ marginTop: 8 }}>Your DM updates your health during fights. Health potions in your inventory restore it.</div>
     </div>
   );
 }
@@ -2327,6 +2711,8 @@ function SetStatsModal({ player, onClose, onSave }) {
     STATS.reduce((m,{key})=>({...m,[key]:player[key]??10}),{})
   );
   const set = (key,val) => setStats(prev=>({...prev,[key]:val===''?'':Number(val)}));
+  const [hp,setHp]=React.useState({max_hp:player.max_hp??20,current_hp:player.current_hp??(player.max_hp??20)});
+  const setHpField=(k,v)=>setHp(prev=>({...prev,[k]:v===''?'':Number(v)}));
   return(
     <div className="rf-modal-overlay" onClick={onClose}>
       <div className="rf-modal" onClick={e=>e.stopPropagation()}>
@@ -2336,6 +2722,16 @@ function SetStatsModal({ player, onClose, onSave }) {
         </div>
         <div className="rf-modal-body">
           <p className="rf-modal-hint">Set any stat to any value, including negatives. No restrictions.</p>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+            <div style={{textAlign:'center'}}>
+              <label className="rf-label" style={{margin:'0 0 6px',display:'block'}}>❤️ Current HP</label>
+              <input className="rf-input" type="number" value={hp.current_hp} onChange={e=>setHpField('current_hp',e.target.value)} style={{textAlign:'center',fontSize:16,fontWeight:700,padding:'8px 4px'}}/>
+            </div>
+            <div style={{textAlign:'center'}}>
+              <label className="rf-label" style={{margin:'0 0 6px',display:'block'}}>❤️ Max HP</label>
+              <input className="rf-input" type="number" min="1" value={hp.max_hp} onChange={e=>setHpField('max_hp',e.target.value)} style={{textAlign:'center',fontSize:16,fontWeight:700,padding:'8px 4px'}}/>
+            </div>
+          </div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
             {STATS.map(({key,label})=>(
               <div key={key} style={{textAlign:'center'}}>
@@ -2355,7 +2751,9 @@ function SetStatsModal({ player, onClose, onSave }) {
           <button className="rf-btn-ghost" onClick={onClose}>Cancel</button>
           <button className="rf-btn-primary" onClick={()=>{
             const cleaned=STATS.reduce((m,{key})=>({...m,[key]:stats[key]===''?0:Number(stats[key])||0}),{});
-            onSave(player.id, cleaned);
+            const maxHp=Math.max(1,Number(hp.max_hp)||1);
+            const curHp=Math.max(0,Math.min(maxHp,Number(hp.current_hp)||0));
+            onSave(player.id, {...cleaned, max_hp:maxHp, current_hp:curHp});
             onClose();
           }}>Save Stats</button>
         </div>
@@ -2364,7 +2762,7 @@ function SetStatsModal({ player, onClose, onSave }) {
   );
 }
 
-function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel, onGiveSkillPoints, onOpenCompanions, onOpenEncounterAssign, onOpenStats, onSetPlayerTheme }) {
+function PlayersTab({ players, trees, abilitySets, companions, items, onAddPlayer, onDeletePlayer, onOpenGrant, onOpenAbilityGrant, onOpenInventory, onSetPlayerLevel, onGiveSkillPoints, onOpenCompanions, onOpenEncounterAssign, onOpenStats, onSetPlayerTheme }) {
   const [newName, setNewName] = useState('');
   const totalRunes = trees.reduce((sum, t) => sum + (t.runes || []).length, 0);
   const totalAbilities = abilitySets.reduce((sum, s) => sum + (s.abilities || []).length, 0);
@@ -2410,7 +2808,7 @@ function PlayersTab({ players, trees, abilitySets, companions, onAddPlayer, onDe
                 <div className="rf-sp-ctrl-val">{p.skill_points||0}</div>
                 <button className="rf-level-ctrl-btn" onClick={()=>onGiveSkillPoints(p.id,+1)}>+</button>
               </div>
-              <div className="rf-player-row-meta" style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>{(p.unlocked_runes || []).length}/{totalRunes} runes unlocked · {(p.granted_abilities || []).length}/{totalAbilities} abilities given <span className="rf-mana-pill" title="Current / max mana"><Droplet size={10}/> {p.current_mana ?? p.max_mana ?? 10}/{p.max_mana ?? 10}</span></div>
+              <div className="rf-player-row-meta" style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>{(p.unlocked_runes || []).length}/{totalRunes} runes unlocked · {(p.granted_abilities || []).length}/{totalAbilities} abilities given <span className="rf-hp-pill" title="Current / max HP">❤️ {playerHP(p).cur}/{playerHP(p).max}</span> <span className="rf-ac-pill" title="Armor Class">🛡 {playerAC(p, items)}</span> <span className="rf-mana-pill" title="Current / max mana"><Droplet size={10}/> {p.current_mana ?? p.max_mana ?? 10}/{p.max_mana ?? 10}</span></div>
               <div className="rf-player-row-actions">
                 <button className="rf-btn-ghost-sm" onClick={() => onOpenGrant(p)} title="Unlock or lock runes for this player"><Sparkles size={13} /> Runes</button>
                 <button className="rf-btn-mana" onClick={() => onOpenAbilityGrant(p)} title="Give abilities and set this player's max mana"><Zap size={13} /> Abilities</button>
@@ -2502,7 +2900,7 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onSetPlayerStats, onSetPlayerTheme, onSaveMeta, onExit, onReset, onRefresh }) {
+function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onAddEffect, onRemoveEffect, onSetPlayerStats, onSetPlayerTheme, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
@@ -2544,8 +2942,8 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
       <div>
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
         {tab === 'abilities' && <AbilitiesTab abilitySets={abilitySets} onOpenEditor={setEditingAbilitySet} />}
-        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} companions={companions} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel} onGiveSkillPoints={onGiveSkillPoints} onOpenCompanions={setCompanionFor} onOpenStats={setStatsFor} onSetPlayerTheme={onSetPlayerTheme}/>}
-        {tab === 'encounters' && <><EncountersTab encounters={encounters} onOpenEditor={setEditingEncounter} onActivate={onActivateEncounter} onEnd={onEndEncounter}/>{activeEncounter&&<div style={{marginTop:18}}><ActiveEncounterView encounter={activeEncounter} isGM={true} onUpdateHP={(cId,d)=>onUpdateCombatantHP(activeEncounter.id,cId,d)} onNextTurn={()=>onNextTurn(activeEncounter.id)} onEndEncounter={onEndEncounter}/></div>}</>
+        {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} companions={companions} items={items} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel} onGiveSkillPoints={onGiveSkillPoints} onOpenCompanions={setCompanionFor} onOpenStats={setStatsFor} onSetPlayerTheme={onSetPlayerTheme}/>}
+        {tab === 'encounters' && <><EncountersTab encounters={encounters} onOpenEditor={setEditingEncounter} onActivate={onActivateEncounter} onEnd={onEndEncounter}/>{activeEncounter&&<div style={{marginTop:18}}><ActiveEncounterView encounter={activeEncounter} isGM={true} players={players} items={items} onAddEffect={onAddEffect} onRemoveEffect={onRemoveEffect} onUpdateHP={(cId,d)=>onUpdateCombatantHP(activeEncounter.id,cId,d)} onNextTurn={()=>onNextTurn(activeEncounter.id)} onEndEncounter={onEndEncounter}/></div>}</>
         }
         {tab === 'companions' && <CompanionsTab companions={companions} onOpenEditor={setEditingCompanion}/>}
         {tab === 'items' && <ItemsTab items={items} onOpenEditor={setEditingItem}/>}
@@ -2598,7 +2996,7 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
           onSave={onSetPlayerStats}/>
       )}
       {editingEncounter !== undefined && (
-        <EncounterEditorModal encounter={editingEncounter} players={players} onClose={()=>setEditingEncounter(undefined)}
+        <EncounterEditorModal encounter={editingEncounter} players={players} items={items} onClose={()=>setEditingEncounter(undefined)}
           onSave={enc=>{onSaveEncounter(enc);setEditingEncounter(undefined);}}
           onDelete={id=>{onDeleteEncounter(id);setEditingEncounter(undefined);}}/>
       )}
@@ -2711,7 +3109,7 @@ function PlayerNotepad({ player, onSave }) {
   );
 }
 
-function PlayerDashboard({ meta, trees, players, abilitySets, companions, encounters, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onUseItem, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh, themeVars }) {
+function PlayerDashboard({ meta, trees, players, abilitySets, companions, encounters, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onUseItem, onEquipItem, onUnequipItem, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh, themeVars }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
@@ -2750,7 +3148,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
       <TopHeader meta={meta} role="player" playerName={player.name} onExit={onExit} onRefresh={onRefresh} onSwitchPlayer={() => onSelectPlayer(null)} live={live} />
       <div style={themeVars||{}}>
         {/* Active encounter */}
-        {(()=>{const ae=encounters&&encounters.find(e=>e.active);return ae?(<><ActiveEncounterView encounter={ae} isGM={false} onUpdateHP={()=>{}} onNextTurn={()=>{}} onEndEncounter={()=>{}}/><PlayerArsenal player={player} items={items} abilitySets={abilitySets}/></>):null;})()}
+        {(()=>{const ae=encounters&&encounters.find(e=>e.active);if(!ae)return null;const mine=ae.combatants.find(c=>c.player_id===player.id);const fx=(mine&&mine.effects)||[];return(<>{fx.length>0&&(<div className="rf-fx-banner">{fx.map(ef=>(<span key={ef.id} className="rf-fx-banner-item">{ef.icon} You are {ef.name.toLowerCase()}{ef.rounds>0?` (${ef.rounds} turn${ef.rounds===1?'':'s'} left)`:''}{ef.skips?' · you lose your turn':''}</span>))}</div>)}<ActiveEncounterView encounter={ae} isGM={false} players={players} items={items} onUpdateHP={()=>{}} onNextTurn={()=>{}} onEndEncounter={()=>{}}/><PlayerArsenal player={player} items={items} abilitySets={abilitySets} onUseItem={onUseItem}/></>);})()}
         {/* Character header */}
         <div className="rf-char-header">
           <div className="rf-char-identity">
@@ -2765,6 +3163,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
                   <div className="rf-sp-badge-val">{player.skill_points}</div>
                 </div>
               )}
+              <div className="rf-ac-badge" title="Armor Class: 10 + DEX modifier + armor"><div className="rf-ac-badge-label">AC</div><div className="rf-ac-badge-val">{playerAC(player, items)}</div></div>
               <div className="rf-level-badge">
                 <div className="rf-level-badge-label">Level</div>
                 <div className="rf-level-badge-val">{player.level||1}</div>
@@ -2772,7 +3171,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
               <button className="rf-char-edit-btn" onClick={()=>setShowSetup(true)}>✏️ Edit</button>
             </div>
           </div>
-          <StatBlock player={player} onSpend={onSpendSkillPoint ? (key) => onSpendSkillPoint(player.id, key) : null}/>
+          <StatBlock player={player} items={items} onSpend={onSpendSkillPoint ? (key) => onSpendSkillPoint(player.id, key) : null}/>
           {(player.skill_points||0) > 0 && (
             <div className="rf-sp-notify">✨ You have {player.skill_points} skill point{player.skill_points!==1?'s':''} — tap +1 on any stat to spend them!</div>
           )}
@@ -2803,6 +3202,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
           )}
         </div>
 
+        <HealthBar player={player}/>
         {maxMana > 0 && (
           <ManaBar
             currentMana={currentMana}
@@ -2812,6 +3212,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
           />
         )}
 
+        <PlayerEquipmentSection player={player} items={items} onEquip={onEquipItem} onUnequip={onUnequipItem}/>
         <PlayerCompanionsSection player={player} companions={companions}/>
         <PlayerInventorySection player={player} items={items} onUseItem={onUseItem}/>
         {grantedAbilitySets.length > 0 && (
@@ -3473,22 +3874,52 @@ export default function App() {
     if (error) { console.error(error); showToast('Failed to update mana.'); }
   };
 
+  const handleEquipItem = async (playerId, item) => {
+    const player = players.find((p) => p.id === playerId);
+    if (!player) return;
+    const res = equipItem(player, items, item);
+    if (!res.ok) { showToast(res.reason); return; }
+    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, equipment: res.equipment } : p)));
+    const { error } = await supabase.from('players').update({ equipment: res.equipment }).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to equip item.'); return; }
+    showToast(`Equipped ${item.name}`);
+  };
+  const handleUnequipItem = async (playerId, slotKey, itemId) => {
+    const player = players.find((p) => p.id === playerId);
+    if (!player) return;
+    const equipment = unequipItem(player, slotKey, itemId);
+    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, equipment } : p)));
+    const { error } = await supabase.from('players').update({ equipment }).eq('id', playerId);
+    if (error) { console.error(error); showToast('Failed to unequip item.'); }
+  };
   const handleUseItem = async (playerId, item) => {
     const player = players.find((p) => p.id === playerId);
-    if (!player || !item || !(item.mana_restore > 0)) return;
+    if (!player || !item) return;
+    const us = itemUseState(player, item);
+    if (!us) return;
     const entry = (player.inventory || []).find((e) => e.item_id === item.id);
     if (!entry || entry.quantity <= 0) return;
+    if (!us.usable) { showToast(us.full + '.'); return; }
+    const hp = playerHP(player);
     const max_mana = player.max_mana ?? 10;
-    const cur = Math.min(player.current_mana ?? max_mana, max_mana);
-    if (cur >= max_mana) { showToast('Your mana is already full.'); return; }
-    const current_mana = Math.min(max_mana, cur + item.mana_restore);
+    const curMana = Math.min(player.current_mana ?? max_mana, max_mana);
+    const heal = Math.max(0, Number(item.heal_amount) || 0);
+    const manaGain = Math.max(0, Number(item.mana_restore) || 0);
+    const current_hp = heal > 0 ? Math.min(hp.max, hp.cur + heal) : hp.cur;
+    const current_mana = manaGain > 0 ? Math.min(max_mana, curMana + manaGain) : curMana;
     const inventory = (player.inventory || [])
       .map((e) => (e.item_id === item.id ? { ...e, quantity: e.quantity - 1 } : e))
       .filter((e) => e.quantity > 0);
-    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, inventory, current_mana } : p)));
-    const { error } = await supabase.from('players').update({ inventory, current_mana }).eq('id', playerId);
+    const updates = { inventory };
+    if (current_hp !== hp.cur) updates.current_hp = current_hp;
+    if (current_mana !== curMana) updates.current_mana = current_mana;
+    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, ...updates } : p)));
+    const { error } = await supabase.from('players').update(updates).eq('id', playerId);
     if (error) { console.error(error); showToast('Failed to use item.'); return; }
-    showToast(`💧 Used ${item.name} · +${current_mana - cur} mana`);
+    const gained = [];
+    if (current_hp !== hp.cur) gained.push(`+${current_hp - hp.cur} HP`);
+    if (current_mana !== curMana) gained.push(`+${current_mana - curMana} mana`);
+    showToast(`🧪 Used ${item.name} · ${gained.join(', ')}`);
   };
 
   const handleUseAbility = async (playerId, ability, via = 'button') => {
@@ -3535,6 +3966,16 @@ export default function App() {
   };
   const handleUpdateCombatantHP = async (encId,combId,delta) => {
     const enc=encounters.find(e=>e.id===encId); if(!enc) return;
+    const comb=enc.combatants.find(c=>c.id===combId); if(!comb) return;
+    if(comb.type==='player' && comb.player_id){
+      const pl=players.find(p=>p.id===comb.player_id); if(!pl) return;
+      const hp=playerHP(pl);
+      const current_hp=Math.max(0,Math.min(hp.max,hp.cur+delta));
+      setPlayers(prev=>prev.map(p=>p.id===pl.id?{...p,current_hp}:p));
+      const {error}=await supabase.from('players').update({current_hp}).eq('id',pl.id);
+      if(error){console.error(error);showToast('Failed to update HP.');}
+      return;
+    }
     const combatants=enc.combatants.map(c=>{
       if(c.id!==combId) return c;
       const hp=Math.max(0,Math.min(c.max_hp,c.current_hp+delta));
@@ -3545,10 +3986,25 @@ export default function App() {
   };
   const handleNextTurn = async (encId) => {
     const enc=encounters.find(e=>e.id===encId); if(!enc) return;
-    let next=enc.turn_index+1; let round=enc.round;
-    if(next>=enc.combatants.length){next=0;round++;}
-    setEncounters(prev=>prev.map(e=>e.id===encId?{...e,turn_index:next,round}:e));
-    await supabase.from('encounters').update({turn_index:next,round}).eq('id',encId);
+    const next=advanceTurn(enc);
+    setEncounters(prev=>prev.map(e=>e.id===encId?{...e,combatants:next.combatants,turn_index:next.turn_index,round:next.round}:e));
+    if(next.notes.length) showToast(next.notes.join(' · '));
+    const {error}=await supabase.from('encounters').update({combatants:next.combatants,turn_index:next.turn_index,round:next.round}).eq('id',encId);
+    if(error){console.error(error);showToast('Failed to advance turn.');}
+  };
+  const handleAddEffect = async (encId,combId,fx) => {
+    const enc=encounters.find(e=>e.id===encId); if(!enc) return;
+    const combatants=enc.combatants.map(c=>c.id!==combId?c:{...c,effects:[...(c.effects||[]).filter(x=>x.name!==fx.name),{id:uid('fx'),...fx}]});
+    setEncounters(prev=>prev.map(e=>e.id===encId?{...e,combatants}:e));
+    const {error}=await supabase.from('encounters').update({combatants}).eq('id',encId);
+    if(error){console.error(error);showToast('Failed to add effect.');}
+  };
+  const handleRemoveEffect = async (encId,combId,fxId) => {
+    const enc=encounters.find(e=>e.id===encId); if(!enc) return;
+    const combatants=enc.combatants.map(c=>c.id!==combId?c:{...c,effects:(c.effects||[]).filter(x=>x.id!==fxId)});
+    setEncounters(prev=>prev.map(e=>e.id===encId?{...e,combatants}:e));
+    const {error}=await supabase.from('encounters').update({combatants}).eq('id',encId);
+    if(error){console.error(error);showToast('Failed to remove effect.');}
   };
   const handleSetMaxCarry = async (playerId, max_carry_weight) => {
     setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,max_carry_weight}:p));
@@ -3623,7 +4079,7 @@ export default function App() {
   const handleSpendSkillPoint = async (playerId, statKey) => {
     const player = players.find(p => p.id === playerId);
     if (!player || (player.skill_points || 0) <= 0) return;
-    const curStat = player[statKey] || 10;
+    const curStat = player[statKey] ?? 10;
     if (curStat >= 30) return;
     const updates = { skill_points: (player.skill_points || 0) - 1, [statKey]: curStat + 1 };
     setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, ...updates } : p));
@@ -3798,6 +4254,8 @@ export default function App() {
           onEndEncounter={handleEndEncounter}
           onUpdateCombatantHP={handleUpdateCombatantHP}
           onNextTurn={handleNextTurn}
+          onAddEffect={handleAddEffect}
+          onRemoveEffect={handleRemoveEffect}
           onSetPlayerStats={handleSetPlayerStats}
           onSetPlayerTheme={handleSetPlayerTheme}
           onSaveMeta={handleSaveMeta}
@@ -3823,6 +4281,8 @@ export default function App() {
           onToggleEquip={handleToggleEquip}
           onAdjustMana={handleAdjustMana}
           onUseItem={handleUseItem}
+          onEquipItem={handleEquipItem}
+          onUnequipItem={handleUnequipItem}
           onUseAbility={handleUseAbility}
           onSpendSkillPoint={handleSpendSkillPoint}
           onSaveCharacter={handleSaveCharacter}
