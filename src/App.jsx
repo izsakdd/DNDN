@@ -723,6 +723,25 @@ const CSS = `
 .rf-equip-btn--go { align-self:center; margin-top:0; border-color:rgba(212,168,67,0.5); color:var(--gold); padding:6px 12px; font-size:12px; }
 .rf-equip-btn--go:hover { background:rgba(212,168,67,0.12); border-color:var(--gold); color:var(--gold); }
 
+
+/* ===== STARTING KITS ===== */
+.rf-kit-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+.rf-kit-card { display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; color:var(--text); cursor:pointer; transition:all .15s; font-family:inherit; }
+.rf-kit-card:hover { border-color:var(--gold); transform:translateY(-1px); }
+.rf-kit-card--set { border-color:rgba(212,168,67,0.45); background:rgba(212,168,67,0.05); }
+.rf-kit-card-icon { font-size:20px; }
+.rf-kit-card-name { font-family:'Cinzel',serif; font-weight:600; font-size:13.5px; }
+.rf-kit-card-stats { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--gold); }
+.rf-kit-card-items { font-size:11.5px; color:var(--text-muted); }
+.rf-kit-card-empty { font-size:11.5px; color:var(--text-muted); font-style:italic; }
+.rf-kit-row { display:flex; align-items:center; gap:10px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:8px 12px; margin-bottom:8px; }
+.rf-kit-add { display:flex; gap:8px; align-items:center; }
+.rf-kit-preview { background:rgba(212,168,67,0.07); border:1px solid rgba(212,168,67,0.3); border-radius:11px; padding:12px 16px; margin-bottom:18px; }
+.rf-kit-preview-title { font-family:'Cinzel',serif; font-weight:600; font-size:14px; margin-bottom:6px; }
+.rf-kit-line { font-size:13px; line-height:1.6; }
+.rf-kit-line b { color:var(--gold); font-weight:600; }
+.rf-stat-setup-bonus { font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--gold); margin-top:3px; white-space:nowrap; }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -919,7 +938,8 @@ function gearBonuses(player, items) {
 }
 
 function playerAC(player, items) {
-  const { ac, stats } = gearBonuses(player, items);
+  const { ac } = gearBonuses(player, items);
+  const stats = totalStatBonus(player, items);
   const dex = (player.dex_score ?? 10) + (stats.dex_score || 0);
   return 10 + statMod(dex) + ac;
 }
@@ -1104,6 +1124,54 @@ function TopHeader({ meta, role, playerName, onExit, onRefresh, onSwitchPlayer, 
    CHARACTER CREATION & STAT BLOCK
    ============================================================ */
 
+/* <kit-helpers> */
+const kitKey = (type, name) => `${type}:${name}`;
+
+function originBonus(kits, cls, race) {
+  const out = {};
+  [cls && kits && kits[kitKey('class', cls)], race && kits && kits[kitKey('race', race)]].forEach((k) => {
+    const st = (k && k.stats) || {};
+    STATS.forEach(({ key }) => { if (st[key]) out[key] = (out[key] || 0) + Number(st[key]); });
+  });
+  return cleanStatBonus(out);
+}
+
+function startingItems(kits, cls, race) {
+  const totals = new Map();
+  [cls && kits && kits[kitKey('class', cls)], race && kits && kits[kitKey('race', race)]].forEach((k) => {
+    ((k && k.items) || []).forEach((it) => {
+      const q = Math.trunc(Number(it.quantity) || 0);
+      if (it.item_id && q > 0) totals.set(it.item_id, (totals.get(it.item_id) || 0) + q);
+    });
+  });
+  return [...totals].map(([item_id, quantity]) => ({ item_id, quantity }));
+}
+
+function grantItems(inventory, grants, catalog) {
+  const next = (inventory || []).map((e) => ({ ...e }));
+  const added = [];
+  grants.forEach((g) => {
+    if (!(catalog || []).some((i) => i.id === g.item_id)) return;
+    const row = next.find((e) => e.item_id === g.item_id);
+    if (row) row.quantity += g.quantity; else next.push({ item_id: g.item_id, quantity: g.quantity });
+    added.push(g);
+  });
+  return { inventory: next, added };
+}
+
+function kitStatText(stats) {
+  return STATS.filter(({ key }) => stats && stats[key])
+    .map(({ key, label }) => `${label} ${stats[key] > 0 ? '+' : ''}${stats[key]}`).join(' · ');
+}
+
+function totalStatBonus(player, items) {
+  const stats = { ...gearBonuses(player, items).stats };
+  const ob = player.origin_bonus || {};
+  STATS.forEach(({ key }) => { if (ob[key]) stats[key] = (stats[key] || 0) + Number(ob[key]); });
+  return stats;
+}
+/* </kit-helpers> */
+
 /* <gear-actions> */
 function equipItem(player, items, item) {
   if (!item || !item.slot) return { ok: false, reason: 'This item cannot be equipped.' };
@@ -1134,7 +1202,7 @@ function unequipItem(player, slotKey, itemId) {
 
 function StatBlock({ player, onSpend, items }) {
   const pts = player.skill_points || 0;
-  const bonus = gearBonuses(player, items || []).stats;
+  const bonus = totalStatBonus(player, items || []);
   return (
     <div className="rf-stat-block">
       {STATS.map(({key,label}) => {
@@ -1148,7 +1216,7 @@ function StatBlock({ player, onSpend, items }) {
             <div className="rf-stat-box-mod">{modStr(v)}</div>
             <div className="rf-stat-box-score">
               {v}
-              {extra !== 0 && <span className="rf-stat-gear" title={`${base} base, ${extra > 0 ? '+' : ''}${extra} from gear`}> ({extra > 0 ? '+' : ''}{extra})</span>}
+              {extra !== 0 && <span className="rf-stat-gear" title={`${base} base, ${extra > 0 ? '+' : ''}${extra} from class, race & gear`}> ({extra > 0 ? '+' : ''}{extra})</span>}
             </div>
             {canSpend && (
               <button className="rf-stat-spend-btn" onClick={() => onSpend(key)}>+1</button>
@@ -1160,15 +1228,19 @@ function StatBlock({ player, onSpend, items }) {
   );
 }
 
-function CharacterSetup({ player, onSave, onBack, statBudget=27 }) {
+function CharacterSetup({ player, onSave, onBack, statBudget=27, kits, items }) {
   const [cls,setCls]   = useState(player.character_class||'');
   const [race,setRace] = useState(player.race||'');
   const [stats,setStats] = useState(
-    STATS.reduce((m,{key})=>({...m,[key]:Math.max(8,player[key]||8)}),{})
+    STATS.reduce((m,{key})=>({...m,[key]:player.character_class?Math.max(8,player[key]??8):8}),{})
   );
 
   const spent = cls==='Kalas' ? 0 : pointsSpent(stats);
   const remaining = cls==='Kalas' ? 0 : statBudget - spent;
+  const origin = originBonus(kits || {}, cls, race);
+  const grants = startingItems(kits || {}, cls, race);
+  const grantNames = grants.map(g=>{const it=(items||[]).find(i=>i.id===g.item_id);return it?`${it.name} ×${g.quantity}`:null;}).filter(Boolean);
+  const hasKit = Object.keys(origin).length>0 || grantNames.length>0;
 
   const adj = (key,d) => {
     if (cls === 'Kalas') return;
@@ -1226,12 +1298,13 @@ function CharacterSetup({ player, onSave, onBack, statBudget=27 }) {
               return(
                 <div key={key} className="rf-stat-setup-box">
                   <div className="rf-stat-setup-label">{label}</div>
-                  <div className="rf-stat-setup-mod">{modStr(val)}</div>
+                  <div className="rf-stat-setup-mod">{modStr(val+(origin[key]||0))}</div>
                   <div className="rf-stat-setup-ctrl">
                     <button onClick={()=>adj(key,-1)} disabled={!canDn}>-</button>
                     <span>{val}</span>
                     <button onClick={()=>adj(key,+1)} disabled={!canUp}>+</button>
                   </div>
+                  {origin[key]?<div className="rf-stat-setup-bonus" title="From your class and race">{origin[key]>0?'+':''}{origin[key]} → {val+origin[key]}</div>:null}
                 </div>
               );
             })}
@@ -1239,6 +1312,14 @@ function CharacterSetup({ player, onSave, onBack, statBudget=27 }) {
           <div style={{fontSize:11.5,color:'var(--text-muted)',marginBottom:22}}>
             • Stats range 8–15 • Cost: 9=1 · 10=2 · 11=3 · 12=4 · 13=5 · 14=7 · 15=9
           </div>
+          {hasKit && (
+            <div className="rf-kit-preview">
+              <div className="rf-kit-preview-title">🎒 Your starting kit</div>
+              {Object.keys(origin).length>0 && <div className="rf-kit-line"><b>Stat bonuses:</b> {kitStatText(origin)}</div>}
+              {grantNames.length>0 && <div className="rf-kit-line"><b>Starting items:</b> {player.kit_given ? 'already received' : grantNames.join(', ')}</div>}
+              <div className="rf-hint" style={{marginTop:6}}>Bonuses come from your class and race. Starting items are added to your inventory once.</div>
+            </div>
+          )}
           <button className="rf-btn-primary" style={{width:'100%',marginBottom:8}} disabled={!cls||!race} onClick={handleSave}>
             Begin Adventure
           </button>
@@ -2482,6 +2563,134 @@ function PlayerArsenal({ player, items, abilitySets, onUseItem }) {
   );
 }
 
+function KitEditorModal({ type, name, kit, items, onClose, onSave }) {
+  const [stats, setStats] = React.useState(kit && kit.stats ? { ...kit.stats } : {});
+  const [rows, setRows] = React.useState(kit && kit.items ? kit.items.map((r) => ({ ...r })) : []);
+  const [pick, setPick] = React.useState('');
+  const [qty, setQty] = React.useState(1);
+  const key = kitKey(type, name);
+  const catalog = (items || []).filter((i) => !rows.some((r) => r.item_id === i.id));
+  const addRow = () => {
+    if (!pick) return;
+    setRows((prev) => [...prev, { item_id: pick, quantity: Math.max(1, Math.trunc(Number(qty) || 1)) }]);
+    setPick('');
+    setQty(1);
+  };
+  const setRowQty = (id, q) => setRows((prev) => prev.map((r) => (r.item_id === id ? { ...r, quantity: Math.max(1, q) } : r)));
+  const finish = (payload) => { onSave(key, payload); onClose(); };
+  const icon = type === 'class' ? (CLASS_ICONS[name] || '⚔️') : '🧬';
+  return (
+    <div className="rf-modal-overlay" onClick={onClose}>
+      <div className="rf-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="rf-modal-header">
+          <h3>{icon} {name} starting kit</h3>
+          <button className="rf-icon-btn" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="rf-modal-body">
+          <p className="rf-modal-hint">Everyone who picks the {type} {name} gets this. Class and race kits stack together.</p>
+          <label className="rf-label" style={{ marginTop: 0 }}>Stat bonuses (use a minus sign for penalties)</label>
+          <div className="rf-gear-stat-grid">
+            {STATS.map(({ key: k, label }) => (
+              <div key={k} style={{ textAlign: 'center' }}>
+                <div className="rf-gear-stat-label">{label}</div>
+                <input className="rf-input rf-input-sm" type="number" placeholder="0" value={stats[k] ?? ''}
+                  onChange={(e) => setStats((prev) => ({ ...prev, [k]: e.target.value }))} style={{ textAlign: 'center' }} />
+              </div>
+            ))}
+          </div>
+          <label className="rf-label">Starting items</label>
+          {rows.length === 0 && <div className="rf-empty-mini">No starting items yet.</div>}
+          {rows.map((r) => {
+            const it = (items || []).find((i) => i.id === r.item_id);
+            return (
+              <div key={r.item_id} className="rf-kit-row">
+                <span style={{ fontSize: 18 }}>{it ? (CAT_ICONS[it.category] || '📦') : '❔'}</span>
+                <div style={{ flex: 1, fontWeight: 600, fontSize: 13.5, color: it ? 'var(--text)' : 'var(--text-muted)' }}>
+                  {it ? it.name : 'Deleted item (removed when you save)'}
+                </div>
+                <div className="rf-qty-ctrl">
+                  <button type="button" className="rf-qty-btn" onClick={() => setRowQty(r.item_id, r.quantity - 1)}>-</button>
+                  <div className="rf-qty-val">{r.quantity}</div>
+                  <button type="button" className="rf-qty-btn" onClick={() => setRowQty(r.item_id, r.quantity + 1)}>+</button>
+                </div>
+                <button type="button" className="rf-icon-btn-danger" title="Remove" onClick={() => setRows((prev) => prev.filter((x) => x.item_id !== r.item_id))}><Trash2 size={14} /></button>
+              </div>
+            );
+          })}
+          {(items || []).length === 0 ? (
+            <div className="rf-hint">Your item catalog is empty. Create items in the Items tab first, then come back.</div>
+          ) : (
+            <div className="rf-kit-add" style={{ marginTop: 10 }}>
+              <select className="rf-input rf-input-sm" value={pick} onChange={(e) => setPick(e.target.value)} style={{ flex: 1 }}>
+                <option value="">{catalog.length ? 'Choose an item...' : 'All items already added'}</option>
+                {catalog.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+              </select>
+              <input className="rf-input rf-input-sm" type="number" min="1" value={qty} onChange={(e) => setQty(e.target.value)} style={{ width: 64, textAlign: 'center' }} />
+              <button type="button" className="rf-btn-primary" style={{ padding: '7px 14px' }} disabled={!pick} onClick={addRow}>Add</button>
+            </div>
+          )}
+        </div>
+        <div className="rf-modal-footer">
+          <button type="button" className="rf-btn-ghost" onClick={() => finish({ stats: {}, items: [] })}>Clear kit</button>
+          <div style={{ flex: 1 }} />
+          <button className="rf-btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="rf-btn-primary" onClick={() => finish({ stats: cleanStatBonus(stats), items: rows.filter((r) => (items || []).some((i) => i.id === r.item_id)) })}>Save kit</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KitsTab({ kits, items, players, onOpenEditor, onApplyBonuses, onGiveItems }) {
+  const summarize = (type, name) => {
+    const k = kits[kitKey(type, name)];
+    const st = k ? kitStatText(k.stats) : '';
+    const n = k && k.items ? k.items.filter((r) => (items || []).some((i) => i.id === r.item_id)).length : 0;
+    return { st, n, set: !!(st || n) };
+  };
+  const card = (type, name, icon) => {
+    const s = summarize(type, name);
+    return (
+      <button key={type + name} type="button" className={`rf-kit-card${s.set ? ' rf-kit-card--set' : ''}`} onClick={() => onOpenEditor(type, name)}>
+        <div className="rf-kit-card-icon">{icon}</div>
+        <div className="rf-kit-card-name">{name}</div>
+        {s.set ? (
+          <>
+            {s.st && <div className="rf-kit-card-stats">{s.st}</div>}
+            {s.n > 0 && <div className="rf-kit-card-items">🎒 {s.n} item{s.n === 1 ? '' : 's'}</div>}
+          </>
+        ) : <div className="rf-kit-card-empty">No kit set</div>}
+      </button>
+    );
+  };
+  const withClass = players.filter((p) => p.character_class).length;
+  const needItems = players.filter((p) => p.character_class && !p.kit_given && startingItems(kits, p.character_class, p.race).length > 0).length;
+  return (
+    <div>
+      <div className="rf-section-header">
+        <div>
+          <h2 className="rf-section-title">Starting Kits</h2>
+          <div className="rf-section-sub">Stat bonuses or penalties and free items players get from their class and race. Click a card to set it up.</div>
+        </div>
+      </div>
+      <div className="rf-label" style={{ marginTop: 0 }}>Classes</div>
+      <div className="rf-kit-grid">{DND_CLASSES.map((c) => card('class', c, CLASS_ICONS[c] || '⚔️'))}</div>
+      <div className="rf-label">Races</div>
+      <div className="rf-kit-grid">{DND_RACES.map((r) => card('race', r, '🧬'))}</div>
+      <div className="rf-card" style={{ marginTop: 22 }}>
+        <div className="rf-label" style={{ marginTop: 0 }}>Players who already have a character</div>
+        <div className="rf-hint" style={{ marginTop: 0, marginBottom: 12 }}>
+          Kits apply automatically when a player creates or edits their character. For characters made before a kit existed, use these:
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button className="rf-btn-ghost" disabled={!withClass} onClick={onApplyBonuses}>Refresh stat bonuses for {withClass} player{withClass === 1 ? '' : 's'}</button>
+          <button className="rf-btn-ghost" disabled={!needItems} onClick={onGiveItems}>Give starting items to {needItems} player{needItems === 1 ? '' : 's'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlayerEquipmentSection({ player, items, onEquip, onUnequip }) {
   const gear = getGear(player, items);
   const bonuses = gearBonuses(player, items);
@@ -2721,7 +2930,7 @@ function SetStatsModal({ player, onClose, onSave }) {
           <button className="rf-icon-btn" onClick={onClose}><X size={18}/></button>
         </div>
         <div className="rf-modal-body">
-          <p className="rf-modal-hint">Set any stat to any value, including negatives. No restrictions.</p>
+          <p className="rf-modal-hint">Set any stat to any value, including negatives. These are base stats; class, race and gear bonuses are added on top.</p>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
             <div style={{textAlign:'center'}}>
               <label className="rf-label" style={{margin:'0 0 6px',display:'block'}}>❤️ Current HP</label>
@@ -2900,7 +3109,7 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onAddEffect, onRemoveEffect, onSetPlayerStats, onSetPlayerTheme, onSaveMeta, onExit, onReset, onRefresh }) {
+function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onAddEffect, onRemoveEffect, onSaveKit, onApplyKitBonuses, onGiveKitItems, onSetPlayerStats, onSetPlayerTheme, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
@@ -2912,6 +3121,7 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
   const [companionFor, setCompanionFor] = useState(null);
   const [editingEncounter, setEditingEncounter] = useState(undefined);
   const [statsFor, setStatsFor] = useState(null);
+  const [editingKit, setEditingKit] = useState(null);
   const activeEncounter = encounters.find(e=>e.active)||null;
 
   const livePlayer = grantingPlayer ? (players.find((p) => p.id === grantingPlayer.id) || grantingPlayer) : null;
@@ -2927,6 +3137,7 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
         <button className={`rf-tab${tab === 'encounters' ? ' rf-tab--active' : ''}`} onClick={() => setTab('encounters')}>⚔️ Encounters</button>
         <button className={`rf-tab${tab === 'companions' ? ' rf-tab--active' : ''}`} onClick={() => setTab('companions')}>🐾 Companions</button>
         <button className={`rf-tab${tab === 'items' ? ' rf-tab--active' : ''}`} onClick={() => setTab('items')}><Package size={15}/> Items</button>
+        <button className={`rf-tab${tab === 'kits' ? ' rf-tab--active' : ''}`} onClick={() => setTab('kits')}>🎒 Starting Kits</button>
         <button className={`rf-tab${tab === 'settings' ? ' rf-tab--active' : ''}`} onClick={() => setTab('settings')}><Settings size={15} /> Settings</button>
       </div>
       <details className="rf-guide">
@@ -2947,6 +3158,7 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
         }
         {tab === 'companions' && <CompanionsTab companions={companions} onOpenEditor={setEditingCompanion}/>}
         {tab === 'items' && <ItemsTab items={items} onOpenEditor={setEditingItem}/>}
+        {tab === 'kits' && <KitsTab kits={meta.starting_kits||{}} items={items} players={players} onOpenEditor={(type,name)=>setEditingKit({type,name})} onApplyBonuses={onApplyKitBonuses} onGiveItems={onGiveKitItems}/>}
         {tab === 'settings' && <SettingsTab meta={meta} shareUrl={shareUrl} onSave={onSaveMeta} onExit={onExit} onReset={onReset} />}
       </div>
       {editingTree !== undefined && (
@@ -2999,6 +3211,9 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
         <EncounterEditorModal encounter={editingEncounter} players={players} items={items} onClose={()=>setEditingEncounter(undefined)}
           onSave={enc=>{onSaveEncounter(enc);setEditingEncounter(undefined);}}
           onDelete={id=>{onDeleteEncounter(id);setEditingEncounter(undefined);}}/>
+      )}
+      {editingKit && (
+        <KitEditorModal type={editingKit.type} name={editingKit.name} kit={(meta.starting_kits||{})[kitKey(editingKit.type, editingKit.name)]} items={items} onClose={()=>setEditingKit(null)} onSave={onSaveKit}/>
       )}
       {inventoryFor && (
         <PlayerInventoryModal
@@ -3119,7 +3334,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
 
   const [showSetup,setShowSetup]=useState(!player.character_class);
   if(showSetup) return(
-    <CharacterSetup player={player} statBudget={meta.stat_points??27}
+    <CharacterSetup player={player} statBudget={meta.stat_points??27} kits={meta.starting_kits} items={items}
       onSave={async data=>{await onSaveCharacter(player.id,data);setShowSetup(false);}}
       onBack={player.character_class?()=>setShowSetup(false):null}/>
   );
@@ -3874,6 +4089,39 @@ export default function App() {
     if (error) { console.error(error); showToast('Failed to update mana.'); }
   };
 
+  const handleSaveKit = async (key, kit) => {
+    const prevKits = (meta && meta.starting_kits) || {};
+    const empty = !Object.keys(kit.stats||{}).length && !(kit.items||[]).length;
+    const next = { ...prevKits };
+    if (empty) delete next[key]; else next[key] = kit;
+    setMeta(m => ({ ...m, starting_kits: next }));
+    const { error } = await supabase.from('campaigns').update({ starting_kits: next }).eq('id', campaignId);
+    if (error) { console.error(error); showToast('Failed to save the kit. Did you run the SQL migration?'); return; }
+    showToast(empty ? 'Kit cleared' : 'Starting kit saved');
+  };
+  const handleApplyKitBonuses = async () => {
+    const kits = (meta && meta.starting_kits) || {};
+    const targets = players.filter(p=>p.character_class).map(p=>({ id:p.id, origin_bonus: originBonus(kits, p.character_class, p.race) }));
+    setPlayers(prev=>prev.map(p=>{const t=targets.find(x=>x.id===p.id);return t?{...p,origin_bonus:t.origin_bonus}:p;}));
+    const results = await Promise.all(targets.map(t=>supabase.from('players').update({origin_bonus:t.origin_bonus}).eq('id',t.id)));
+    if (results.some(r=>r.error)) { showToast('Some players failed to update.'); return; }
+    showToast(`Stat bonuses refreshed for ${targets.length} player${targets.length===1?'':'s'}`);
+  };
+  const handleGiveKitItems = async () => {
+    const kits = (meta && meta.starting_kits) || {};
+    const jobs = [];
+    const nextPlayers = players.map(p=>{
+      if (p.kit_given || !p.character_class) return p;
+      const res = grantItems(p.inventory, startingItems(kits, p.character_class, p.race), items);
+      if (!res.added.length) return p;
+      jobs.push(supabase.from('players').update({ inventory: res.inventory, kit_given: true }).eq('id', p.id));
+      return { ...p, inventory: res.inventory, kit_given: true };
+    });
+    setPlayers(nextPlayers);
+    const results = await Promise.all(jobs);
+    if (results.some(r=>r.error)) { showToast('Some players failed to update.'); return; }
+    showToast(jobs.length ? `Starting items given to ${jobs.length} player${jobs.length===1?'':'s'}` : 'Nobody needed starting items.');
+  };
   const handleEquipItem = async (playerId, item) => {
     const player = players.find((p) => p.id === playerId);
     if (!player) return;
@@ -4105,9 +4353,24 @@ export default function App() {
     await supabase.from('players').update({level}).eq('id',playerId);
   };
   const handleSaveCharacter = async (playerId, data) => {
-    setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,...data}:p));
-    const {error}=await supabase.from('players').update(data).eq('id',playerId);
-    if(error){console.error(error);showToast('Failed to save character.');}
+    const player = players.find(p=>p.id===playerId);
+    const kits = (meta && meta.starting_kits) || {};
+    const updates = { ...data };
+    const bonus = originBonus(kits, data.character_class, data.race);
+    if (Object.keys(bonus).length || (player && Object.keys(player.origin_bonus||{}).length)) updates.origin_bonus = bonus;
+    let note = null;
+    if (player && !player.kit_given) {
+      const res = grantItems(player.inventory, startingItems(kits, data.character_class, data.race), items);
+      if (res.added.length) {
+        updates.inventory = res.inventory;
+        updates.kit_given = true;
+        note = `🎒 Starting kit added: ${res.added.map(g=>{const it=items.find(i=>i.id===g.item_id);return `${it.name} ×${g.quantity}`;}).join(', ')}`;
+      }
+    }
+    setPlayers(prev=>prev.map(p=>p.id===playerId?{...p,...updates}:p));
+    const {error}=await supabase.from('players').update(updates).eq('id',playerId);
+    if(error){console.error(error);showToast('Failed to save character.');return;}
+    if(note) showToast(note);
   };
   const handleSaveNotes = async (playerId, notes) => {
     setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, notes } : p));
@@ -4256,6 +4519,9 @@ export default function App() {
           onNextTurn={handleNextTurn}
           onAddEffect={handleAddEffect}
           onRemoveEffect={handleRemoveEffect}
+          onSaveKit={handleSaveKit}
+          onApplyKitBonuses={handleApplyKitBonuses}
+          onGiveKitItems={handleGiveKitItems}
           onSetPlayerStats={handleSetPlayerStats}
           onSetPlayerTheme={handleSetPlayerTheme}
           onSaveMeta={handleSaveMeta}
