@@ -742,6 +742,27 @@ const CSS = `
 .rf-kit-line b { color:var(--gold); font-weight:600; }
 .rf-stat-setup-bonus { font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--gold); margin-top:3px; white-space:nowrap; }
 
+
+/* ===== TARGETS / ATTACKS ===== */
+.rf-target-list { display:flex; flex-direction:column; gap:8px; }
+.rf-target-row { display:flex; justify-content:space-between; align-items:center; gap:12px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; color:var(--text); cursor:pointer; text-align:left; font-family:inherit; transition:all .15s; }
+.rf-target-row:hover { border-color:var(--gold); background:rgba(212,168,67,0.08); }
+.rf-target-name { font-weight:600; font-size:14px; }
+.rf-target-sub { font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--text-muted); white-space:nowrap; }
+.rf-atk-panel { background:linear-gradient(135deg,var(--surface),var(--surface-2)); border:1px solid rgba(196,69,60,0.35); border-radius:var(--radius); padding:16px 18px; margin-bottom:18px; }
+.rf-atk-chips { display:flex; flex-wrap:wrap; gap:8px; }
+.rf-atk-chip { display:flex; flex-direction:column; align-items:flex-start; gap:2px; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:8px 12px; color:var(--text); cursor:pointer; font-family:inherit; text-align:left; transition:all .15s; }
+.rf-atk-chip:hover { border-color:var(--text-muted); }
+.rf-atk-chip--on { border-color:var(--gold); background:rgba(212,168,67,0.10); box-shadow:0 0 0 1px var(--gold); }
+.rf-atk-chip--enemy.rf-atk-chip--on { border-color:var(--danger); background:rgba(196,69,60,0.12); box-shadow:0 0 0 1px var(--danger); }
+.rf-atk-chip-name { font-size:13px; font-weight:600; }
+.rf-atk-chip-sub { font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-muted); }
+.rf-enc-acted { font-size:10.5px; font-weight:500; color:var(--text-muted); }
+.rf-enc-log { border-top:1px solid var(--border); padding:12px 16px; background:var(--bg); }
+.rf-enc-log-title { font-family:'Cinzel',serif; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--text-muted); }
+.rf-enc-log-row { font-size:12.5px; line-height:1.5; padding:3px 0; border-bottom:1px dashed var(--border); }
+.rf-enc-log-row:last-child { border-bottom:none; }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -937,11 +958,11 @@ function gearBonuses(player, items) {
   return { ac, stats };
 }
 
-function playerAC(player, items) {
+function playerAC(player, items, effects) {
   const { ac } = gearBonuses(player, items);
-  const stats = totalStatBonus(player, items);
+  const stats = totalStatBonus(player, items, effects);
   const dex = (player.dex_score ?? 10) + (stats.dex_score || 0);
-  return 10 + statMod(dex) + ac;
+  return 10 + statMod(dex) + ac + effectBonuses(effects).ac;
 }
 
 function gearSummary(item) {
@@ -979,6 +1000,7 @@ function advanceTurn(enc) {
     notes.push(`${combatants[idx].name} is ${skip.name.toLowerCase()} and loses their turn`);
     tick(idx);
   }
+  combatants[idx].attacks_used = 0;
   return { combatants, turn_index: idx, round, notes };
 }
 /* </game-helpers> */
@@ -1164,13 +1186,203 @@ function kitStatText(stats) {
     .map(({ key, label }) => `${label} ${stats[key] > 0 ? '+' : ''}${stats[key]}`).join(' · ');
 }
 
-function totalStatBonus(player, items) {
+function totalStatBonus(player, items, effects) {
   const stats = { ...gearBonuses(player, items).stats };
   const ob = player.origin_bonus || {};
-  STATS.forEach(({ key }) => { if (ob[key]) stats[key] = (stats[key] || 0) + Number(ob[key]); });
+  const fx = effectBonuses(effects).stats;
+  STATS.forEach(({ key }) => {
+    if (ob[key]) stats[key] = (stats[key] || 0) + Number(ob[key]);
+    if (fx[key]) stats[key] = (stats[key] || 0) + Number(fx[key]);
+  });
   return stats;
 }
 /* </kit-helpers> */
+
+/* <combat-helpers> */
+const UNARMED = { id: '__unarmed', name: 'Unarmed strike', damage_dice: '1', attack_bonus: 0, attack_stat: 'str_score', virtual: true };
+
+function parseDice(expr) {
+  const s = String(expr || '').toLowerCase().replace(/\s+/g, '');
+  const m = s.match(/^(\d*)d(\d+)([+-]\d+)?$/);
+  if (m) {
+    const count = m[1] === '' ? 1 : parseInt(m[1], 10);
+    const sides = parseInt(m[2], 10);
+    const mod = m[3] ? parseInt(m[3], 10) : 0;
+    if (count < 1 || count > 50 || sides < 2 || sides > 1000) return null;
+    return { count, sides, mod };
+  }
+  if (/^\d+$/.test(s)) return { count: 0, sides: 0, mod: parseInt(s, 10) };
+  return null;
+}
+
+function rollDice(expr, rng, crit) {
+  const parsed = parseDice(expr);
+  const d = parsed || parseDice('1d4');
+  const rand = rng || Math.random;
+  const n = crit ? d.count * 2 : d.count;
+  const rolls = [];
+  for (let i = 0; i < n; i++) rolls.push(Math.floor(rand() * d.sides) + 1);
+  return { total: rolls.reduce((a, b) => a + b, 0) + d.mod, rolls, mod: d.mod, used: parsed ? String(expr).trim() : '1d4' };
+}
+
+function effectBonuses(effects) {
+  let ac = 0;
+  const stats = {};
+  (effects || []).forEach((ef) => {
+    ac += Number(ef.ac) || 0;
+    const sb = cleanStatBonus(ef.stats);
+    STATS.forEach(({ key }) => { if (sb[key]) stats[key] = (stats[key] || 0) + sb[key]; });
+  });
+  return { ac, stats };
+}
+
+function playerEffects(encounters, playerId) {
+  const enc = (encounters || []).find((e) => e.active);
+  const c = enc && enc.combatants.find((x) => x.player_id === playerId);
+  return (c && c.effects) || [];
+}
+
+function weaponSummary(item) {
+  const stat = (STATS.find((s) => s.key === (item.attack_stat || 'str_score')) || STATS[0]).label;
+  const bonus = Number(item.attack_bonus) || 0;
+  return [item.damage_dice || '1d4', bonus ? `${bonus > 0 ? '+' : ''}${bonus} to hit` : '', stat].filter(Boolean).join(' · ');
+}
+
+function playerWeapons(player, items) {
+  const owned = (player.inventory || [])
+    .map((e) => ({ e, it: (items || []).find((i) => i.id === e.item_id) }))
+    .filter(({ e, it }) => it && it.category === 'weapon' && e.quantity > 0)
+    .map(({ it }) => it);
+  return [...owned, UNARMED];
+}
+
+function resolveAttack({ player, items, effects, weapon, targetAC, rng }) {
+  const rand = rng || Math.random;
+  const statKey = weapon.attack_stat || 'str_score';
+  const bonuses = totalStatBonus(player, items, effects);
+  const mod = statMod((player[statKey] ?? 10) + (bonuses[statKey] || 0));
+  const hitBonus = Number(weapon.attack_bonus) || 0;
+  const d20 = Math.floor(rand() * 20) + 1;
+  const total = d20 + mod + hitBonus;
+  const crit = d20 === 20;
+  const hit = crit || (d20 !== 1 && total >= targetAC);
+  let damage = 0;
+  let dmg = null;
+  if (hit) {
+    dmg = rollDice(weapon.damage_dice, rand, crit);
+    damage = Math.max(0, dmg.total + mod);
+  }
+  return { d20, mod, hitBonus, total, targetAC, hit, crit, fumble: d20 === 1, damage, dmg };
+}
+
+function attackText(who, targetName, weapon, r) {
+  const sign = (n) => (n >= 0 ? '+' : '') + n;
+  const roll = `d20 ${r.d20}${sign(r.mod)}${r.hitBonus ? sign(r.hitBonus) : ''} = ${r.total} vs AC ${r.targetAC}`;
+  if (r.crit) return `${who} attacks ${targetName} with ${weapon.name}: natural 20! Critical hit for ${r.damage} damage (${roll})`;
+  if (r.fumble) return `${who} attacks ${targetName} with ${weapon.name}: natural 1, a miss (${roll})`;
+  if (r.hit) return `${who} hits ${targetName} with ${weapon.name} for ${r.damage} damage (${roll})`;
+  return `${who} misses ${targetName} with ${weapon.name} (${roll})`;
+}
+
+function planAttack({ player, items, encounter, weapon, combId, rng }) {
+  if (!encounter || !encounter.active) return { error: 'There is no active fight.' };
+  const myIdx = encounter.combatants.findIndex((c) => c.player_id === player.id);
+  if (myIdx < 0) return { error: "You aren't part of this fight." };
+  if (myIdx !== encounter.turn_index) return { error: "It isn't your turn yet." };
+  const me = encounter.combatants[myIdx];
+  if ((me.attacks_used || 0) >= 1) return { error: 'You already attacked this turn.' };
+  if (!weapon) return { error: 'Choose a weapon.' };
+  const target = encounter.combatants.find((c) => c.id === combId);
+  if (!target || target.type !== 'enemy') return { error: 'Choose an enemy to attack.' };
+  if (target.current_hp <= 0) return { error: `${target.name} is already down.` };
+  const targetAC = (Number(target.ac) || 10) + effectBonuses(target.effects).ac;
+  const result = resolveAttack({ player, items, effects: me.effects, weapon, targetAC, rng });
+  const newHp = result.hit ? Math.max(0, target.current_hp - result.damage) : target.current_hp;
+  const combatants = encounter.combatants.map((c) => {
+    if (c.id === target.id) return { ...c, current_hp: newHp, is_defeated: newHp <= 0 };
+    if (c.id === me.id) return { ...c, attacks_used: (c.attacks_used || 0) + 1 };
+    return c;
+  });
+  let text = attackText(player.name, target.name, weapon, result);
+  if (result.hit && newHp <= 0) text += `. ${target.name} is defeated!`;
+  return { result, combatants, text, targetName: target.name };
+}
+
+const abilityKind = (ab) => (ab && (ab.kind === 'heal' || ab.kind === 'effect') ? ab.kind : 'utility');
+
+function abilityEffectText(ab) {
+  const k = abilityKind(ab);
+  if (k === 'heal') return `💚 Heals ${Math.max(0, Number(ab.heal_amount) || 0)} HP · choose a target`;
+  if (k === 'effect') {
+    const fx = ab.fx || {};
+    const bits = [];
+    if (Number(fx.ac)) bits.push(`AC ${Number(fx.ac) > 0 ? '+' : ''}${Number(fx.ac)}`);
+    const st = kitStatText(cleanStatBonus(fx.stats));
+    if (st) bits.push(st);
+    if (fx.skips) bits.push('loses their turn');
+    const turns = Number(fx.rounds) > 0 ? ` for ${Number(fx.rounds)} turn${Number(fx.rounds) === 1 ? '' : 's'}` : '';
+    return `${fx.icon || '✨'} ${fx.name || 'Effect'}${bits.length ? ` (${bits.join(', ')})` : ''}${turns} · choose a target`;
+  }
+  return '';
+}
+
+function castTargets(ability, player, players, encounters) {
+  const kind = abilityKind(ability);
+  const enc = (encounters || []).find((e) => e.active) || null;
+  if (kind === 'heal' && !enc) {
+    return (players || []).filter((p) => p.character_class || p.id === player.id).map((p) => {
+      const hp = playerHP(p);
+      return { key: 'p' + p.id, label: p.id === player.id ? `${p.name} (you)` : p.name, sub: `HP ${hp.cur}/${hp.max}`, target: { playerId: p.id } };
+    });
+  }
+  if (!enc) return [];
+  return enc.combatants.filter((c) => !(c.type === 'enemy' && c.current_hp <= 0)).map((c) => {
+    const pl = c.type === 'player' && c.player_id ? (players || []).find((p) => p.id === c.player_id) : null;
+    const hp = pl ? playerHP(pl) : { cur: c.current_hp, max: c.max_hp };
+    const you = pl && pl.id === player.id;
+    return { key: 'c' + c.id, label: `${c.name}${you ? ' (you)' : ''}`, sub: `${c.type === 'player' ? 'Ally' : 'Enemy'} · HP ${hp.cur}/${hp.max}`, target: { combId: c.id } };
+  });
+}
+
+function planTargetedCast({ ability, caster, target, players, encounter }) {
+  const kind = abilityKind(ability);
+  const enc = encounter && encounter.active ? encounter : null;
+  let comb = null;
+  let tp = null;
+  if (target && target.combId && enc) comb = enc.combatants.find((c) => c.id === target.combId) || null;
+  if (comb && comb.type === 'player') tp = (players || []).find((p) => p.id === comb.player_id) || null;
+  if (!comb && target && target.playerId) tp = (players || []).find((p) => p.id === target.playerId) || null;
+  if (!comb && !tp) return { error: 'Choose a target first.' };
+  const name = comb ? comb.name : tp.name;
+  const playerPatches = {};
+  let combatants = null;
+  let detail = '';
+  if (kind === 'heal') {
+    const amount = Math.max(0, Number(ability.heal_amount) || 0);
+    if (!amount) return { error: `${ability.name} has no healing amount set.` };
+    const hp = tp ? playerHP(tp) : { cur: comb.current_hp, max: comb.max_hp };
+    if (hp.cur >= hp.max) return { error: `${name} is already at full health.` };
+    const next = Math.min(hp.max, hp.cur + amount);
+    if (tp) playerPatches[tp.id] = { current_hp: next };
+    else combatants = enc.combatants.map((c) => (c.id === comb.id ? { ...c, current_hp: next, is_defeated: next <= 0 } : c));
+    detail = `+${next - hp.cur} HP`;
+  } else if (kind === 'effect') {
+    if (!comb || !enc) return { error: 'Buffs and debuffs need an active fight and a target in it.' };
+    const fx = ability.fx || {};
+    if (!String(fx.name || '').trim()) return { error: `${ability.name} has no effect set up yet.` };
+    const effect = {
+      id: uid('fx'), name: String(fx.name).trim(), icon: fx.icon || '✨', skips: !!fx.skips,
+      rounds: Math.max(0, Math.trunc(Number(fx.rounds) || 0)), ac: Number(fx.ac) || 0, stats: cleanStatBonus(fx.stats),
+    };
+    combatants = enc.combatants.map((c) => (c.id === comb.id ? { ...c, effects: [...(c.effects || []).filter((x) => x.name !== effect.name), effect] } : c));
+    detail = `${effect.icon} ${effect.name}${effect.rounds > 0 ? ` (${effect.rounds})` : ''}`;
+  } else {
+    return { error: 'That ability does not need a target.' };
+  }
+  return { playerPatches, combatants, text: `${caster.name} casts ${ability.name} on ${name}: ${detail}`, targetName: name, detail };
+}
+/* </combat-helpers> */
+
 
 /* <gear-actions> */
 function equipItem(player, items, item) {
@@ -1200,9 +1412,9 @@ function unequipItem(player, slotKey, itemId) {
 }
 /* </gear-actions> */
 
-function StatBlock({ player, onSpend, items }) {
+function StatBlock({ player, onSpend, items, effects }) {
   const pts = player.skill_points || 0;
-  const bonus = totalStatBonus(player, items || []);
+  const bonus = totalStatBonus(player, items || [], effects);
   return (
     <div className="rf-stat-block">
       {STATS.map(({key,label}) => {
@@ -1216,7 +1428,7 @@ function StatBlock({ player, onSpend, items }) {
             <div className="rf-stat-box-mod">{modStr(v)}</div>
             <div className="rf-stat-box-score">
               {v}
-              {extra !== 0 && <span className="rf-stat-gear" title={`${base} base, ${extra > 0 ? '+' : ''}${extra} from class, race & gear`}> ({extra > 0 ? '+' : ''}{extra})</span>}
+              {extra !== 0 && <span className="rf-stat-gear" title={`${base} base, ${extra > 0 ? '+' : ''}${extra} from class, race, gear & effects`}> ({extra > 0 ? '+' : ''}{extra})</span>}
             </div>
             {canSpend && (
               <button className="rf-stat-spend-btn" onClick={() => onSpend(key)}>+1</button>
@@ -1509,6 +1721,7 @@ function AbilityItem({ ability, currentMana, onUse }) {
       <div className="rf-ability-item-body">
         <div className="rf-ability-item-name">{ability.name}</div>
         {ability.effect && <div className="rf-ability-item-effect">{ability.effect}</div>}
+        {abilityKind(ability) !== 'utility' && <div className="rf-ability-item-effect">{abilityEffectText(ability)}</div>}
         {ability.description && <div className="rf-ability-item-desc">{ability.description}</div>}
         {voiceOnly && <div className="rf-ability-voice-tag">🎤 Voice only: hold the speak button and say “{ability.name}”</div>}
       </div>
@@ -1518,7 +1731,7 @@ function AbilityItem({ ability, currentMana, onUse }) {
           <div className="rf-ability-voice-lock" title="Your DM made this spell voice-cast only">🎤 Voice only</div>
         ) : (
           <button className="rf-ability-use" disabled={!canAfford} onClick={() => onUse(ability)}>
-            <Zap size={12} /> Use
+            <Zap size={12} /> {abilityKind(ability) === 'utility' ? 'Use' : 'Cast…'}
           </button>
         )}
       </div>
@@ -1841,6 +2054,63 @@ function AbilitySetEditorModal({ set, onClose, onSave, onDelete }) {
                 <input type="checkbox" checked={!!ab.voice_only} onChange={e=>updateAbility(ab.id,{voice_only:e.target.checked})} style={{marginTop:2}}/>
                 <span>🎤 Voice cast only <span style={{color:'var(--text-muted)'}}>(no Use button: the player must say “{ab.name||'the spell name'}” while holding the speak button)</span></span>
               </label>
+              <div className="rf-gear-fields" style={{marginTop:10}}>
+                <div className="rf-label" style={{marginTop:0}}>What does it do when cast?</div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
+                  {[['utility','✨ Just spends mana'],['heal','💚 Heals a target'],['effect','🛡️ Buff or debuff a target']].map(([k,l])=>(
+                    <button key={k} type="button" style={{fontSize:12,padding:'5px 10px'}}
+                      className={abilityKind(ab)===k?'rf-btn-primary':'rf-btn-ghost'} onClick={()=>updateAbility(ab.id,{kind:k})}>{l}</button>
+                  ))}
+                </div>
+                {abilityKind(ab)==='heal'&&(
+                  <>
+                    <label className="rf-label">HP restored</label>
+                    <input className="rf-input" type="number" min="1" value={ab.heal_amount??''} placeholder="e.g. 8" onChange={e=>updateAbility(ab.id,{heal_amount:e.target.value})} style={{width:110}}/>
+                    <div className="rf-hint">The caster picks who to heal, then the mana is spent.</div>
+                  </>
+                )}
+                {abilityKind(ab)==='effect'&&(()=>{
+                  const fx=ab.fx||{rounds:3};
+                  const setFx=(p)=>updateAbility(ab.id,{fx:{...fx,...p}});
+                  return (
+                    <>
+                      <label className="rf-label">Effect</label>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
+                        {STATUS_EFFECTS.map(s=>(
+                          <button key={s.name} type="button" className="rf-fx-chip" style={fx.name===s.name?{borderColor:'var(--gold)',color:'var(--gold)'}:null}
+                            onClick={()=>setFx({name:s.name,icon:s.icon,skips:!!s.skips})}>{s.icon} {s.name}</button>
+                        ))}
+                      </div>
+                      <input className="rf-input rf-input-sm" value={fx.name||''} placeholder="Or type your own, e.g. Iron Skin" onChange={e=>setFx({name:e.target.value,icon:fx.icon||'✨'})}/>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:10}}>
+                        <div>
+                          <label className="rf-label" style={{marginTop:0}}>Lasts (their turns)</label>
+                          <input className="rf-input rf-input-sm" type="number" min="0" value={fx.rounds??3} onChange={e=>setFx({rounds:e.target.value})}/>
+                        </div>
+                        <div>
+                          <label className="rf-label" style={{marginTop:0}}>AC change</label>
+                          <input className="rf-input rf-input-sm" type="number" placeholder="0" value={fx.ac??''} onChange={e=>setFx({ac:e.target.value})}/>
+                        </div>
+                      </div>
+                      <label style={{display:'flex',alignItems:'center',gap:8,marginTop:10,cursor:'pointer',fontSize:12.5}}>
+                        <input type="checkbox" checked={!!fx.skips} onChange={e=>setFx({skips:e.target.checked})}/>
+                        <span>Target loses their turn (stun)</span>
+                      </label>
+                      <label className="rf-label">Stat changes (use a minus sign for penalties)</label>
+                      <div className="rf-gear-stat-grid">
+                        {STATS.map(({key,label})=>(
+                          <div key={key} style={{textAlign:'center'}}>
+                            <div className="rf-gear-stat-label">{label}</div>
+                            <input className="rf-input rf-input-sm" type="number" placeholder="0" value={(fx.stats||{})[key]??''}
+                              onChange={e=>setFx({stats:{...(fx.stats||{}),[key]:e.target.value}})} style={{textAlign:'center'}}/>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="rf-hint">Applies to whoever the caster targets, ally or enemy, during a fight. It counts down on the target's own turns (0 = until you remove it).</div>
+                    </>
+                  );
+                })()}
+              </div>
               <div style={{display:'flex',alignItems:'center',gap:8,marginTop:6,flexWrap:'wrap'}}>
                 <span style={{fontSize:11.5,color:'var(--text-muted)',fontFamily:"'Cinzel',serif"}}>Min Level</span>
                 <input className="rf-input rf-input-sm" type="number" min="0" max="20" value={ab.req_level||0} onChange={e=>updateAbility(ab.id,{req_level:Number(e.target.value)||0})} style={{width:60,textAlign:'center'}}/>
@@ -1967,10 +2237,13 @@ function ItemEditorModal({ item, onClose, onSave, onDelete }) {
   const [gearSlot, setGearSlot] = useState(item && item.category==='armor' && item.slot ? item.slot : 'chest');
   const [acBonus, setAcBonus] = useState(item?.ac_bonus ?? 0);
   const [statBonus, setStatBonus] = useState(item?.stat_bonus || {});
+  const [damageDice, setDamageDice] = useState(item?.damage_dice || '');
+  const [attackBonus, setAttackBonus] = useState(item?.attack_bonus ?? 0);
+  const [attackStat, setAttackStat] = useState(item?.attack_stat || 'str_score');
 
   const handleSave = () => {
     if (!name.trim()) return;
-    onSave({ id: item ? item.id : uid('item'), name:name.trim(), description:desc.trim(), category:cat, weight:Number(weight)||0, gold_value:Number(goldVal)||0, mana_restore:Math.max(0, Number(manaRestore)||0), heal_amount:Math.max(0, Number(healAmount)||0), slot:(cat==='trinket'?'trinket':cat==='armor'?gearSlot:''), ac_bonus:(cat==='armor'?(Number(acBonus)||0):0), stat_bonus:((cat==='armor'||cat==='trinket')?cleanStatBonus(statBonus):{}) });
+    onSave({ id: item ? item.id : uid('item'), name:name.trim(), description:desc.trim(), category:cat, weight:Number(weight)||0, gold_value:Number(goldVal)||0, mana_restore:Math.max(0, Number(manaRestore)||0), heal_amount:Math.max(0, Number(healAmount)||0), slot:(cat==='trinket'?'trinket':cat==='armor'?gearSlot:''), ac_bonus:(cat==='armor'?(Number(acBonus)||0):0), stat_bonus:((cat==='armor'||cat==='trinket')?cleanStatBonus(statBonus):{}), ...(cat==='weapon' ? { damage_dice: damageDice.trim(), attack_bonus: Number(attackBonus)||0, attack_stat: attackStat } : {}) });
   };
   return (
     <div className="rf-modal-overlay" onClick={onClose}>
@@ -2003,6 +2276,29 @@ function ItemEditorModal({ item, onClose, onSave, onDelete }) {
               <input className="rf-input" type="number" min="0" step="0.5" value={goldVal} onChange={e=>setGoldVal(e.target.value)}/>
             </div>
           </div>
+          {cat==='weapon'&&(
+            <div className="rf-gear-fields">
+              <div className="rf-label" style={{marginTop:0}}>Weapon</div>
+              <div style={{display:'grid',gridTemplateColumns:'1.2fr 1fr 1fr',gap:10}}>
+                <div>
+                  <label className="rf-label" style={{marginTop:0}}>Damage dice</label>
+                  <input className="rf-input" value={damageDice} onChange={e=>setDamageDice(e.target.value)} placeholder="1d8"/>
+                </div>
+                <div>
+                  <label className="rf-label" style={{marginTop:0}}>Hit bonus</label>
+                  <input className="rf-input" type="number" value={attackBonus} onChange={e=>setAttackBonus(e.target.value)} placeholder="0"/>
+                </div>
+                <div>
+                  <label className="rf-label" style={{marginTop:0}}>Attack stat</label>
+                  <select className="rf-input" value={attackStat} onChange={e=>setAttackStat(e.target.value)}>
+                    {STATS.map(s=><option key={s.key} value={s.key}>{s.label}</option>)}
+                  </select>
+                </div>
+              </div>
+              {damageDice.trim()&&!parseDice(damageDice)&&<div className="rf-error">That isn't a valid dice roll. Use something like 1d8 or 2d6+1. It will fall back to 1d4.</div>}
+              <div className="rf-hint">The attacker rolls a d20 plus the stat modifier plus the hit bonus against the enemy's AC. A hit deals these dice plus the stat modifier. A natural 20 always hits and doubles the dice.</div>
+            </div>
+          )}
           {(cat==='armor'||cat==='trinket')&&(
             <div className="rf-gear-fields">
               <div className="rf-label" style={{marginTop:0}}>{cat==='armor'?'Armor':'Trinket'} bonuses</div>
@@ -2129,6 +2425,7 @@ function ItemsTab({ items, onOpenEditor }) {
                 {item.weight>0 && <div className="rf-item-stat">{item.weight}<b>kg</b></div>}
                 {item.gold_value>0 && <div className="rf-item-stat">{item.gold_value}<b>gp</b></div>}
                 {gearSummary(item) && <div className="rf-item-stat rf-item-gear">{gearSummary(item)}</div>}
+                {item.category==='weapon' && <div className="rf-item-stat rf-item-gear">🗡️ {weaponSummary(item)}</div>}
                 {item.heal_amount>0 && <div className="rf-item-stat rf-item-heal">❤️ +{item.heal_amount} HP</div>}
                 {item.mana_restore>0 && <div className="rf-item-stat rf-item-mana">💧 +{item.mana_restore} mana</div>}
               </div>
@@ -2427,7 +2724,7 @@ function EncountersTab({ encounters, onOpenEditor, onActivate, onEnd }) {
   );
 }
 
-function ActiveEncounterView({ encounter, isGM, players, items, onUpdateHP, onNextTurn, onEndEncounter, onAddEffect, onRemoveEffect }) {
+function ActiveEncounterView({ encounter, isGM, players, items, onUpdateHP, onNextTurn, onEndEncounter, onAddEffect, onRemoveEffect, onResetAttack }) {
   const [effectFor, setEffectFor] = React.useState(null);
   const [rounds, setRounds] = React.useState(2);
   const [custom, setCustom] = React.useState('');
@@ -2449,7 +2746,7 @@ function ActiveEncounterView({ encounter, isGM, players, items, onUpdateHP, onNe
         {encounter.combatants.map((c,i)=>{
           const pl = c.type==='player' && c.player_id ? (players||[]).find(p=>p.id===c.player_id) : null;
           const hp = pl ? playerHP(pl) : { cur: c.current_hp, max: c.max_hp };
-          const ac = pl ? playerAC(pl, items) : c.ac;
+          const ac = pl ? playerAC(pl, items, c.effects) : (Number(c.ac) || 0) + effectBonuses(c.effects).ac;
           const cur=i===encounter.turn_index;
           const dead=hp.cur<=0;
           const pct=Math.max(0,Math.min(100,(hp.cur/hp.max)*100));
@@ -2462,7 +2759,7 @@ function ActiveEncounterView({ encounter, isGM, players, items, onUpdateHP, onNe
                 <div className="rf-enc-init">{c.initiative}</div>
                 <div className="rf-enc-icon">{c.type==='player'?'👤':'👹'}</div>
                 <div className="rf-enc-name-block">
-                  <div className="rf-enc-name" style={{textDecoration:dead?'line-through':'none'}}>{c.name}</div>
+                  <div className="rf-enc-name" style={{textDecoration:dead?'line-through':'none'}}>{c.name}{c.attacks_used>0&&<span className="rf-enc-acted"> · attacked</span>}</div>
                   <div className="rf-enc-hp-bar-wrap"><div className="rf-enc-hp-bar" style={{width:`${pct}%`,background:col}}/></div>
                   {effects.length>0&&(
                     <div className="rf-enc-effects">
@@ -2488,6 +2785,7 @@ function ActiveEncounterView({ encounter, isGM, players, items, onUpdateHP, onNe
                   <div className="rf-enc-hp-display">{hp.cur}/{hp.max}</div>
                 )}
                 {isGM&&c.attack&&<div className="rf-enc-atk">{c.attack}</div>}
+                {isGM&&c.attacks_used>0&&<button type="button" className="rf-enc-fx-btn" title="Allow another attack this turn" onClick={()=>onResetAttack&&onResetAttack(encounter.id,c.id)}>↺</button>}
                 {isGM&&<button type="button" className="rf-enc-fx-btn" title="Add a status effect (stunned, poisoned...)" onClick={()=>setEffectFor(effectFor===c.id?null:c.id)}>✨</button>}
               </div>
               {isGM&&effectFor===c.id&&(
@@ -2512,6 +2810,12 @@ function ActiveEncounterView({ encounter, isGM, players, items, onUpdateHP, onNe
           );
         })}
       </div>
+      {(encounter.log||[]).length>0&&(
+        <div className="rf-enc-log">
+          <div className="rf-enc-log-title">📜 Combat log</div>
+          {[...encounter.log].slice(-6).reverse().map(l=>(<div key={l.id} className="rf-enc-log-row">{l.text}</div>))}
+        </div>
+      )}
     </div>
   );
 }
@@ -2559,6 +2863,82 @@ function PlayerArsenal({ player, items, abilitySets, onUseItem }) {
           </div>
         ))}
       </div>}
+    </div>
+  );
+}
+
+function TargetPickerModal({ ability, targets, onPick, onClose }) {
+  return (
+    <div className="rf-modal-overlay" onClick={onClose}>
+      <div className="rf-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="rf-modal-header">
+          <h3>{ability.name}: choose a target</h3>
+          <button className="rf-icon-btn" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="rf-modal-body">
+          <p className="rf-modal-hint">{abilityEffectText(ability)}</p>
+          <div className="rf-target-list">
+            {targets.map((t) => (
+              <button key={t.key} type="button" className="rf-target-row" onClick={() => onPick(t.target)}>
+                <span className="rf-target-name">{t.label}</span>
+                <span className="rf-target-sub">{t.sub}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="rf-modal-footer"><div style={{ flex: 1 }} /><button className="rf-btn-ghost" onClick={onClose}>Cancel</button></div>
+      </div>
+    </div>
+  );
+}
+
+function AttackPanel({ player, items, encounter, onAttack }) {
+  const [weaponId, setWeaponId] = React.useState(null);
+  const [targetId, setTargetId] = React.useState(null);
+  if (!encounter) return null;
+  const weapons = playerWeapons(player, items);
+  const weapon = weapons.find((w) => w.id === weaponId) || weapons[0];
+  const enemies = encounter.combatants.filter((c) => c.type === 'enemy' && c.current_hp > 0);
+  const myIdx = encounter.combatants.findIndex((c) => c.player_id === player.id);
+  const me = myIdx >= 0 ? encounter.combatants[myIdx] : null;
+  const myTurn = myIdx >= 0 && myIdx === encounter.turn_index;
+  const used = !!me && (me.attacks_used || 0) >= 1;
+  const target = enemies.find((c) => c.id === targetId) || null;
+  let blocker = null;
+  if (!me) blocker = "You aren't part of this fight.";
+  else if (!myTurn) blocker = 'Wait for your turn to attack.';
+  else if (used) blocker = 'You already attacked this turn.';
+  else if (!enemies.length) blocker = 'No enemies left standing.';
+  else if (!target) blocker = 'Pick an enemy to attack.';
+  return (
+    <div className="rf-atk-panel">
+      <div className="rf-arsenal-title">🗡️ Attack</div>
+      <div className="rf-arsenal-sub">1. Choose your weapon</div>
+      <div className="rf-atk-chips">
+        {weapons.map((w) => (
+          <button key={w.id} type="button" className={`rf-atk-chip${weapon && weapon.id === w.id ? ' rf-atk-chip--on' : ''}`} onClick={() => setWeaponId(w.id)}>
+            <span className="rf-atk-chip-name">{w.name}</span>
+            <span className="rf-atk-chip-sub">{weaponSummary(w)}</span>
+          </button>
+        ))}
+      </div>
+      <div className="rf-arsenal-sub" style={{ marginTop: 12 }}>2. Choose your target</div>
+      {enemies.length === 0 ? (
+        <div className="rf-empty-mini">No enemies left standing.</div>
+      ) : (
+        <div className="rf-atk-chips">
+          {enemies.map((c) => (
+            <button key={c.id} type="button" className={`rf-atk-chip rf-atk-chip--enemy${target && target.id === c.id ? ' rf-atk-chip--on' : ''}`} onClick={() => setTargetId(c.id)}>
+              <span className="rf-atk-chip-name">👹 {c.name}</span>
+              <span className="rf-atk-chip-sub">HP {c.current_hp}/{c.max_hp} · AC {(Number(c.ac) || 10) + effectBonuses(c.effects).ac}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <button type="button" className="rf-btn-primary" style={{ width: '100%', marginTop: 14 }} disabled={!!blocker}
+        onClick={() => { if (!blocker) onAttack(player.id, weapon, target.id); }}>
+        {blocker ? blocker : `⚔️ Attack ${target.name} with ${weapon.name}`}
+      </button>
     </div>
   );
 }
@@ -3109,7 +3489,7 @@ function SettingsTab({ meta, shareUrl, onSave, onExit, onReset }) {
   );
 }
 
-function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onAddEffect, onRemoveEffect, onSaveKit, onApplyKitBonuses, onGiveKitItems, onSetPlayerStats, onSetPlayerTheme, onSaveMeta, onExit, onReset, onRefresh }) {
+function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, encounters, items, live, onSaveTree, onDeleteTree, onAddPlayer, onDeletePlayer, onToggleUnlock, onSaveAbilitySet, onDeleteAbilitySet, onToggleGrantAbility, onSetPlayerMaxMana, onSetPlayerLevel, onGiveSkillPoints, onSaveCompanion, onDeleteCompanion, onToggleCompanion, onSaveItem, onDeleteItem, onSetItemQty, onSetMaxCarry, onSaveEncounter, onDeleteEncounter, onActivateEncounter, onEndEncounter, onUpdateCombatantHP, onNextTurn, onAddEffect, onRemoveEffect, onResetAttack, onSaveKit, onApplyKitBonuses, onGiveKitItems, onSetPlayerStats, onSetPlayerTheme, onSaveMeta, onExit, onReset, onRefresh }) {
   const [tab, setTab] = useState('trees');
   const [editingTree, setEditingTree] = useState(undefined);
   const [grantingPlayer, setGrantingPlayer] = useState(null);
@@ -3154,7 +3534,7 @@ function DMDashboard({ meta, shareUrl, trees, players, abilitySets, companions, 
         {tab === 'trees' && <TreesTab trees={trees} onOpenEditor={setEditingTree} />}
         {tab === 'abilities' && <AbilitiesTab abilitySets={abilitySets} onOpenEditor={setEditingAbilitySet} />}
         {tab === 'players' && <PlayersTab players={players} trees={trees} abilitySets={abilitySets} companions={companions} items={items} onAddPlayer={onAddPlayer} onDeletePlayer={onDeletePlayer} onOpenGrant={setGrantingPlayer} onOpenAbilityGrant={setGrantingAbilitiesFor} onOpenInventory={setInventoryFor} onSetPlayerLevel={onSetPlayerLevel} onGiveSkillPoints={onGiveSkillPoints} onOpenCompanions={setCompanionFor} onOpenStats={setStatsFor} onSetPlayerTheme={onSetPlayerTheme}/>}
-        {tab === 'encounters' && <><EncountersTab encounters={encounters} onOpenEditor={setEditingEncounter} onActivate={onActivateEncounter} onEnd={onEndEncounter}/>{activeEncounter&&<div style={{marginTop:18}}><ActiveEncounterView encounter={activeEncounter} isGM={true} players={players} items={items} onAddEffect={onAddEffect} onRemoveEffect={onRemoveEffect} onUpdateHP={(cId,d)=>onUpdateCombatantHP(activeEncounter.id,cId,d)} onNextTurn={()=>onNextTurn(activeEncounter.id)} onEndEncounter={onEndEncounter}/></div>}</>
+        {tab === 'encounters' && <><EncountersTab encounters={encounters} onOpenEditor={setEditingEncounter} onActivate={onActivateEncounter} onEnd={onEndEncounter}/>{activeEncounter&&<div style={{marginTop:18}}><ActiveEncounterView encounter={activeEncounter} isGM={true} players={players} items={items} onAddEffect={onAddEffect} onRemoveEffect={onRemoveEffect} onResetAttack={onResetAttack} onUpdateHP={(cId,d)=>onUpdateCombatantHP(activeEncounter.id,cId,d)} onNextTurn={()=>onNextTurn(activeEncounter.id)} onEndEncounter={onEndEncounter}/></div>}</>
         }
         {tab === 'companions' && <CompanionsTab companions={companions} onOpenEditor={setEditingCompanion}/>}
         {tab === 'items' && <ItemsTab items={items} onOpenEditor={setEditingItem}/>}
@@ -3324,7 +3704,7 @@ function PlayerNotepad({ player, onSave }) {
   );
 }
 
-function PlayerDashboard({ meta, trees, players, abilitySets, companions, encounters, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onUseItem, onEquipItem, onUnequipItem, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh, themeVars }) {
+function PlayerDashboard({ meta, trees, players, abilitySets, companions, encounters, items, currentPlayerId, live, onSelectPlayer, onJoinAsNew, onToggleEquip, onAdjustMana, onUseAbility, onUseItem, onEquipItem, onUnequipItem, onAttack, onRequestCast, onSpendSkillPoint, onSaveNotes, onSaveCharacter, onExit, onRefresh, themeVars }) {
   const [selected, setSelected] = useState(null);
   const player = players.find((p) => p.id === currentPlayerId);
 
@@ -3363,7 +3743,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
       <TopHeader meta={meta} role="player" playerName={player.name} onExit={onExit} onRefresh={onRefresh} onSwitchPlayer={() => onSelectPlayer(null)} live={live} />
       <div style={themeVars||{}}>
         {/* Active encounter */}
-        {(()=>{const ae=encounters&&encounters.find(e=>e.active);if(!ae)return null;const mine=ae.combatants.find(c=>c.player_id===player.id);const fx=(mine&&mine.effects)||[];return(<>{fx.length>0&&(<div className="rf-fx-banner">{fx.map(ef=>(<span key={ef.id} className="rf-fx-banner-item">{ef.icon} You are {ef.name.toLowerCase()}{ef.rounds>0?` (${ef.rounds} turn${ef.rounds===1?'':'s'} left)`:''}{ef.skips?' · you lose your turn':''}</span>))}</div>)}<ActiveEncounterView encounter={ae} isGM={false} players={players} items={items} onUpdateHP={()=>{}} onNextTurn={()=>{}} onEndEncounter={()=>{}}/><PlayerArsenal player={player} items={items} abilitySets={abilitySets} onUseItem={onUseItem}/></>);})()}
+        {(()=>{const ae=encounters&&encounters.find(e=>e.active);if(!ae)return null;const mine=ae.combatants.find(c=>c.player_id===player.id);const fx=(mine&&mine.effects)||[];return(<>{fx.length>0&&(<div className="rf-fx-banner">{fx.map(ef=>(<span key={ef.id} className="rf-fx-banner-item">{ef.icon} You are {ef.name.toLowerCase()}{ef.rounds>0?` (${ef.rounds} turn${ef.rounds===1?'':'s'} left)`:''}{ef.skips?' · you lose your turn':''}</span>))}</div>)}<ActiveEncounterView encounter={ae} isGM={false} players={players} items={items} onUpdateHP={()=>{}} onNextTurn={()=>{}} onEndEncounter={()=>{}}/><AttackPanel player={player} items={items} encounter={ae} onAttack={onAttack}/><PlayerArsenal player={player} items={items} abilitySets={abilitySets} onUseItem={onUseItem}/></>);})()}
         {/* Character header */}
         <div className="rf-char-header">
           <div className="rf-char-identity">
@@ -3378,7 +3758,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
                   <div className="rf-sp-badge-val">{player.skill_points}</div>
                 </div>
               )}
-              <div className="rf-ac-badge" title="Armor Class: 10 + DEX modifier + armor"><div className="rf-ac-badge-label">AC</div><div className="rf-ac-badge-val">{playerAC(player, items)}</div></div>
+              <div className="rf-ac-badge" title="Armor Class: 10 + DEX modifier + armor"><div className="rf-ac-badge-label">AC</div><div className="rf-ac-badge-val">{playerAC(player, items, playerEffects(encounters, player.id))}</div></div>
               <div className="rf-level-badge">
                 <div className="rf-level-badge-label">Level</div>
                 <div className="rf-level-badge-val">{player.level||1}</div>
@@ -3386,7 +3766,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
               <button className="rf-char-edit-btn" onClick={()=>setShowSetup(true)}>✏️ Edit</button>
             </div>
           </div>
-          <StatBlock player={player} items={items} onSpend={onSpendSkillPoint ? (key) => onSpendSkillPoint(player.id, key) : null}/>
+          <StatBlock player={player} items={items} effects={playerEffects(encounters, player.id)} onSpend={onSpendSkillPoint ? (key) => onSpendSkillPoint(player.id, key) : null}/>
           {(player.skill_points||0) > 0 && (
             <div className="rf-sp-notify">✨ You have {player.skill_points} skill point{player.skill_points!==1?'s':''} — tap +1 on any stat to spend them!</div>
           )}
@@ -3438,7 +3818,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
             <VoiceCastPanel
               abilities={grantedAbilitySets.flatMap(s => s.abilities)}
               currentMana={currentMana}
-              onCast={(ab) => onUseAbility(player.id, ab, 'voice')} />
+              onCast={(ab) => onRequestCast(ab, 'voice')} />
             {grantedAbilitySets.map(s => {
               const color = TREE_COLORS[s.color] || TREE_COLORS.violet;
               return (
@@ -3453,7 +3833,7 @@ function PlayerDashboard({ meta, trees, players, abilitySets, companions, encoun
                   <div className="rf-ability-items">
                     {s.abilities.map(ab => (
                       <AbilityItem key={ab.id} ability={ab} currentMana={currentMana}
-                        onUse={() => onUseAbility(player.id, ab)} />
+                        onUse={() => onRequestCast(ab, 'button')} />
                     ))}
                   </div>
                 </div>
@@ -3763,6 +4143,7 @@ export default function App() {
   const [players, setPlayers] = useState([]);
   const [abilitySets, setAbilitySets] = useState([]);
   const [encounters, setEncounters] = useState([]);
+  const [castPending, setCastPending] = useState(null);
   const [companions, setCompanions] = useState([]);
   const [items, setItems] = useState([]);
   const [currentPlayerId, setCurrentPlayerId] = useState(null);
@@ -4170,7 +4551,51 @@ export default function App() {
     showToast(`🧪 Used ${item.name} · ${gained.join(', ')}`);
   };
 
-  const handleUseAbility = async (playerId, ability, via = 'button') => {
+  const patchEncounter = async (encId, patch) => {
+    let { error } = await supabase.from('encounters').update(patch).eq('id', encId);
+    if (error && 'log' in patch) {
+      const { log, ...rest } = patch;
+      if (!Object.keys(rest).length) return null;
+      ({ error } = await supabase.from('encounters').update(rest).eq('id', encId));
+    }
+    return error;
+  };
+  const withLog = (enc, text) => [...(enc.log || []), { id: uid('log'), text }].slice(-30);
+
+  const handleAttack = async (playerId, weapon, combId) => {
+    const enc = encounters.find((e) => e.active);
+    const player = players.find((p) => p.id === playerId);
+    if (!enc || !player) return;
+    const plan = planAttack({ player, items, encounter: enc, weapon, combId });
+    if (plan.error) { showToast(plan.error); return; }
+    const log = withLog(enc, plan.text);
+    setEncounters((prev) => prev.map((e) => (e.id === enc.id ? { ...e, combatants: plan.combatants, log } : e)));
+    const error = await patchEncounter(enc.id, { combatants: plan.combatants, log });
+    if (error) { console.error(error); showToast('Failed to save the attack.'); return; }
+    showToast(`⚔️ ${plan.text}`);
+  };
+  const handleResetAttack = async (encId, combId) => {
+    const enc = encounters.find((e) => e.id === encId);
+    if (!enc) return;
+    const combatants = enc.combatants.map((c) => (c.id === combId ? { ...c, attacks_used: 0 } : c));
+    setEncounters((prev) => prev.map((e) => (e.id === encId ? { ...e, combatants } : e)));
+    const error = await patchEncounter(encId, { combatants });
+    if (error) { console.error(error); showToast('Failed to reset the attack.'); }
+  };
+
+  const requestCast = (ability, via) => {
+    const player = players.find((p) => p.id === currentPlayerId);
+    if (!player) return;
+    if (abilityKind(ability) === 'utility') { handleUseAbility(player.id, ability, via); return; }
+    const targets = castTargets(ability, player, players, encounters);
+    if (!targets.length) {
+      showToast(abilityKind(ability) === 'effect' ? 'No valid targets. This ability needs an active fight.' : 'No valid targets.');
+      return;
+    }
+    setCastPending({ ability, via, playerId: player.id });
+  };
+
+  const handleUseAbility = async (playerId, ability, via = 'button', target = null) => {
     const player = players.find((p) => p.id === playerId);
     if (!player) return;
     const latest = abilitySets.flatMap((s) => s.abilities || []).find((a) => a.id === ability.id) || ability;
@@ -4180,12 +4605,32 @@ export default function App() {
     }
     const max_mana = player.max_mana ?? 10;
     const cur = player.current_mana ?? max_mana;
-    if (cur < ability.mana_cost) return;
-    const current_mana = cur - ability.mana_cost;
-    setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, current_mana } : p)));
-    const { error } = await supabase.from('players').update({ current_mana }).eq('id', playerId);
-    if (error) { console.error(error); showToast('Failed to use ability.'); return; }
-    showToast(`\u{1F52E} Used ${ability.name} \u00B7 \u2212${ability.mana_cost} mana`);
+    if (cur < latest.mana_cost) { showToast(`Not enough mana for ${latest.name}.`); return; }
+    const current_mana = cur - latest.mana_cost;
+    if (abilityKind(latest) === 'utility') {
+      setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, current_mana } : p)));
+      const { error } = await supabase.from('players').update({ current_mana }).eq('id', playerId);
+      if (error) { console.error(error); showToast('Failed to use ability.'); return; }
+      showToast(`🔮 Used ${latest.name} · −${latest.mana_cost} mana`);
+      return;
+    }
+    const enc = encounters.find((e) => e.active) || null;
+    const plan = planTargetedCast({ ability: latest, caster: player, target, players, encounter: enc });
+    if (plan.error) { showToast(plan.error); return; }
+    const patches = { ...plan.playerPatches };
+    patches[playerId] = { ...(patches[playerId] || {}), current_mana };
+    setPlayers((prev) => prev.map((p) => (patches[p.id] ? { ...p, ...patches[p.id] } : p)));
+    const results = await Promise.all(Object.entries(patches).map(([id, patch]) => supabase.from('players').update(patch).eq('id', id)));
+    let failed = results.some((r) => r.error);
+    if (enc) {
+      const log = withLog(enc, plan.text);
+      const encPatch = plan.combatants ? { combatants: plan.combatants, log } : { log };
+      setEncounters((prev) => prev.map((e) => (e.id === enc.id ? { ...e, ...encPatch } : e)));
+      const error = await patchEncounter(enc.id, encPatch);
+      if (error) failed = true;
+    }
+    if (failed) { showToast('Something failed to save. Try again.'); return; }
+    showToast(`✨ ${plan.text} · −${latest.mana_cost} mana`);
   };
 
 
@@ -4453,6 +4898,7 @@ export default function App() {
       {(()=>{const p=players.find(x=>x.id===currentPlayerId);const t=p?.player_theme||'campfire';return(phase==='player'&&currentPlayerId)?<ThemedBackground theme={t}/>:<FireplaceBackground/>;})()}
     <style>{CSS}</style>
       {toast && <div className="rf-toast">{toast}</div>}
+      {castPending && (() => { const p = players.find(x => x.id === castPending.playerId); return p ? (<TargetPickerModal ability={castPending.ability} targets={castTargets(castPending.ability, p, players, encounters)} onClose={() => setCastPending(null)} onPick={(t) => { const c = castPending; setCastPending(null); handleUseAbility(c.playerId, c.ability, c.via, t); }} />) : null; })()}
 
       {phase === 'loading' && <div className="rf-center"><div className="rf-loading">Unsealing the rune vault…</div></div>}
 
@@ -4520,6 +4966,7 @@ export default function App() {
           onAddEffect={handleAddEffect}
           onRemoveEffect={handleRemoveEffect}
           onSaveKit={handleSaveKit}
+          onResetAttack={handleResetAttack}
           onApplyKitBonuses={handleApplyKitBonuses}
           onGiveKitItems={handleGiveKitItems}
           onSetPlayerStats={handleSetPlayerStats}
@@ -4549,6 +4996,8 @@ export default function App() {
           onUseItem={handleUseItem}
           onEquipItem={handleEquipItem}
           onUnequipItem={handleUnequipItem}
+          onAttack={handleAttack}
+          onRequestCast={requestCast}
           onUseAbility={handleUseAbility}
           onSpendSkillPoint={handleSpendSkillPoint}
           onSaveCharacter={handleSaveCharacter}
