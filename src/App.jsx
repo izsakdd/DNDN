@@ -1256,7 +1256,7 @@ function playerWeapons(player, items) {
   return [...owned, UNARMED];
 }
 
-function resolveAttack({ player, items, effects, weapon, targetAC, rng }) {
+function resolveAttack({ player, items, effects, weapon, targetAC, rng, spell }) {
   const rand = rng || Math.random;
   const statKey = weapon.attack_stat || 'str_score';
   const bonuses = totalStatBonus(player, items, effects);
@@ -1270,7 +1270,7 @@ function resolveAttack({ player, items, effects, weapon, targetAC, rng }) {
   let dmg = null;
   if (hit) {
     dmg = rollDice(weapon.damage_dice, rand, crit);
-    damage = Math.max(0, dmg.total + mod);
+    damage = Math.max(0, dmg.total + (spell ? 0 : mod));
   }
   return { d20, mod, hitBonus, total, targetAC, hit, crit, fumble: d20 === 1, damage, dmg };
 }
@@ -1308,11 +1308,33 @@ function planAttack({ player, items, encounter, weapon, combId, rng }) {
   return { result, combatants, text, targetName: target.name };
 }
 
-const abilityKind = (ab) => (ab && (ab.kind === 'heal' || ab.kind === 'effect') ? ab.kind : 'utility');
+const abilityKind = (ab) => (ab && (ab.kind === 'heal' || ab.kind === 'effect' || ab.kind === 'damage') ? ab.kind : 'utility');
+const isSelfOnly = (ab) => (abilityKind(ab) === 'heal' || abilityKind(ab) === 'effect') && !!ab.self_only;
+
+function selfTarget(player, encounters) {
+  const enc = (encounters || []).find((e) => e.active);
+  const mine = enc ? enc.combatants.find((c) => c.player_id === player.id) : null;
+  return mine ? { combId: mine.id } : { playerId: player.id };
+}
+
+function spellText(who, spell, targetName, r) {
+  const sign = (n) => (n >= 0 ? '+' : '') + n;
+  if (r.d20 == null) return `${who} casts ${spell} on ${targetName} for ${r.damage} damage`;
+  const roll = `d20 ${r.d20}${sign(r.mod)}${r.hitBonus ? sign(r.hitBonus) : ''} = ${r.total} vs AC ${r.targetAC}`;
+  if (r.crit) return `${who} casts ${spell} on ${targetName}: critical hit for ${r.damage} damage (${roll})`;
+  if (r.fumble) return `${who} casts ${spell} on ${targetName}: natural 1, a miss (${roll})`;
+  if (r.hit) return `${who} casts ${spell} on ${targetName}: hits for ${r.damage} damage (${roll})`;
+  return `${who} casts ${spell} on ${targetName}: misses (${roll})`;
+}
 
 function abilityEffectText(ab) {
   const k = abilityKind(ab);
-  if (k === 'heal') return `💚 Heals ${Math.max(0, Number(ab.heal_amount) || 0)} HP · choose a target`;
+  const who = isSelfOnly(ab) ? 'self only' : 'choose a target';
+  if (k === 'damage') {
+    const stat = (STATS.find((s) => s.key === (ab.attack_stat || 'int_score')) || STATS[0]).label;
+    return `⚔️ Deals ${ab.damage_dice || '1d4'} damage ${ab.auto_hit ? '(always hits)' : `(roll to hit, ${stat})`} · choose an enemy`;
+  }
+  if (k === 'heal') return `💚 Heals ${Math.max(0, Number(ab.heal_amount) || 0)} HP · ${who}`;
   if (k === 'effect') {
     const fx = ab.fx || {};
     const bits = [];
@@ -1321,7 +1343,7 @@ function abilityEffectText(ab) {
     if (st) bits.push(st);
     if (fx.skips) bits.push('loses their turn');
     const turns = Number(fx.rounds) > 0 ? ` for ${Number(fx.rounds)} turn${Number(fx.rounds) === 1 ? '' : 's'}` : '';
-    return `${fx.icon || '✨'} ${fx.name || 'Effect'}${bits.length ? ` (${bits.join(', ')})` : ''}${turns} · choose a target`;
+    return `${fx.icon || '✨'} ${fx.name || 'Effect'}${bits.length ? ` (${bits.join(', ')})` : ''}${turns} · ${who}`;
   }
   return '';
 }
@@ -1329,6 +1351,20 @@ function abilityEffectText(ab) {
 function castTargets(ability, player, players, encounters) {
   const kind = abilityKind(ability);
   const enc = (encounters || []).find((e) => e.active) || null;
+  if (kind === 'damage') {
+    if (!enc) return [];
+    return enc.combatants.filter((c) => c.type === 'enemy' && c.current_hp > 0).map((c) => ({
+      key: 'c' + c.id, label: c.name,
+      sub: `Enemy · HP ${c.current_hp}/${c.max_hp} · AC ${(Number(c.ac) || 10) + effectBonuses(c.effects).ac}`,
+      target: { combId: c.id },
+    }));
+  }
+  if (isSelfOnly(ability)) {
+    const t = selfTarget(player, encounters);
+    const hp = playerHP(player);
+    if (t.combId) return [{ key: 'c' + t.combId, label: `${player.name} (you)`, sub: `Self · HP ${hp.cur}/${hp.max}`, target: t }];
+    return kind === 'heal' ? [{ key: 'p' + player.id, label: `${player.name} (you)`, sub: `Self · HP ${hp.cur}/${hp.max}`, target: t }] : [];
+  }
   if (kind === 'heal' && !enc) {
     return (players || []).filter((p) => p.character_class || p.id === player.id).map((p) => {
       const hp = playerHP(p);
@@ -1344,15 +1380,18 @@ function castTargets(ability, player, players, encounters) {
   });
 }
 
-function planTargetedCast({ ability, caster, target, players, encounter }) {
+function planTargetedCast({ ability, caster, target, players, encounter, items, rng }) {
   const kind = abilityKind(ability);
   const enc = encounter && encounter.active ? encounter : null;
+  if (kind === 'damage' && !enc) return { error: 'Attack abilities need an active fight.' };
+  if (kind === 'effect' && !enc) return { error: 'Buffs and debuffs need an active fight and a target in it.' };
   let comb = null;
   let tp = null;
   if (target && target.combId && enc) comb = enc.combatants.find((c) => c.id === target.combId) || null;
   if (comb && comb.type === 'player') tp = (players || []).find((p) => p.id === comb.player_id) || null;
   if (!comb && target && target.playerId) tp = (players || []).find((p) => p.id === target.playerId) || null;
   if (!comb && !tp) return { error: 'Choose a target first.' };
+  if (isSelfOnly(ability) && !(tp && tp.id === caster.id)) return { error: `${ability.name} can only be cast on yourself.` };
   const name = comb ? comb.name : tp.name;
   const playerPatches = {};
   let combatants = null;
@@ -1376,6 +1415,33 @@ function planTargetedCast({ ability, caster, target, players, encounter }) {
     };
     combatants = enc.combatants.map((c) => (c.id === comb.id ? { ...c, effects: [...(c.effects || []).filter((x) => x.name !== effect.name), effect] } : c));
     detail = `${effect.icon} ${effect.name}${effect.rounds > 0 ? ` (${effect.rounds})` : ''}`;
+  } else if (kind === 'damage') {
+    if (!enc) return { error: 'Attack abilities need an active fight.' };
+    const myIdx = enc.combatants.findIndex((c) => c.player_id === caster.id);
+    if (myIdx < 0) return { error: "You aren't part of this fight." };
+    if (myIdx !== enc.turn_index) return { error: "It isn't your turn yet." };
+    const me = enc.combatants[myIdx];
+    if ((me.attacks_used || 0) >= 1) return { error: 'You already attacked this turn.' };
+    if (!comb || comb.type !== 'enemy') return { error: 'Choose an enemy to target.' };
+    if (comb.current_hp <= 0) return { error: `${comb.name} is already down.` };
+    const targetAC = (Number(comb.ac) || 10) + effectBonuses(comb.effects).ac;
+    let res;
+    if (ability.auto_hit) {
+      const dmg = rollDice(ability.damage_dice, rng, false);
+      res = { hit: true, crit: false, fumble: false, damage: Math.max(0, dmg.total), d20: null, mod: 0, hitBonus: 0, total: null, targetAC };
+    } else {
+      res = resolveAttack({ player: caster, items, effects: me.effects, targetAC, rng, spell: true,
+        weapon: { attack_stat: ability.attack_stat || 'int_score', attack_bonus: ability.attack_bonus, damage_dice: ability.damage_dice } });
+    }
+    const newHp = res.hit ? Math.max(0, comb.current_hp - res.damage) : comb.current_hp;
+    const hit = enc.combatants.map((c) => {
+      if (c.id === comb.id) return { ...c, current_hp: newHp, is_defeated: newHp <= 0 };
+      if (c.id === me.id) return { ...c, attacks_used: (c.attacks_used || 0) + 1 };
+      return c;
+    });
+    let text = spellText(caster.name, ability.name, comb.name, res);
+    if (res.hit && newHp <= 0) text += `. ${comb.name} is defeated!`;
+    return { playerPatches, combatants: hit, text, targetName: comb.name, detail: '', result: res };
   } else {
     return { error: 'That ability does not need a target.' };
   }
@@ -1731,7 +1797,7 @@ function AbilityItem({ ability, currentMana, onUse }) {
           <div className="rf-ability-voice-lock" title="Your DM made this spell voice-cast only">🎤 Voice only</div>
         ) : (
           <button className="rf-ability-use" disabled={!canAfford} onClick={() => onUse(ability)}>
-            <Zap size={12} /> {abilityKind(ability) === 'utility' ? 'Use' : 'Cast…'}
+            <Zap size={12} /> {abilityKind(ability) === 'utility' || isSelfOnly(ability) ? 'Use' : 'Cast…'}
           </button>
         )}
       </div>
@@ -2057,16 +2123,22 @@ function AbilitySetEditorModal({ set, onClose, onSave, onDelete }) {
               <div className="rf-gear-fields" style={{marginTop:10}}>
                 <div className="rf-label" style={{marginTop:0}}>What does it do when cast?</div>
                 <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
-                  {[['utility','✨ Just spends mana'],['heal','💚 Heals a target'],['effect','🛡️ Buff or debuff a target']].map(([k,l])=>(
+                  {[['utility','✨ Just spends mana'],['heal','💚 Heals a target'],['effect','🛡️ Buff or debuff a target'],['damage','⚔️ Damages an enemy']].map(([k,l])=>(
                     <button key={k} type="button" style={{fontSize:12,padding:'5px 10px'}}
                       className={abilityKind(ab)===k?'rf-btn-primary':'rf-btn-ghost'} onClick={()=>updateAbility(ab.id,{kind:k})}>{l}</button>
                   ))}
                 </div>
+                {(abilityKind(ab)==='heal'||abilityKind(ab)==='effect')&&(
+                  <label style={{display:'flex',alignItems:'flex-start',gap:8,marginTop:10,cursor:'pointer',fontSize:12.5,lineHeight:1.4}}>
+                    <input type="checkbox" checked={!!ab.self_only} onChange={e=>updateAbility(ab.id,{self_only:e.target.checked})} style={{marginTop:2}}/>
+                    <span>🧍 Self only <span style={{color:'var(--text-muted)'}}>(the caster can only use it on themselves, like a shield. No target is chosen.)</span></span>
+                  </label>
+                )}
                 {abilityKind(ab)==='heal'&&(
                   <>
                     <label className="rf-label">HP restored</label>
                     <input className="rf-input" type="number" min="1" value={ab.heal_amount??''} placeholder="e.g. 8" onChange={e=>updateAbility(ab.id,{heal_amount:e.target.value})} style={{width:110}}/>
-                    <div className="rf-hint">The caster picks who to heal, then the mana is spent.</div>
+                    <div className="rf-hint">{ab.self_only?'Heals only the caster.':'The caster picks who to heal, then the mana is spent.'}</div>
                   </>
                 )}
                 {abilityKind(ab)==='effect'&&(()=>{
@@ -2106,10 +2178,36 @@ function AbilitySetEditorModal({ set, onClose, onSave, onDelete }) {
                           </div>
                         ))}
                       </div>
-                      <div className="rf-hint">Applies to whoever the caster targets, ally or enemy, during a fight. It counts down on the target's own turns (0 = until you remove it).</div>
+                      <div className="rf-hint">{ab.self_only?'Applies to the caster only. ':'Applies to whoever the caster targets, ally or enemy. '}It needs an active fight and counts down on the target's own turns (0 = until you remove it).</div>
                     </>
                   );
                 })()}
+                {abilityKind(ab)==='damage'&&(
+                  <>
+                    <div style={{display:'grid',gridTemplateColumns:'1.2fr 1fr 1fr',gap:10,marginTop:10}}>
+                      <div>
+                        <label className="rf-label" style={{marginTop:0}}>Damage dice</label>
+                        <input className="rf-input rf-input-sm" value={ab.damage_dice||''} placeholder="2d6" onChange={e=>updateAbility(ab.id,{damage_dice:e.target.value})}/>
+                      </div>
+                      <div>
+                        <label className="rf-label" style={{marginTop:0}}>Hit bonus</label>
+                        <input className="rf-input rf-input-sm" type="number" placeholder="0" value={ab.attack_bonus??''} onChange={e=>updateAbility(ab.id,{attack_bonus:e.target.value})}/>
+                      </div>
+                      <div>
+                        <label className="rf-label" style={{marginTop:0}}>Attack stat</label>
+                        <select className="rf-input rf-input-sm" value={ab.attack_stat||'int_score'} onChange={e=>updateAbility(ab.id,{attack_stat:e.target.value})}>
+                          {STATS.map(s=><option key={s.key} value={s.key}>{s.label}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <label style={{display:'flex',alignItems:'center',gap:8,marginTop:10,cursor:'pointer',fontSize:12.5}}>
+                      <input type="checkbox" checked={!!ab.auto_hit} onChange={e=>updateAbility(ab.id,{auto_hit:e.target.checked})}/>
+                      <span>Always hits (skip the attack roll)</span>
+                    </label>
+                    {ab.damage_dice&&!parseDice(ab.damage_dice)&&<div className="rf-error">That isn't a valid dice roll. Use something like 2d6 or 1d10+3. It will fall back to 1d4.</div>}
+                    <div className="rf-hint">Works like a normal attack: the caster picks an enemy, it has to be their turn, and it uses up their attack for the turn. Spell damage doesn't add the stat modifier, so put any flat bonus in the dice (like 2d6+3).</div>
+                  </>
+                )}
               </div>
               <div style={{display:'flex',alignItems:'center',gap:8,marginTop:6,flexWrap:'wrap'}}>
                 <span style={{fontSize:11.5,color:'var(--text-muted)',fontFamily:"'Cinzel',serif"}}>Min Level</span>
@@ -4586,10 +4684,21 @@ export default function App() {
   const requestCast = (ability, via) => {
     const player = players.find((p) => p.id === currentPlayerId);
     if (!player) return;
-    if (abilityKind(ability) === 'utility') { handleUseAbility(player.id, ability, via); return; }
+    const kind = abilityKind(ability);
+    if (kind === 'utility') { handleUseAbility(player.id, ability, via); return; }
+    if (isSelfOnly(ability)) {
+      const enc = encounters.find((e) => e.active) || null;
+      const mine = enc ? enc.combatants.find((c) => c.player_id === player.id) : null;
+      if (kind === 'effect' && !mine) {
+        showToast(enc ? "You aren't part of this fight." : 'This ability needs an active fight.');
+        return;
+      }
+      handleUseAbility(player.id, ability, via, selfTarget(player, encounters));
+      return;
+    }
     const targets = castTargets(ability, player, players, encounters);
     if (!targets.length) {
-      showToast(abilityKind(ability) === 'effect' ? 'No valid targets. This ability needs an active fight.' : 'No valid targets.');
+      showToast(kind === 'heal' ? 'No valid targets.' : 'No valid targets. This ability needs an active fight.');
       return;
     }
     setCastPending({ ability, via, playerId: player.id });
@@ -4615,7 +4724,7 @@ export default function App() {
       return;
     }
     const enc = encounters.find((e) => e.active) || null;
-    const plan = planTargetedCast({ ability: latest, caster: player, target, players, encounter: enc });
+    const plan = planTargetedCast({ ability: latest, caster: player, target, players, encounter: enc, items });
     if (plan.error) { showToast(plan.error); return; }
     const patches = { ...plan.playerPatches };
     patches[playerId] = { ...(patches[playerId] || {}), current_mana };
