@@ -763,6 +763,11 @@ const CSS = `
 .rf-enc-log-row { font-size:12.5px; line-height:1.5; padding:3px 0; border-bottom:1px dashed var(--border); }
 .rf-enc-log-row:last-child { border-bottom:none; }
 
+
+/* ===== DICE PICKER ===== */
+.rf-dice-picker { display:flex; gap:6px; }
+.rf-dice-picker .rf-input { width:auto; flex:1 1 0; min-width:0; }
+
 @media (max-width: 600px) {
   .rf-login-card { padding: 26px 20px; }
   .rf-page { padding: 16px 14px 50px; }
@@ -2184,10 +2189,10 @@ function AbilitySetEditorModal({ set, onClose, onSave, onDelete }) {
                 })()}
                 {abilityKind(ab)==='damage'&&(
                   <>
-                    <div style={{display:'grid',gridTemplateColumns:'1.2fr 1fr 1fr',gap:10,marginTop:10}}>
+                    <div style={{display:'grid',gridTemplateColumns:'2fr 0.8fr 1fr',gap:10,marginTop:10}}>
                       <div>
                         <label className="rf-label" style={{marginTop:0}}>Damage dice</label>
-                        <input className="rf-input rf-input-sm" value={ab.damage_dice||''} placeholder="2d6" onChange={e=>updateAbility(ab.id,{damage_dice:e.target.value})}/>
+                        <DicePicker value={ab.damage_dice||''} onChange={v=>updateAbility(ab.id,{damage_dice:v})}/>
                       </div>
                       <div>
                         <label className="rf-label" style={{marginTop:0}}>Hit bonus</label>
@@ -2204,8 +2209,7 @@ function AbilitySetEditorModal({ set, onClose, onSave, onDelete }) {
                       <input type="checkbox" checked={!!ab.auto_hit} onChange={e=>updateAbility(ab.id,{auto_hit:e.target.checked})}/>
                       <span>Always hits (skip the attack roll)</span>
                     </label>
-                    {ab.damage_dice&&!parseDice(ab.damage_dice)&&<div className="rf-error">That isn't a valid dice roll. Use something like 2d6 or 1d10+3. It will fall back to 1d4.</div>}
-                    <div className="rf-hint">Works like a normal attack: the caster picks an enemy, it has to be their turn, and it uses up their attack for the turn. Spell damage doesn't add the stat modifier, so put any flat bonus in the dice (like 2d6+3).</div>
+                    <div className="rf-hint">Works like a normal attack: the caster picks an enemy, it has to be their turn, and it uses up their attack for the turn. Spell damage doesn't add the stat modifier, so use the bonus dropdown for any flat extra damage.</div>
                   </>
                 )}
               </div>
@@ -2377,10 +2381,10 @@ function ItemEditorModal({ item, onClose, onSave, onDelete }) {
           {cat==='weapon'&&(
             <div className="rf-gear-fields">
               <div className="rf-label" style={{marginTop:0}}>Weapon</div>
-              <div style={{display:'grid',gridTemplateColumns:'1.2fr 1fr 1fr',gap:10}}>
+              <div style={{display:'grid',gridTemplateColumns:'2fr 0.8fr 1fr',gap:10}}>
                 <div>
                   <label className="rf-label" style={{marginTop:0}}>Damage dice</label>
-                  <input className="rf-input" value={damageDice} onChange={e=>setDamageDice(e.target.value)} placeholder="1d8"/>
+                  <DicePicker value={damageDice} onChange={setDamageDice}/>
                 </div>
                 <div>
                   <label className="rf-label" style={{marginTop:0}}>Hit bonus</label>
@@ -2393,7 +2397,6 @@ function ItemEditorModal({ item, onClose, onSave, onDelete }) {
                   </select>
                 </div>
               </div>
-              {damageDice.trim()&&!parseDice(damageDice)&&<div className="rf-error">That isn't a valid dice roll. Use something like 1d8 or 2d6+1. It will fall back to 1d4.</div>}
               <div className="rf-hint">The attacker rolls a d20 plus the stat modifier plus the hit bonus against the enemy's AC. A hit deals these dice plus the stat modifier. A natural 20 always hits and doubles the dice.</div>
             </div>
           )}
@@ -2964,6 +2967,38 @@ function PlayerArsenal({ player, items, abilitySets, onUseItem }) {
     </div>
   );
 }
+
+/* <dice-picker> */
+const DICE_SIDES = [4, 6, 8, 10, 12, 20, 100];
+const DICE_COUNTS = Array.from({ length: 20 }, (_, i) => i + 1);
+const DICE_BONUSES = Array.from({ length: 31 }, (_, i) => i - 10);
+
+function buildDice(count, sides, bonus) {
+  if (count < 1 || sides < 2) return String(Math.max(0, bonus));
+  return `${count}d${sides}${bonus > 0 ? '+' + bonus : bonus < 0 ? String(bonus) : ''}`;
+}
+
+function DicePicker({ value, onChange }) {
+  const { count, sides, mod } = parseDice(value) || { count: 1, sides: 4, mod: 0 };
+  const choices = (list, cur) => (list.includes(cur) ? list : [...list, cur].sort((a, b) => a - b));
+  return (
+    <div className="rf-dice-picker">
+      <select className="rf-input rf-input-sm" title="How many dice" value={count}
+        onChange={(e) => onChange(buildDice(Number(e.target.value), sides < 2 ? 6 : sides, mod))}>
+        {choices(DICE_COUNTS, count).map((n) => <option key={n} value={n}>{n === 0 ? 'no dice' : n}</option>)}
+      </select>
+      <select className="rf-input rf-input-sm" title="Which die" value={sides}
+        onChange={(e) => onChange(buildDice(count < 1 ? 1 : count, Number(e.target.value), mod))}>
+        {choices(DICE_SIDES, sides).map((n) => <option key={n} value={n}>{n === 0 ? 'flat' : 'd' + n}</option>)}
+      </select>
+      <select className="rf-input rf-input-sm" title="Flat bonus added to the total" value={mod}
+        onChange={(e) => onChange(buildDice(count, sides, Number(e.target.value)))}>
+        {choices(DICE_BONUSES, mod).map((n) => <option key={n} value={n}>{n > 0 ? '+' + n : n}</option>)}
+      </select>
+    </div>
+  );
+}
+/* </dice-picker> */
 
 function TargetPickerModal({ ability, targets, onPick, onClose }) {
   return (
